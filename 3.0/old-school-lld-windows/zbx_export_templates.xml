@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>3.0</version>
-    <date>2020-08-14T12:55:06Z</date>
+    <date>2020-08-22T17:58:33Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -158,6 +158,49 @@
                     <valuemap/>
                     <logtimefmt/>
                 </item>
+                <item>
+                    <name>discover listening ports json</name>
+                    <type>7</type>
+                    <snmp_community/>
+                    <multiplier>0</multiplier>
+                    <snmp_oid/>
+                    <key>system.run[&quot;@echo off &amp;&amp; {$NETSTAT.STEP0} &amp;&amp; ({$NETSTAT.STEP1} do {$NETSTAT.STEP2} do {$NETSTAT.STEP3} do {$NETSTAT.STEP4}) &amp; {$NETSTAT.STEP5}&quot;]</key>
+                    <delay>86400</delay>
+                    <history>10</history>
+                    <trends>0</trends>
+                    <status>0</status>
+                    <value_type>4</value_type>
+                    <allowed_hosts/>
+                    <units/>
+                    <delta>0</delta>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <formula>1</formula>
+                    <delay_flex/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <data_type>0</data_type>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <description/>
+                    <inventory_link>0</inventory_link>
+                    <applications>
+                        <application>
+                            <name>lld</name>
+                        </application>
+                    </applications>
+                    <valuemap/>
+                    <logtimefmt/>
+                </item>
             </items>
             <discovery_rules>
                 <discovery_rule>
@@ -191,7 +234,7 @@
                         <conditions>
                             <condition>
                                 <macro>{#USERNAME}</macro>
-                                <value>@validUsers</value>
+                                <value>^(?!.*dummyValue).*$</value>
                                 <operator>8</operator>
                                 <formulaid>A</formulaid>
                             </condition>
@@ -340,6 +383,30 @@
                 </discovery_rule>
             </discovery_rules>
             <macros>
+                <macro>
+                    <macro>{$NETSTAT.STEP0}</macro>
+                    <value>echo {&quot;data&quot;:[</value>
+                </macro>
+                <macro>
+                    <macro>{$NETSTAT.STEP1}</macro>
+                    <value>for /f &quot;tokens=2 delims= &quot; %f IN ('netstat -ano 0 ^|findstr &quot;LISTEN&quot;')</value>
+                </macro>
+                <macro>
+                    <macro>{$NETSTAT.STEP2}</macro>
+                    <value>for /f &quot;tokens=1,2 delims=:&quot; %a in ('echo %f ^|findstr /B &quot;[0-9]&quot;')</value>
+                </macro>
+                <macro>
+                    <macro>{$NETSTAT.STEP3}</macro>
+                    <value>for /f &quot;tokens=1 delims= &quot; %d IN ('echo %a&quot;,&quot;{#P}&quot;:&quot;%b')</value>
+                </macro>
+                <macro>
+                    <macro>{$NETSTAT.STEP4}</macro>
+                    <value>echo {&quot;{#I}&quot;:&quot;%d&quot;},</value>
+                </macro>
+                <macro>
+                    <macro>{$NETSTAT.STEP5}</macro>
+                    <value>echo {&quot;{#I}&quot;:&quot;9&quot;,&quot;{#P}&quot;:&quot;9&quot;}]}</value>
+                </macro>
                 <macro>
                     <macro>{$USERS.LOCATION}</macro>
                     <value>C:\Users</value>
