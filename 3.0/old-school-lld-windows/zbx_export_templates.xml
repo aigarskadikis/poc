@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>3.0</version>
-    <date>2020-08-22T18:11:40Z</date>
+    <date>2020-08-22T18:21:16Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -413,7 +413,52 @@
                     </filter>
                     <lifetime>0</lifetime>
                     <description/>
-                    <item_prototypes/>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>port {#PORT} is listening</name>
+                            <type>7</type>
+                            <snmp_community/>
+                            <multiplier>0</multiplier>
+                            <snmp_oid/>
+                            <key>net.tcp.listen[{#PORT}]</key>
+                            <delay>300</delay>
+                            <history>10</history>
+                            <trends>0</trends>
+                            <status>0</status>
+                            <value_type>3</value_type>
+                            <allowed_hosts/>
+                            <units/>
+                            <delta>0</delta>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <formula>1</formula>
+                            <delay_flex/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <data_type>0</data_type>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description/>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>port</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <application_prototypes/>
+                        </item_prototype>
+                    </item_prototypes>
                     <trigger_prototypes/>
                     <graph_prototypes/>
                     <host_prototypes/>
@@ -453,4 +498,16 @@
             <screens/>
         </template>
     </templates>
+    <triggers>
+        <trigger>
+            <expression>{system.run windows lld poc:system.run[&quot;@echo off &amp;&amp; {$NETSTAT.STEP0} &amp;&amp; ({$NETSTAT.STEP1} do {$NETSTAT.STEP2} do {$NETSTAT.STEP3} do {$NETSTAT.STEP4}) &amp; {$NETSTAT.STEP5}&quot;,].diff()}=1</expression>
+            <name>Listening port situation has been changed, check latast data page</name>
+            <url/>
+            <status>0</status>
+            <priority>2</priority>
+            <description/>
+            <type>0</type>
+            <dependencies/>
+        </trigger>
+    </triggers>
 </zabbix_export>
