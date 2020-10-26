@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>4.4</version>
+    <date>2020-10-26T20:22:31Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Pick up CSV content from external file JSON LLD Dependable items JSONPath</template>
+            <name>Pick up CSV content from external file JSON LLD Dependable items JSONPath</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Licence file</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Licence file</name>
+                    <key>vfs.file.contents[&quot;{$LICENCE.FILE}&quot;]</key>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Licence file</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.replace(/;\s+/gm,&quot;;&quot;).replace(/\s+;/gm,&quot;;&quot;);
+</params>
+                        </step>
+                        <step>
+                            <type>CSV_TO_JSON</type>
+                            <params>;
+&quot;
+1</params>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>discover.rows</name>
+                    <type>DEPENDENT</type>
+                    <key>discover.rows</key>
+                    <delay>0</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#ACCOUNTNAME}: {#PRODUCTNAME}</name>
+                            <type>DEPENDENT</type>
+                            <key>row.id[{#ACCOUNTNAME},{#PRODUCTNAME}]</key>
+                            <delay>0</delay>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <applications>
+                                <application>
+                                    <name>Licence file</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$..[?(@.[&quot;Account Name&quot;] == '{#ACCOUNTNAME}')].[&quot;Expiration Date&quot;].first()</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>vfs.file.contents[&quot;{$LICENCE.FILE}&quot;]</key>
+                            </master_item>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>vfs.file.contents[&quot;{$LICENCE.FILE}&quot;]</key>
+                    </master_item>
+                    <lld_macro_paths>
+                        <lld_macro_path>
+                            <lld_macro>{#ACCOUNTNAME}</lld_macro>
+                            <path>$.[&quot;Account Name&quot;]</path>
+                        </lld_macro_path>
+                        <lld_macro_path>
+                            <lld_macro>{#PRODUCTNAME}</lld_macro>
+                            <path>$.[&quot;Product Name&quot;]</path>
+                        </lld_macro_path>
+                    </lld_macro_paths>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$LICENCE.FILE}</macro>
+                    <value>/tmp/test.csv</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
