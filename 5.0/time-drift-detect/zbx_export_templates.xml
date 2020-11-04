@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2020-11-04T13:41:50Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Time drift detect template</template>
+            <name>Time drift detect template</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <name>maximal time</name>
+                    <type>AGGREGATE</type>
+                    <key>grpmax[&quot;UTC monitoring&quot;,&quot;system.localtime[utc]&quot;,last]</key>
+                    <delay>0;s1,31</delay>
+                    <units>unixtime</units>
+                </item>
+                <item>
+                    <name>minimal time</name>
+                    <type>AGGREGATE</type>
+                    <key>grpmin[&quot;UTC monitoring&quot;,&quot;system.localtime[utc]&quot;,last]</key>
+                    <delay>0;s1,31</delay>
+                    <units>unixtime</units>
+                </item>
+                <item>
+                    <name>time.difference.host.group</name>
+                    <type>CALCULATED</type>
+                    <key>time.difference.host.group</key>
+                    <delay>0;s16,46</delay>
+                    <units>s</units>
+                    <params>last(&quot;grpmax[\&quot;UTC monitoring\&quot;,\&quot;system.localtime[utc]\&quot;,last]&quot;)&#13;
+-&#13;
+last(&quot;grpmin[\&quot;UTC monitoring\&quot;,\&quot;system.localtime[utc]\&quot;,last]&quot;)</params>
+                    <triggers>
+                        <trigger>
+                            <expression>{min({$TIME.UTC.RANGE})} &gt; {$TIME.UTC.MAX.MIN.DIFF}</expression>
+                            <name>Dime differenece in last {$TIME.UTC.RANGE} is bigger than {$TIME.UTC.MAX.MIN.DIFF}</name>
+                            <priority>AVERAGE</priority>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+            </items>
+        </template>
+    </templates>
+</zabbix_export>

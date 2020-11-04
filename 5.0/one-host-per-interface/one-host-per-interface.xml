@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2020-11-02T07:42:03Z</date>
+    <groups>
+        <group>
+            <name>SNMP Interfaces</name>
+        </group>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>one host per interface first discovery host prototype</template>
+            <name>one host per interface first discovery host prototype</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Zabbix raw items</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>discover.parents.first.lld</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#MIDDLEINDEX},1.3.6.1.4.1.14988.1.1.7]</snmp_oid>
+                    <key>discover.parents.first.lld</key>
+                    <delay>30s</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.[*].[&quot;{#SNMPINDEX}&quot;]</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// put the output from JSONPath result as an array of elements
+var obj = JSON.parse(value);
+
+// count the elements in input
+var lines_num = obj.length;
+
+// define new array
+var lld = [];
+
+// transform each element in array and put in new array
+// .replace(/\..*$/gm,&quot;&quot;) means we will erase any other character starting from first dot (.)
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+  row[&quot;{#SNMPINDEX}&quot;] = obj[i].replace(/\..*$/gm,&quot;&quot;);
+  lld.push(row);
+}
+return JSON.stringify(lld);
+</params>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>index.discovery.custom</name>
+                    <type>DEPENDENT</type>
+                    <key>index.discovery.custom</key>
+                    <delay>0</delay>
+                    <host_prototypes>
+                        <host_prototype>
+                            <host>INTERFACE-{#SNMPINDEX}</host>
+                            <name>INTERFACE-{#SNMPINDEX}</name>
+                            <group_links>
+                                <group_link>
+                                    <group>
+                                        <name>SNMP Interfaces</name>
+                                    </group>
+                                </group_link>
+                            </group_links>
+                            <templates>
+                                <template>
+                                    <name>one host per interface second discovery host prototype</name>
+                                </template>
+                            </templates>
+                            <macros>
+                                <macro>
+                                    <macro>{$SNMPINDEX}</macro>
+                                    <value>{#SNMPINDEX}</value>
+                                </macro>
+                            </macros>
+                        </host_prototype>
+                    </host_prototypes>
+                    <master_item>
+                        <key>discover.parents.first.lld</key>
+                    </master_item>
+                </discovery_rule>
+            </discovery_rules>
+        </template>
+        <template>
+            <template>one host per interface second discovery host prototype</template>
+            <name>one host per interface second discovery host prototype</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Zabbix raw items</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>discover.last.index</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#SECONDLLD},1.3.6.1.4.1.14988.1.1.7.{$SNMPINDEX}]</snmp_oid>
+                    <key>discover.last.index</key>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>index.discovery.custom</name>
+                    <type>DEPENDENT</type>
+                    <key>index.discovery.custom</key>
+                    <delay>0</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>key[{$SNMPINDEX},{#SNMPINDEX}]</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>1.3.6.1.4.1.14988.1.1.7.{$SNMPINDEX}.{#SNMPINDEX}</snmp_oid>
+                            <key>key[{$SNMPINDEX},{#SNMPINDEX}]</key>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                        </item_prototype>
+                    </item_prototypes>
+                    <host_prototypes>
+                        <host_prototype>
+                            <host>CUSTOME-{#SNMPINDEX}</host>
+                            <name>CUSTOME-{#SNMPINDEX}</name>
+                            <group_links>
+                                <group_link>
+                                    <group>
+                                        <name>SNMP Interfaces</name>
+                                    </group>
+                                </group_link>
+                            </group_links>
+                            <macros>
+                                <macro>
+                                    <macro>{$SNMPINDEX}</macro>
+                                    <value>{#SNMPINDEX}</value>
+                                </macro>
+                            </macros>
+                        </host_prototype>
+                    </host_prototypes>
+                    <master_item>
+                        <key>discover.last.index</key>
+                    </master_item>
+                </discovery_rule>
+            </discovery_rules>
+        </template>
+    </templates>
+</zabbix_export>
