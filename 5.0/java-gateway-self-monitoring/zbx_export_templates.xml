@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2020-11-13T07:01:29Z</date>
+    <groups>
+        <group>
+            <name>Templates/Java</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Java Gataway self monitoring JMX</template>
+            <name>Java Gataway self monitoring JMX</name>
+            <groups>
+                <group>
+                    <name>Templates/Java</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>JMX</name>
+                </application>
+                <application>
+                    <name>JMX attribute</name>
+                </application>
+                <application>
+                    <name>JMX attribute GarbageCollector</name>
+                </application>
+                <application>
+                    <name>JMX CollectionCount</name>
+                </application>
+                <application>
+                    <name>JMX MBeans type and name</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>LoadedClassCount</name>
+                    <type>JMX</type>
+                    <key>jmx[&quot;java.lang:type=ClassLoading&quot;,LoadedClassCount]</key>
+                    <delay>5m</delay>
+                    <history>1d</history>
+                    <applications>
+                        <application>
+                            <name>JMX</name>
+                        </application>
+                    </applications>
+                    <jmx_endpoint>service:jmx:rmi:///jndi/rmi://{HOST.CONN}:{HOST.PORT}/jmxrmi</jmx_endpoint>
+                </item>
+                <item>
+                    <name>Used heap memory</name>
+                    <type>JMX</type>
+                    <key>jmx[&quot;java.lang:type=Memory&quot;,HeapMemoryUsage.used]</key>
+                    <delay>5m</delay>
+                    <history>1d</history>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>JMX</name>
+                        </application>
+                    </applications>
+                    <jmx_endpoint>service:jmx:rmi:///jndi/rmi://{HOST.CONN}:{HOST.PORT}/jmxrmi</jmx_endpoint>
+                </item>
+                <item>
+                    <name>Non heap memory usage</name>
+                    <type>JMX</type>
+                    <key>jmx[&quot;java.lang:type=Memory&quot;,NonHeapMemoryUsage.used]</key>
+                    <delay>5m</delay>
+                    <history>1d</history>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>JMX</name>
+                        </application>
+                    </applications>
+                    <jmx_endpoint>service:jmx:rmi:///jndi/rmi://{HOST.CONN}:{HOST.PORT}/jmxrmi</jmx_endpoint>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Discover attributes (type and name)</name>
+                    <type>JMX</type>
+                    <key>jmx.discovery[attributes,&quot;java.lang:type=*,name=*&quot;]</key>
+                    <delay>1d</delay>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>attribute &quot;{#JMXDESC}&quot;</name>
+                            <type>TRAP</type>
+                            <key>attribute[{#JMXOBJ},{#JMXATTR}]</key>
+                            <delay>0</delay>
+                            <applications>
+                                <application>
+                                    <name>JMX attribute</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <jmx_endpoint>service:jmx:rmi:///jndi/rmi://{HOST.CONN}:{HOST.PORT}/jmxrmi</jmx_endpoint>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Discover attributes regarding type GarbageCollector</name>
+                    <type>JMX</type>
+                    <key>jmx.discovery[attributes,&quot;java.lang:type=GarbageCollector,name=*&quot;]</key>
+                    <delay>1d</delay>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>dummy &quot;{#JMXDESC}&quot;</name>
+                            <type>TRAP</type>
+                            <key>GarbageCollector.attribute[{#JMXOBJ},{#JMXATTR}]</key>
+                            <delay>0</delay>
+                            <applications>
+                                <application>
+                                    <name>JMX attribute GarbageCollector</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>&quot;{#JMXDESC}&quot;</name>
+                            <type>JMX</type>
+                            <key>jmx[&quot;{#JMXOBJ}&quot;,&quot;{#JMXATTR}&quot;]</key>
+                            <delay>5m</delay>
+                            <history>1h</history>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <applications>
+                                <application>
+                                    <name>JMX attribute GarbageCollector</name>
+                                </application>
+                            </applications>
+                            <jmx_endpoint>service:jmx:rmi:///jndi/rmi://{HOST.CONN}:{HOST.PORT}/jmxrmi</jmx_endpoint>
+                        </item_prototype>
+                    </item_prototypes>
+                    <jmx_endpoint>service:jmx:rmi:///jndi/rmi://{HOST.CONN}:{HOST.PORT}/jmxrmi</jmx_endpoint>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Discover MBeans (type and name)</name>
+                    <type>JMX</type>
+                    <key>jmx.discovery[beans,&quot;java.lang:type=*,name=*&quot;]</key>
+                    <delay>1d</delay>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#JMXOBJ}</name>
+                            <type>TRAP</type>
+                            <key>key[{#JMXOBJ}]</key>
+                            <delay>0</delay>
+                            <applications>
+                                <application>
+                                    <name>JMX MBeans type and name</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <jmx_endpoint>service:jmx:rmi:///jndi/rmi://{HOST.CONN}:{HOST.PORT}/jmxrmi</jmx_endpoint>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Discover MBeans regarding type GarbageCollector</name>
+                    <type>JMX</type>
+                    <key>jmx.discovery[beans,&quot;java.lang:type=GarbageCollector,name=*&quot;]</key>
+                    <delay>1d</delay>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>java.gc {#JMXOBJ}-CollectionCount</name>
+                            <type>JMX</type>
+                            <key>jmx[{#JMXOBJ},CollectionCount]</key>
+                            <delay>5m</delay>
+                            <history>1h</history>
+                            <applications>
+                                <application>
+                                    <name>JMX CollectionCount</name>
+                                </application>
+                            </applications>
+                            <jmx_endpoint>service:jmx:rmi:///jndi/rmi://{HOST.CONN}:{HOST.PORT}/jmxrmi</jmx_endpoint>
+                        </item_prototype>
+                    </item_prototypes>
+                    <jmx_endpoint>service:jmx:rmi:///jndi/rmi://{HOST.CONN}:{HOST.PORT}/jmxrmi</jmx_endpoint>
+                </discovery_rule>
+            </discovery_rules>
+        </template>
+    </templates>
+</zabbix_export>

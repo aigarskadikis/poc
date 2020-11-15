@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2020-11-05T07:43:03Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>windows service monitoring stopped but enabled at startup</template>
+            <name>windows service monitoring stopped but enabled at startup</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Services</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>count.of.stopped.services</name>
+                    <type>DEPENDENT</type>
+                    <key>count.of.stopped.services</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>Services</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.split(/\r\n|\r|\n/).length;</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>services[automatic,stopped,&quot;MapsBroker,gupdate,dbupdate,edgeupdate,gpsvc,ImDiskRD,sppsvc&quot;]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>automatically starts at system boot but currently is down</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>services[automatic,stopped,&quot;MapsBroker,gupdate,dbupdate,edgeupdate,gpsvc,ImDiskRD,sppsvc&quot;]</key>
+                    <delay>15s</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Services</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+        </template>
+    </templates>
+    <triggers>
+        <trigger>
+            <expression>{windows service monitoring stopped but enabled at startup:count.of.stopped.services.min(#3)}&gt;1&#13;
+or&#13;
+{windows service monitoring stopped but enabled at startup:services[automatic,stopped,&quot;MapsBroker,gupdate,dbupdate,edgeupdate,gpsvc,ImDiskRD,sppsvc&quot;].str()}=2</expression>
+            <recovery_mode>RECOVERY_EXPRESSION</recovery_mode>
+            <recovery_expression>{windows service monitoring stopped but enabled at startup:count.of.stopped.services.min(#3)}&lt;2</recovery_expression>
+            <name>Services {ITEM.LASTVALUE2} is stopped for 3 consecutive checks</name>
+            <priority>AVERAGE</priority>
+            <manual_close>YES</manual_close>
+        </trigger>
+    </triggers>
+</zabbix_export>

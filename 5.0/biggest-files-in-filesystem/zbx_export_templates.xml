@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2020-11-15T10:42:19Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Filesystem biggest files by Zabbix agent</template>
+            <name>Filesystem biggest files by Zabbix agent</name>
+            <description># working in bash in alpine image, zabbix-agent2&#13;
+find / -type f -exec du {} + 2&gt;/dev/null | sort -n -r | grep -v ^0 | head -20 | base64 -w0&#13;
+&#13;
+# biggest directories&#13;
+du -a / | sort -n -r | head -n 5&#13;
+&#13;
+# together with sender&#13;
+zabbix_sender -c /etc/zabbix/zabbix_agent2.conf -s $(hostname -s).gnt.ros.do -k big.in -o &quot;find / -type f -exec du {} + 2&gt;/dev/null | sort -n -r | grep -v ^0 | head -20 | base64 -w0&quot;</description>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Alive</name>
+                </application>
+                <application>
+                    <name>Biggest directories delta</name>
+                </application>
+                <application>
+                    <name>Biggest directories size</name>
+                </application>
+                <application>
+                    <name>Biggest files delta</name>
+                </application>
+                <application>
+                    <name>Biggest files size</name>
+                </application>
+                <application>
+                    <name>Zabbix raw items</name>
+                </application>
+                <application>
+                    <name>Zabbix sender</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Receive biggest files</name>
+                    <type>TRAP</type>
+                    <key>biggest.files</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <description>3145728 /myswap&#13;
+767012  /root/zabbix-source/.git/objects/pack/pack-6f2063f3b8802ba65e63a46440c618ad9239ead0.pack&#13;
+161452  /var/lib/rpm/Packages&#13;
+123984  /usr/lib/oracle/18.5/client64/lib/libociei.so&#13;
+103656  /usr/lib/locale/locale-archive&#13;
+102792  /root/zabbix-source.tar&#13;
+102596  /usr/bin/dockerd&#13;
+87168   /var/cache/yum/x86_64/7/centos-sclo-rh/gen/filelists_db.sqlite&#13;
+87128   /usr/bin/docker&#13;
+76368   /usr/lib/oracle/18.5/client64/lib/libclntsh.so.18.1</description>
+                    <inventory_link>SOFTWARE_FULL</inventory_link>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return &quot;SIZE,FILE\n&quot;+value.replace(/\s+\//gm,&quot;,\/&quot;);
+
+</params>
+                        </step>
+                        <step>
+                            <type>CSV_TO_JSON</type>
+                            <params>,
+&quot;
+1</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var jsonData = JSON.parse(value);
+return JSON.stringify(jsonData.slice(0,{$Z_BIGGEST_FILES_CNT}));</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>detect.if.content.file</name>
+                    <type>DEPENDENT</type>
+                    <key>detect.if.content.file</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <applications>
+                        <application>
+                            <name>Alive</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.length;</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>biggest.files</key>
+                    </master_item>
+                    <triggers>
+                        <trigger>
+                            <expression>{nodata({$DATA_NOT_COMMING})}=1</expression>
+                            <name>No data {$DATA_NOT_COMMING} for file receiver</name>
+                            <priority>HIGH</priority>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Find biggest files</name>
+                    <key>system.run[&quot;{$Z_SNDR_CNF} -s \&quot;{HOST.HOST}\&quot; -k biggest.files -o \&quot;$({$Z_BIGGEST_FILES})\&quot;&quot;,nowait]</key>
+                    <delay>55m</delay>
+                    <trends>0</trends>
+                    <applications>
+                        <application>
+                            <name>Zabbix sender</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>big.file.discovery</name>
+                    <type>DEPENDENT</type>
+                    <key>big.file.discovery</key>
+                    <delay>0</delay>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>file.on.fs.change[{#FILE}]</name>
+                            <type>DEPENDENT</type>
+                            <key>file.on.fs.change[{#FILE}]</key>
+                            <delay>0</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Biggest files delta</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$..[?(@.FILE == &quot;{#FILE}&quot;)].SIZE.first()</params>
+                                </step>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1024</params>
+                                </step>
+                                <step>
+                                    <type>SIMPLE_CHANGE</type>
+                                    <params/>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>biggest.files</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>file.on.fs[{#FILE}]</name>
+                            <type>DEPENDENT</type>
+                            <key>file.on.fs[{#FILE}]</key>
+                            <delay>0</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Biggest files size</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$..[?(@.FILE == &quot;{#FILE}&quot;)].SIZE.first()</params>
+                                </step>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1024</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>biggest.files</key>
+                            </master_item>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>biggest.files</key>
+                    </master_item>
+                    <lld_macro_paths>
+                        <lld_macro_path>
+                            <lld_macro>{#FILE}</lld_macro>
+                            <path>$.FILE</path>
+                        </lld_macro_path>
+                    </lld_macro_paths>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$DATA_NOT_COMMING}</macro>
+                    <value>26h</value>
+                </macro>
+                <macro>
+                    <macro>{$Z_BIGGEST_FILES}</macro>
+                    <value>find / -type f -exec du {} + 2&gt;/dev/null | sort -n -r | grep -v ^0 | head -30</value>
+                </macro>
+                <macro>
+                    <macro>{$Z_BIGGEST_FILES_CNT}</macro>
+                    <value>16</value>
+                </macro>
+            </macros>
+        </template>
+        <template>
+            <template>Filesystem biggest folders by Zabbix agent</template>
+            <name>Filesystem biggest folders by Zabbix agent</name>
+            <description># working in bash in alpine image, zabbix-agent2&#13;
+find / -type f -exec du {} + 2&gt;/dev/null | sort -n -r | grep -v ^0 | head -20 | base64 -w0&#13;
+&#13;
+# biggest directories&#13;
+du -a / | sort -n -r | head -n 5&#13;
+&#13;
+# together with sender&#13;
+zabbix_sender -c /etc/zabbix/zabbix_agent2.conf -s $(hostname -s).gnt.ros.do -k big.in -o &quot;find / -type f -exec du {} + 2&gt;/dev/null | sort -n -r | grep -v ^0 | head -20 | base64 -w0&quot;</description>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Alive</name>
+                </application>
+                <application>
+                    <name>Biggest directories delta</name>
+                </application>
+                <application>
+                    <name>Biggest directories size</name>
+                </application>
+                <application>
+                    <name>Biggest files delta</name>
+                </application>
+                <application>
+                    <name>Biggest files size</name>
+                </application>
+                <application>
+                    <name>Zabbix raw items</name>
+                </application>
+                <application>
+                    <name>Zabbix sender</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Receive biggest directories</name>
+                    <type>TRAP</type>
+                    <key>biggest.directories</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <description>var jsonData = JSON.parse(value);&#13;
+&#13;
+// sort json data by size property and DIR property&#13;
+// first it sorts the data by SIZE property ( Descending)&#13;
+// and then if the SIZE is same, it checks the DIR property. longer string will be front of shoter string.&#13;
+jsonData.sort(function(a, b){&#13;
+  return a.SIZE &gt; b.SIZE || (a.SIZE == b.SIZE &amp;&amp; a.DIR.toLowerCase().localeCompare(b.DIR) &gt; 0);&#13;
+})&#13;
+&#13;
+// check each row and remove the data&#13;
+for(var row = 0; row &lt; jsonData.length - 1; row++){&#13;
+  // this will check the first condition.&#13;
+  if(jsonData[row].SIZE == jsonData[row+1].SIZE &amp;&amp; jsonData[row].DIR.startsWith(jsonData[row+1].DIR)){&#13;
+    // remove the row.&#13;
+    jsonData.splice(row + 1, 1);&#13;
+  }&#13;
+  else{&#13;
+    // this will check the second condition.&#13;
+    // for the second condition, it needs extra loop while the difference of size is smaller than 20480.&#13;
+    var pointer = 1;&#13;
+    while(row + pointer &lt; jsonData.length &amp;&amp; jsonData[row].SIZE - jsonData[row + pointer].SIZE &lt; 20480){&#13;
+      if (jsonData[row + pointer].DIR.startsWith(jsonData[row].DIR)) { &#13;
+        // remove the current row and then reduce row because array items after row will be shifted&#13;
+        jsonData.splice(row, 1);&#13;
+        row--;&#13;
+        break;&#13;
+      }&#13;
+      pointer ++;&#13;
+    }&#13;
+  }&#13;
+}&#13;
+&#13;
+return JSON.stringify(jsonData);</description>
+                    <inventory_link>HARDWARE_FULL</inventory_link>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return &quot;SIZE,DIR\n&quot;+value.replace(/\t/gm,&quot;,&quot;);</params>
+                        </step>
+                        <step>
+                            <type>CSV_TO_JSON</type>
+                            <params>,
+
+1</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>
+var jsonData = JSON.parse(value);
+
+// check each row and remove the data
+for(var row = 0; row &lt; jsonData.length - 1; row++){
+	// this will check the first condition.
+  var pointer = 1;
+  while(row + pointer &lt; jsonData.length &amp;&amp; jsonData[row].SIZE == jsonData[row + pointer].SIZE){
+  	if( jsonData[row].DIR.startsWith(jsonData[row+1].DIR) ){
+    	jsonData.splice(row + pointer, 1);
+    }
+    else	{
+    	pointer++;
+    }
+  }
+	
+  // this will check the second condition.
+  // for the second condition, it needs extra loop while the difference of size is smaller than 20480.
+  pointer = 1;
+  while(row + pointer &lt; jsonData.length &amp;&amp; jsonData[row].SIZE - jsonData[row + pointer].SIZE &lt; {$Z_BIGGEST_DIRS_SIZE_DIFF}){
+    if (jsonData[row + pointer].DIR.startsWith(jsonData[row].DIR)) { 
+      // remove the current row and then reduce row because array items after row will be shifted
+      jsonData.splice(row, 1);
+      row--;
+      break;
+    }
+    pointer ++;
+  }
+}
+
+return JSON.stringify(jsonData.slice(0,{$Z_BIGGEST_DIRS_CNT}));
+</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>detect.if.content.dir</name>
+                    <type>DEPENDENT</type>
+                    <key>detect.if.content.dir</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <applications>
+                        <application>
+                            <name>Alive</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.length;</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>biggest.directories</key>
+                    </master_item>
+                    <triggers>
+                        <trigger>
+                            <expression>{nodata({$DATA_NOT_COMMING})}=1</expression>
+                            <name>No data {$DATA_NOT_COMMING} for directory receiver</name>
+                            <priority>HIGH</priority>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Find biggest directories</name>
+                    <key>system.run[&quot;{$Z_SNDR_CNF} -s \&quot;{HOST.HOST}\&quot; -k biggest.directories -o \&quot;$({$Z_BIGGEST_DIRS})\&quot;&quot;,nowait]</key>
+                    <delay>55m</delay>
+                    <trends>0</trends>
+                    <applications>
+                        <application>
+                            <name>Zabbix sender</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>big.dir.discovery</name>
+                    <type>DEPENDENT</type>
+                    <key>big.dir.discovery</key>
+                    <delay>0</delay>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>dir.on.fs.change[{#DIR}]</name>
+                            <type>DEPENDENT</type>
+                            <key>dir.on.fs.change[{#DIR}]</key>
+                            <delay>0</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Biggest directories delta</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$..[?(@.DIR == &quot;{#DIR}&quot;)].SIZE.first()</params>
+                                </step>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1024</params>
+                                </step>
+                                <step>
+                                    <type>SIMPLE_CHANGE</type>
+                                    <params/>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>biggest.directories</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>dir.on.fs[{#DIR}]</name>
+                            <type>DEPENDENT</type>
+                            <key>dir.on.fs[{#DIR}]</key>
+                            <delay>0</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Biggest directories size</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$..[?(@.DIR == &quot;{#DIR}&quot;)].SIZE.first()</params>
+                                </step>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1024</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>biggest.directories</key>
+                            </master_item>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>biggest.directories</key>
+                    </master_item>
+                    <lld_macro_paths>
+                        <lld_macro_path>
+                            <lld_macro>{#DIR}</lld_macro>
+                            <path>$.DIR</path>
+                        </lld_macro_path>
+                    </lld_macro_paths>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$DATA_NOT_COMMING}</macro>
+                    <value>26h</value>
+                </macro>
+                <macro>
+                    <macro>{$Z_BIGGEST_DIRS}</macro>
+                    <value>du / 2&gt;/dev/null | sort -n -r | head -n 50</value>
+                </macro>
+                <macro>
+                    <macro>{$Z_BIGGEST_DIRS_CNT}</macro>
+                    <value>16</value>
+                </macro>
+                <macro>
+                    <macro>{$Z_BIGGEST_DIRS_SIZE_DIFF}</macro>
+                    <value>204800</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
