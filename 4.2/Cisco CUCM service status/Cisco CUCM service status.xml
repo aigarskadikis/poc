@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>4.2</version>
+    <date>2020-12-05T21:50:32Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Cisco CUCM service status</template>
+            <name>Cisco CUCM service status</name>
+            <description/>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Cisco service status</name>
+                </application>
+                <application>
+                    <name>Zabbix raw items</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>data.input.xml</name>
+                    <type>0</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>system.run[cat &quot;/tmp/cisco.cucm.xml&quot;]</key>
+                    <delay>1m</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <status>0</status>
+                    <value_type>4</value_type>
+                    <allowed_hosts/>
+                    <units/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <description/>
+                    <inventory_link>0</inventory_link>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <valuemap/>
+                    <logtimefmt/>
+                    <preprocessing>
+                        <step>
+                            <type>21</type>
+                            <params>// remove empty lines
+return value.replace(/^\s*[\r\n]/gm,'');
+
+
+</params>
+                            <error_handler>0</error_handler>
+                            <error_handler_params/>
+                        </step>
+                        <step>
+                            <type>21</type>
+                            <params>// remove leading and trailing spaces
+return value.replace(/^\s+|\s+$/gm,'');</params>
+                            <error_handler>0</error_handler>
+                            <error_handler_params/>
+                        </step>
+                        <step>
+                            <type>21</type>
+                            <params>// merge all lines together as one long line
+return value.replace(/(\r\n|\n|\r)/gm,&quot;&quot;);</params>
+                            <error_handler>0</error_handler>
+                            <error_handler_params/>
+                        </step>
+                    </preprocessing>
+                    <jmx_endpoint/>
+                    <timeout>3s</timeout>
+                    <url/>
+                    <query_fields/>
+                    <posts/>
+                    <status_codes>200</status_codes>
+                    <follow_redirects>1</follow_redirects>
+                    <post_type>0</post_type>
+                    <http_proxy/>
+                    <headers/>
+                    <retrieve_mode>0</retrieve_mode>
+                    <request_method>0</request_method>
+                    <output_format>0</output_format>
+                    <allow_traps>0</allow_traps>
+                    <ssl_cert_file/>
+                    <ssl_key_file/>
+                    <ssl_key_password/>
+                    <verify_peer>0</verify_peer>
+                    <verify_host>0</verify_host>
+                    <master_item/>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>service.discovery</name>
+                    <type>18</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>service.discovery</key>
+                    <delay>0</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>
+                        <evaltype>0</evaltype>
+                        <formula/>
+                        <conditions/>
+                    </filter>
+                    <lifetime>0</lifetime>
+                    <description/>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Service &quot;{#SERVICE}&quot; status</name>
+                            <type>18</type>
+                            <snmp_community/>
+                            <snmp_oid/>
+                            <key>cisco.service.status[{#SERVICE}]</key>
+                            <delay>0</delay>
+                            <history>90d</history>
+                            <trends>365d</trends>
+                            <status>0</status>
+                            <value_type>3</value_type>
+                            <allowed_hosts/>
+                            <units/>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description/>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>Cisco service status</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Cisco service status</name>
+                            </valuemap>
+                            <logtimefmt/>
+                            <preprocessing>
+                                <step>
+                                    <type>5</type>
+                                    <params>ServiceName xsi:type=\&quot;xsd:string\&quot;&gt;{#SERVICE}&lt;\/ServiceName&gt;&lt;ServiceStatus xsi:type=&quot;ns2:ServiceStatus&quot;&gt;([A-Za-z]+)
+\1</params>
+                                    <error_handler>0</error_handler>
+                                    <error_handler_params/>
+                                </step>
+                                <step>
+                                    <type>21</type>
+                                    <params>// convert strings to integers: Stopped=0, Started=1
+// there is a value mapping configured under &quot;Administration&quot; =&gt; &quot;General&quot; =&gt; &quot;Value mapping&quot; so
+// integers will be stored at the database, but latast data page will report strings
+return value.replace(/Started/,&quot;1&quot;).replace(/Stopped/,&quot;0&quot;);</params>
+                                    <error_handler>0</error_handler>
+                                    <error_handler_params/>
+                                </step>
+                            </preprocessing>
+                            <jmx_endpoint/>
+                            <timeout>3s</timeout>
+                            <url/>
+                            <query_fields/>
+                            <posts/>
+                            <status_codes>200</status_codes>
+                            <follow_redirects>1</follow_redirects>
+                            <post_type>0</post_type>
+                            <http_proxy/>
+                            <headers/>
+                            <retrieve_mode>0</retrieve_mode>
+                            <request_method>0</request_method>
+                            <output_format>0</output_format>
+                            <allow_traps>0</allow_traps>
+                            <ssl_cert_file/>
+                            <ssl_key_file/>
+                            <ssl_key_password/>
+                            <verify_peer>0</verify_peer>
+                            <verify_host>0</verify_host>
+                            <application_prototypes/>
+                            <master_item>
+                                <key>system.run[cat &quot;/tmp/cisco.cucm.xml&quot;]</key>
+                            </master_item>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes/>
+                    <graph_prototypes/>
+                    <host_prototypes/>
+                    <jmx_endpoint/>
+                    <timeout>3s</timeout>
+                    <url/>
+                    <query_fields/>
+                    <posts/>
+                    <status_codes>200</status_codes>
+                    <follow_redirects>1</follow_redirects>
+                    <post_type>0</post_type>
+                    <http_proxy/>
+                    <headers/>
+                    <retrieve_mode>0</retrieve_mode>
+                    <request_method>0</request_method>
+                    <allow_traps>0</allow_traps>
+                    <ssl_cert_file/>
+                    <ssl_key_file/>
+                    <ssl_key_password/>
+                    <verify_peer>0</verify_peer>
+                    <verify_host>0</verify_host>
+                    <lld_macro_paths/>
+                    <preprocessing>
+                        <step>
+                            <type>21</type>
+                            <params>// extract all service titles, one service per line
+return value
+.match(/&lt;ServiceName xsi:type=&quot;xsd:string&quot;&gt;[\w\s]+&lt;\/ServiceName&gt;/g)
+.join(&quot;\n&quot;)
+.replace(/&lt;\/ServiceName&gt;/gm,&quot;&quot;)
+.replace(/&lt;ServiceName xsi:type=\&quot;xsd:string\&quot;&gt;/gm,&quot;&quot;);</params>
+                            <error_handler>0</error_handler>
+                            <error_handler_params/>
+                        </step>
+                        <step>
+                            <type>21</type>
+                            <params>// cook a low level discovery array
+// by taking one line as one service
+var lld = [];
+var lines = value.split(&quot;\n&quot;);
+var lines_num = lines.length;
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+  row[&quot;{#SERVICE}&quot;] = lines[i]
+  lld.push(row);
+}
+return JSON.stringify(lld);</params>
+                            <error_handler>0</error_handler>
+                            <error_handler_params/>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>system.run[cat &quot;/tmp/cisco.cucm.xml&quot;]</key>
+                    </master_item>
+                </discovery_rule>
+            </discovery_rules>
+            <httptests/>
+            <macros/>
+            <templates/>
+            <screens/>
+            <tags/>
+        </template>
+    </templates>
+    <value_maps>
+        <value_map>
+            <name>Cisco service status</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>Stopped</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>Started</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>
