@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-05-17T18:31:08Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Overwrite global macro through JavaScript via Zabbix API</template>
+            <name>Overwrite global macro through JavaScript via Zabbix API</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>API token</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>update global macro TOKEN.NR1</name>
+                    <type>INTERNAL</type>
+                    <key>zabbix[uptime]</key>
+                    <delay>1d</delay>
+                    <applications>
+                        <application>
+                            <name>API token</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var req = new CurlHttpRequest();
+
+// Zabbix API
+var json_rpc='{$ZABBIX.URL}/api_jsonrpc.php'
+
+// lib curl header
+req.AddHeader('Content-Type: application/json');
+
+// first request to obtain authorization tokken of Zabbix API
+var token =  JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;user.login&quot;,&quot;params&quot;:{&quot;user&quot;:&quot;api&quot;,&quot;password&quot;:&quot;zabbix&quot;},&quot;id&quot;:1,&quot;auth&quot;:null}'
+)).result;
+
+// get the global macro ID
+// we cannot plot here a very native Zabbix macro because it will be automatically expanded
+// must use a workaround to distinguish a dollar sign from the actual macro name like and merge together with '+'
+var id = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;usermacro.get&quot;,&quot;params&quot;:{&quot;output&quot;:[&quot;globalmacroid&quot;],&quot;globalmacro&quot;:true,&quot;filter&quot;:{&quot;macro&quot;:&quot;{$'+'TOKEN.NR1'+'}&quot;}},&quot;auth&quot;:&quot;'+token+'&quot;,&quot;id&quot;:1}'
+)).result[0].globalmacroid;
+
+// this line contains a keywork '+value+' which will grab exactly the previous value outside this javascript snippet
+var overwrite = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;usermacro.updateglobal&quot;,&quot;params&quot;:{&quot;globalmacroid&quot;:&quot;'+id+'&quot;,&quot;value&quot;:&quot;'+value+'&quot;},&quot;auth&quot;:&quot;'+token+'&quot;,&quot;id&quot;:1}'
+));
+
+// close the session token
+var logout = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;user.logout&quot;,&quot;params&quot;:[],&quot;id&quot;:1,&quot;auth&quot;:&quot;'+token+'&quot;}'
+));
+
+// return the id (an iteger) of the macro which was updated
+return overwrite.result.globalmacroids[0];</params>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+        </template>
+    </templates>
+</zabbix_export>
