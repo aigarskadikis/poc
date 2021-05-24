@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-05-24T12:55:44Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Web site check PoC</template>
+            <name>Web site check PoC</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <httptests>
+                <httptest>
+                    <name>Check performance</name>
+                    <delay>{$SCENARIO.UPDATE.INTERVAL}</delay>
+                    <steps>
+                        <step>
+                            <name>{$STEP1.NAME}</name>
+                            <url>{$STEP1.URL}</url>
+                            <follow_redirects>NO</follow_redirects>
+                            <required>{$STEP1.SEEK}</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>{$STEP2.NAME}</name>
+                            <url>{$STEP2.URL}</url>
+                            <follow_redirects>NO</follow_redirects>
+                            <required>{$STEP2.SEEK}</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>{$STEP3.NAME}</name>
+                            <url>{$STEP3.URL}</url>
+                            <follow_redirects>NO</follow_redirects>
+                            <required>{$STEP3.SEEK}</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                    </steps>
+                </httptest>
+            </httptests>
+            <macros>
+                <macro>
+                    <macro>{$ANALYZE.LAST.VALUES}</macro>
+                    <value>#5</value>
+                </macro>
+                <macro>
+                    <macro>{$FAILED.THRESHOLD}</macro>
+                    <value>5</value>
+                </macro>
+                <macro>
+                    <macro>{$SCENARIO.UPDATE.INTERVAL}</macro>
+                    <value>1m</value>
+                </macro>
+                <macro>
+                    <macro>{$STEP1.NAME}</macro>
+                    <value>1. Landing page</value>
+                </macro>
+                <macro>
+                    <macro>{$STEP1.SEEK}</macro>
+                    <value>Read more</value>
+                </macro>
+                <macro>
+                    <macro>{$STEP1.URL}</macro>
+                    <value>https://blog.zabbix.com/</value>
+                </macro>
+                <macro>
+                    <macro>{$STEP2.NAME}</macro>
+                    <value>2. Search post by Aigars Kadiķis</value>
+                </macro>
+                <macro>
+                    <macro>{$STEP2.SEEK}</macro>
+                    <value>Aigars Kadiķis</value>
+                </macro>
+                <macro>
+                    <macro>{$STEP2.URL}</macro>
+                    <value>https://blog.zabbix.com/author/aigars-k/</value>
+                </macro>
+                <macro>
+                    <macro>{$STEP3.NAME}</macro>
+                    <value>3. Open HowTo section</value>
+                </macro>
+                <macro>
+                    <macro>{$STEP3.SEEK}</macro>
+                    <value>MySQL</value>
+                </macro>
+                <macro>
+                    <macro>{$STEP3.URL}</macro>
+                    <value>https://blog.zabbix.com/category/howto/</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <triggers>
+        <trigger>
+            <expression>{Web site check PoC:web.test.error[Check performance].diff()}&lt;&gt;2&#13;
+and&#13;
+{Web site check PoC:web.test.fail[Check performance].last()}=1</expression>
+            <name>Failed &quot;{$STEP1.NAME}&quot;, {$STEP1.URL}</name>
+            <priority>HIGH</priority>
+            <description>{{ITEM.VALUE1}.regsub(&quot;(.*)&quot;,\1)}</description>
+            <manual_close>YES</manual_close>
+            <dependencies>
+                <dependency>
+                    <name>Pattern &quot;{$STEP1.SEEK}&quot; not found {$STEP1.URL}</name>
+                    <expression>{Web site check PoC:web.test.fail[Check performance].last()}=1&#13;
+and &#13;
+{Web site check PoC:web.test.error[Check performance].str(required pattern,#1)}=1</expression>
+                </dependency>
+                <dependency>
+                    <name>{ITEM.VALUE} received at &quot;{$STEP1.NAME}&quot;, {$STEP1.URL}</name>
+                    <expression>{Web site check PoC:web.test.rspcode[Check performance,{$STEP1.NAME}].count({$ANALYZE.LAST.VALUES},200,ne)}&gt;={$FAILED.THRESHOLD}</expression>
+                </dependency>
+            </dependencies>
+        </trigger>
+        <trigger>
+            <expression>{Web site check PoC:web.test.error[Check performance].diff()}&lt;&gt;2&#13;
+and&#13;
+{Web site check PoC:web.test.fail[Check performance].last()}=2</expression>
+            <name>Failed &quot;{$STEP2.NAME}&quot;, {$STEP2.URL}</name>
+            <priority>HIGH</priority>
+            <description>{{ITEM.VALUE1}.regsub(&quot;(.*)&quot;,\1)}</description>
+            <manual_close>YES</manual_close>
+            <dependencies>
+                <dependency>
+                    <name>Pattern &quot;{$STEP2.SEEK}&quot; not found {$STEP2.URL}</name>
+                    <expression>{Web site check PoC:web.test.fail[Check performance].last()}=2&#13;
+and &#13;
+{Web site check PoC:web.test.error[Check performance].str(required pattern,#1)}=1</expression>
+                </dependency>
+                <dependency>
+                    <name>{ITEM.VALUE} received at &quot;{$STEP2.NAME}&quot;, {$STEP2.URL}</name>
+                    <expression>{Web site check PoC:web.test.rspcode[Check performance,{$STEP2.NAME}].count({$ANALYZE.LAST.VALUES},200,ne)}&gt;={$FAILED.THRESHOLD}</expression>
+                </dependency>
+            </dependencies>
+        </trigger>
+        <trigger>
+            <expression>{Web site check PoC:web.test.error[Check performance].diff()}&lt;&gt;2&#13;
+and&#13;
+{Web site check PoC:web.test.fail[Check performance].last()}=3</expression>
+            <name>Failed &quot;{$STEP3.NAME}&quot;, {$STEP3.URL}</name>
+            <priority>HIGH</priority>
+            <description>{{ITEM.VALUE1}.regsub(&quot;(.*)&quot;,\1)}</description>
+            <manual_close>YES</manual_close>
+            <dependencies>
+                <dependency>
+                    <name>Pattern &quot;{$STEP3.SEEK}&quot; not found {$STEP3.URL}</name>
+                    <expression>{Web site check PoC:web.test.fail[Check performance].last()}=3&#13;
+and &#13;
+{Web site check PoC:web.test.error[Check performance].str(required pattern,#1)}=1</expression>
+                </dependency>
+                <dependency>
+                    <name>{ITEM.VALUE} received at &quot;{$STEP3.NAME}&quot;, {$STEP3.URL}</name>
+                    <expression>{Web site check PoC:web.test.rspcode[Check performance,{$STEP3.NAME}].count({$ANALYZE.LAST.VALUES},200,ne)}&gt;={$FAILED.THRESHOLD}</expression>
+                </dependency>
+            </dependencies>
+        </trigger>
+        <trigger>
+            <expression>{Web site check PoC:web.test.fail[Check performance].last()}=1&#13;
+and &#13;
+{Web site check PoC:web.test.error[Check performance].str(required pattern,#1)}=1</expression>
+            <name>Pattern &quot;{$STEP1.SEEK}&quot; not found {$STEP1.URL}</name>
+            <priority>HIGH</priority>
+            <manual_close>YES</manual_close>
+        </trigger>
+        <trigger>
+            <expression>{Web site check PoC:web.test.fail[Check performance].last()}=2&#13;
+and &#13;
+{Web site check PoC:web.test.error[Check performance].str(required pattern,#1)}=1</expression>
+            <name>Pattern &quot;{$STEP2.SEEK}&quot; not found {$STEP2.URL}</name>
+            <priority>HIGH</priority>
+            <manual_close>YES</manual_close>
+        </trigger>
+        <trigger>
+            <expression>{Web site check PoC:web.test.fail[Check performance].last()}=3&#13;
+and &#13;
+{Web site check PoC:web.test.error[Check performance].str(required pattern,#1)}=1</expression>
+            <name>Pattern &quot;{$STEP3.SEEK}&quot; not found {$STEP3.URL}</name>
+            <priority>HIGH</priority>
+            <manual_close>YES</manual_close>
+        </trigger>
+        <trigger>
+            <expression>{Web site check PoC:web.test.rspcode[Check performance,{$STEP1.NAME}].count({$ANALYZE.LAST.VALUES},200,ne)}&gt;={$FAILED.THRESHOLD}</expression>
+            <name>{ITEM.VALUE} received at &quot;{$STEP1.NAME}&quot;, {$STEP1.URL}</name>
+            <priority>HIGH</priority>
+        </trigger>
+        <trigger>
+            <expression>{Web site check PoC:web.test.rspcode[Check performance,{$STEP2.NAME}].count({$ANALYZE.LAST.VALUES},200,ne)}&gt;={$FAILED.THRESHOLD}</expression>
+            <name>{ITEM.VALUE} received at &quot;{$STEP2.NAME}&quot;, {$STEP2.URL}</name>
+            <priority>HIGH</priority>
+        </trigger>
+        <trigger>
+            <expression>{Web site check PoC:web.test.rspcode[Check performance,{$STEP3.NAME}].count({$ANALYZE.LAST.VALUES},200,ne)}&gt;={$FAILED.THRESHOLD}</expression>
+            <name>{ITEM.VALUE} received at &quot;{$STEP3.NAME}&quot;, {$STEP3.URL}</name>
+            <priority>HIGH</priority>
+        </trigger>
+    </triggers>
+</zabbix_export>

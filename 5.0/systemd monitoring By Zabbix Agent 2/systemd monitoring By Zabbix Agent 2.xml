@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-05-24T13:24:51Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>systemd monitoring By Zabbix Agent 2</template>
+            <name>systemd monitoring By Zabbix Agent 2</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>systemd unit info</name>
+                </application>
+                <application>
+                    <name>Zabbix raw items</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>systemd.unit.discovery[service]</name>
+                    <key>systemd.unit.discovery[service]</key>
+                    <delay>1d</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>systemd.service.list</name>
+                    <type>DEPENDENT</type>
+                    <key>systemd.service.list</key>
+                    <delay>0</delay>
+                    <filter>
+                        <evaltype>AND</evaltype>
+                        <conditions>
+                            <condition>
+                                <macro>{#UNIT.NAME}</macro>
+                                <value>{$SYSTEMD_MATCHES}</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                            <condition>
+                                <macro>{#UNIT.NAME}</macro>
+                                <value>{$SYSTEMD_NOT_MATCHES}</value>
+                                <operator>NOT_MATCHES_REGEX</operator>
+                                <formulaid>B</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>systemd.unit.info[&quot;{#UNIT.NAME}&quot;]</name>
+                            <key>systemd.unit.info[&quot;{#UNIT.NAME}&quot;]</key>
+                            <trends>0</trends>
+                            <value_type>CHAR</value_type>
+                            <applications>
+                                <application>
+                                    <name>systemd unit info</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JAVASCRIPT</type>
+                                    <params>return value
+.replace(/inactive/,&quot;0&quot;)
+.replace(/active/,&quot;1&quot;)
+.replace(/reloading/,&quot;2&quot;)
+.replace(/failed/,&quot;3&quot;)
+.replace(/activating/,&quot;4&quot;)
+.replace(/deactivating/,&quot;5&quot;);</params>
+                                </step>
+                            </preprocessing>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{count(#2,1,ne)}&gt;1</expression>
+                                    <name>{#UNIT.NAME} is not active</name>
+                                    <priority>AVERAGE</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>systemd.unit.discovery[service]</key>
+                    </master_item>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$SYSTEMD_MATCHES}</macro>
+                    <value>^.*$</value>
+                    <description>^(tomcat|nginx|firewalld|jsdb|jsscan|socat)\.service$</description>
+                </macro>
+                <macro>
+                    <macro>{$SYSTEMD_NOT_MATCHES}</macro>
+                    <value>^\s$</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
