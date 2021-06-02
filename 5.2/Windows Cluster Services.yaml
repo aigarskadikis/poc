@@ -1,0 +1,314 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-05-06T18:13:15Z'
+  groups:
+    -
+      name: 'Windows Cluster Servers'
+  templates:
+    -
+      template: 'Template OS Windows Cluster Services'
+      name: 'Template OS Windows Cluster Services'
+      groups:
+        -
+          name: 'Windows Cluster Servers'
+      applications:
+        -
+          name: 'Cluster CSV Block Redirection'
+        -
+          name: 'Cluster CSV File System'
+        -
+          name: 'Cluster CSV Volume Manager'
+        -
+          name: 'Cluster Global Update Manager Messages'
+        -
+          name: 'Cluster Name'
+        -
+          name: 'Cluster Network Reconnections'
+        -
+          name: 'Cluster Resource Control Manager'
+        -
+          name: 'Cluster Resources'
+      items:
+        -
+          name: 'Cluster Global Update Manager Messages Average Waiting Time To Execute Database Messages'
+          key: 'perf_counter["\Cluster Global Update Manager Messages\Average Waiting Time To Execute Database Messages",300]'
+          delay: '30'
+          value_type: FLOAT
+          units: sec
+          applications:
+            -
+              name: 'Cluster Global Update Manager Messages'
+        -
+          name: 'Cluster Global Update Manager Messages Average Waiting Time To Execute Messages'
+          key: 'perf_counter["\Cluster Global Update Manager Messages\Average Waiting Time To Execute Messages",300]'
+          delay: '30'
+          value_type: FLOAT
+          units: sec
+          applications:
+            -
+              name: 'Cluster Global Update Manager Messages'
+        -
+          name: 'Cluster Global Update Manager Messages Database Messages Queue Length'
+          key: 'perf_counter["\Cluster Global Update Manager Messages\Database Messages Queue Length",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Global Update Manager Messages'
+          triggers:
+            -
+              expression: '{last()}>1'
+              name: 'Cluster Global Update Manager Messages Database Messages Queue Length'
+              priority: WARNING
+              description: 'Monitors the number of messages in the Database update queue.'
+        -
+          name: 'Cluster Global Update Manager Messages Messages Execution Queue Length'
+          key: 'perf_counter["\Cluster Global Update Manager Messages\Messages Execution Queue Length",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Global Update Manager Messages'
+          triggers:
+            -
+              expression: '{last()}>1'
+              name: 'Cluster Global Update Manager Messages Messages  Execution Queue Length'
+              priority: WARNING
+              description: 'Monitors the number of messages in the Database update queue.'
+        -
+          name: 'Cluster Global Update Manager Messages Messages Queue Length'
+          key: 'perf_counter["\Cluster Global Update Manager Messages\Messages Queue Length",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Global Update Manager Messages'
+          triggers:
+            -
+              expression: '{last()}>1'
+              name: 'Cluster Global Update Manager Messages Messages  Queue Length'
+              priority: WARNING
+              description: 'Monitors the number of messages in the Database update queue.'
+        -
+          name: 'Cluster Resource Control Manager Groups Online'
+          key: 'perf_counter["\Cluster Resource Control Manager\Groups Online",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Resource Control Manager'
+        -
+          name: 'Cluster Resource Control Manager RHS Processes'
+          key: 'perf_counter["\Cluster Resource Control Manager\RHS Processes",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Resource Control Manager'
+        -
+          name: 'Cluster Resource Control Manager RHS Restarts'
+          key: 'perf_counter["\Cluster Resource Control Manager\RHS Restarts",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Resource Control Manager'
+        -
+          name: 'Cluster Resources (Total) Resource Controls'
+          key: 'perf_counter["\Cluster Resources(_Total)\Resource Controls",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Resources'
+        -
+          name: 'Cluster Resources (Total) Resource Failure'
+          key: 'perf_counter["\Cluster Resources(_Total)\Resource Failure",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Resources'
+        -
+          name: 'Cluster Resources (Total) Resource Failure Access Violation'
+          key: 'perf_counter["\Cluster Resources(_Total)\Resource Failure Access Violation",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Resources'
+        -
+          name: 'Cluster Resources (Total) Resource Failure Deadlock'
+          key: 'perf_counter["\Cluster Resources(_Total)\Resource Failure Deadlock",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Resources'
+        -
+          name: 'Cluster Resources (Total) Resources Online'
+          key: 'perf_counter["\Cluster Resources(_Total)\Resources Online",300]'
+          delay: '30'
+          value_type: FLOAT
+          applications:
+            -
+              name: 'Cluster Resources'
+        -
+          name: 'Get Cluster Names JSON'
+          key: 'wmi.getall[root\cimv2,select Name from win32_PerfFormattedData_ClussvcPerfProvider_ClusterNetworkReconnections]'
+          delay: 8h
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          applications:
+            -
+              name: 'Cluster Name'
+      discovery_rules:
+        -
+          name: 'Cluster Service Network Reconnections Discovery'
+          type: DEPENDENT
+          key: cluster.names.json
+          delay: '0'
+          description: 'Discovers nodes in the network reconnections monitor.'
+          item_prototypes:
+            -
+              name: 'Cluster Network Reconnections {#CLUSSVCNETREC} Normal Message Queue Length'
+              key: 'perf_counter["\Cluster Network Reconnections({#CLUSSVCNETREC})\Normal Message Queue Length",300]'
+              delay: '30'
+              value_type: FLOAT
+              applications:
+                -
+                  name: 'Cluster Network Reconnections'
+              trigger_prototypes:
+                -
+                  expression: '{last()}>1'
+                  name: '{#CLUSSVCNETREC}) Normal Message Queue Length'
+                  url: 'http://blogs.msdn.com/b/clustering/archive/2009/09/04/9891266.aspx'
+                  priority: WARNING
+                  description: 'Monitors how many messages are sitting in the queue and waiting to be sent.  Normally this number is 0, but if TCP connection breaks you might observe it is going up until TCP connection is reestablished and we can send all of them through.'
+            -
+              name: 'Cluster Network Reconnections {#CLUSSVCNETREC} Reconnect Count'
+              key: 'perf_counter["\Cluster Network Reconnections({#CLUSSVCNETREC})\Reconnect Count",300]'
+              delay: '30'
+              value_type: FLOAT
+              applications:
+                -
+                  name: 'Cluster Network Reconnections'
+            -
+              name: 'Cluster Network Reconnections {#CLUSSVCNETREC} Unacknowledged Message Queue Length'
+              key: 'perf_counter["\Cluster Network Reconnections({#CLUSSVCNETREC})\Unacknowledged Message Queue Length",300]'
+              delay: '30'
+              value_type: FLOAT
+              applications:
+                -
+                  name: 'Cluster Network Reconnections'
+              trigger_prototypes:
+                -
+                  expression: '{last()}>1'
+                  name: '{#CLUSSVCNETREC}) Unacknowledged Message Queue Length'
+                  url: 'http://blogs.msdn.com/b/clustering/archive/2009/09/04/9891266.aspx'
+                  priority: WARNING
+                  description: 'Monitors how many messages are sitting in the queue and waiting to be sent.  Normally this number is 0, but if TCP connection breaks you might observe it is going up until TCP connection is reestablished and we can send all of them through.'
+            -
+              name: 'Cluster Network Reconnections {#CLUSSVCNETREC} Urgent Message Queue Length'
+              key: 'perf_counter["\Cluster Network Reconnections({#CLUSSVCNETREC})\Urgent Message Queue Length",300]'
+              delay: '30'
+              value_type: FLOAT
+              applications:
+                -
+                  name: 'Cluster Network Reconnections'
+              trigger_prototypes:
+                -
+                  expression: '{last()}>1'
+                  name: '{#CLUSSVCNETREC}) Urgent Message Queue Length'
+                  url: 'http://blogs.msdn.com/b/clustering/archive/2009/09/04/9891266.aspx'
+                  priority: WARNING
+                  description: 'Monitors how many messages are sitting in the queue and waiting to be sent.  Normally this number is 0, but if TCP connection breaks you might observe it is going up until TCP connection is reestablished and we can send all of them through.'
+          graph_prototypes:
+            -
+              name: 'Cluster Network Reconnections {#CLUSSVCNETREC}'
+              graph_items:
+                -
+                  color: 00C800
+                  item:
+                    host: 'Template OS Windows Cluster Services'
+                    key: 'perf_counter["\Cluster Network Reconnections({#CLUSSVCNETREC})\Normal Message Queue Length",300]'
+                -
+                  sortorder: '1'
+                  color: FF3333
+                  item:
+                    host: 'Template OS Windows Cluster Services'
+                    key: 'perf_counter["\Cluster Network Reconnections({#CLUSSVCNETREC})\Reconnect Count",300]'
+                -
+                  sortorder: '2'
+                  color: 0000C8
+                  item:
+                    host: 'Template OS Windows Cluster Services'
+                    key: 'perf_counter["\Cluster Network Reconnections({#CLUSSVCNETREC})\Unacknowledged Message Queue Length",300]'
+                -
+                  sortorder: '3'
+                  color: C800C8
+                  item:
+                    host: 'Template OS Windows Cluster Services'
+                    key: 'perf_counter["\Cluster Network Reconnections({#CLUSSVCNETREC})\Urgent Message Queue Length",300]'
+          master_item:
+            key: 'wmi.getall[root\cimv2,select Name from win32_PerfFormattedData_ClussvcPerfProvider_ClusterNetworkReconnections]'
+          lld_macro_paths:
+            -
+              lld_macro: '{#CLUSSVCNETREC}'
+              path: '$.[''Name'']'
+  graphs:
+    -
+      name: 'Cluster Global Update Manager Latency'
+      graph_items:
+        -
+          color: 00C800
+          item:
+            host: 'Template OS Windows Cluster Services'
+            key: 'perf_counter["\Cluster Global Update Manager Messages\Average Waiting Time To Execute Database Messages",300]'
+        -
+          sortorder: '1'
+          color: FF3333
+          item:
+            host: 'Template OS Windows Cluster Services'
+            key: 'perf_counter["\Cluster Global Update Manager Messages\Average Waiting Time To Execute Messages",300]'
+    -
+      name: 'Cluster Global Update Manager Queues'
+      graph_items:
+        -
+          color: 00C800
+          item:
+            host: 'Template OS Windows Cluster Services'
+            key: 'perf_counter["\Cluster Global Update Manager Messages\Database Messages Queue Length",300]'
+        -
+          sortorder: '1'
+          color: FF3333
+          item:
+            host: 'Template OS Windows Cluster Services'
+            key: 'perf_counter["\Cluster Global Update Manager Messages\Messages Execution Queue Length",300]'
+        -
+          sortorder: '2'
+          color: 0000C8
+          item:
+            host: 'Template OS Windows Cluster Services'
+            key: 'perf_counter["\Cluster Global Update Manager Messages\Messages Queue Length",300]'
+    -
+      name: 'Cluster Resource Failures'
+      graph_items:
+        -
+          color: 00C800
+          item:
+            host: 'Template OS Windows Cluster Services'
+            key: 'perf_counter["\Cluster Resources(_Total)\Resource Failure",300]'
+        -
+          sortorder: '1'
+          color: FF3333
+          item:
+            host: 'Template OS Windows Cluster Services'
+            key: 'perf_counter["\Cluster Resources(_Total)\Resource Failure Access Violation",300]'
+        -
+          sortorder: '2'
+          color: 0000C8
+          item:
+            host: 'Template OS Windows Cluster Services'
+            key: 'perf_counter["\Cluster Resources(_Total)\Resource Failure Deadlock",300]'

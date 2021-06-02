@@ -1,0 +1,364 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-05-06T18:49:54Z'
+  groups:
+    -
+      name: 'My Templates'
+  templates:
+    -
+      template: 'Template AD DS Monitoring and Attack Detection'
+      name: 'Template AD DS Monitoring and Attack Detection'
+      groups:
+        -
+          name: 'My Templates'
+      applications:
+        -
+          name: 'Security events'
+      items:
+        -
+          name: 'Windows Security (ID1102)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^1102$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'The audit log was cleared.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'The audit log was cleared.'
+              priority: HIGH
+              description: 'The audit log was cleared.'
+        -
+          name: 'Windows Security (ID4618)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4618$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'A monitored security event pattern has occurred.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'A monitored security event pattern has occurred.'
+              priority: HIGH
+              description: 'A monitored security event pattern has occurred.'
+        -
+          name: 'Windows Security (ID4621)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4621$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'Administrator recovered system from CrashOnAuditFail. Users who are not administrators will now be allowed to log on. Some auditable activity might not have been recorded.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'Administrator recovered system from CrashOnAuditFail.'
+              priority: AVERAGE
+              description: 'Administrator recovered system from CrashOnAuditFail. Users who are not administrators will now be allowed to log on. Some auditable activity might not have been recorded.'
+        -
+          name: 'Windows Security (ID4649)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4649$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'A replay attack was detected. May be a harmless false positive due to misconfiguration error.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'A replay attack was detected. May be a harmless false positive due to misconfiguration error.'
+              priority: HIGH
+              description: 'A replay attack was detected. May be a harmless false positive due to misconfiguration error.'
+        -
+          name: 'Windows Security (ID4675)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4675$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'SIDs were filtered.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'SIDs were filtered.'
+              priority: AVERAGE
+              description: 'SIDs were filtered.'
+        -
+          name: 'Windows Security (ID4692)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4692$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'Backup of data protection master key was attempted.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'Backup of data protection master key was attempted.'
+              priority: AVERAGE
+              description: 'Backup of data protection master key was attempted.'
+        -
+          name: 'Windows Security (ID4693)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4693$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'Recovery of data protection master key was attempted.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'Recovery of data protection master key was attempted.'
+              priority: AVERAGE
+              description: 'Backup of data protection master key was attempted.'
+        -
+          name: 'Windows Security (ID4706)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4706$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'A new trust was created to a domain.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'A new trust was created to a domain.'
+              priority: AVERAGE
+              description: 'A new trust was created to a domain.'
+        -
+          name: 'Windows Security (ID4713)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4713$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'Kerberos policy was changed.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'Kerberos policy was changed.'
+              priority: AVERAGE
+              description: 'Kerberos policy was changed.'
+        -
+          name: 'Windows Security (ID4714)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4714$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'Encrypted data recovery policy was changed.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'Encrypted data recovery policy was changed.'
+              priority: AVERAGE
+              description: 'Encrypted data recovery policy was changed.'
+        -
+          name: 'Windows Security (ID4715)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4715$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'The audit policy (SACL) on an object was changed.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'The audit policy (SACL) on an object was changed.'
+              priority: AVERAGE
+              description: 'The audit policy (SACL) on an object was changed.'
+        -
+          name: 'Windows Security (ID4716)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4716$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'Trusted domain information was modified.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'Trusted domain information was modified.'
+              priority: AVERAGE
+              description: 'Trusted domain information was modified.'
+        -
+          name: 'Windows Security (ID4719)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4719$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'System audit policy was changed.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'System audit policy was changed.'
+              status: DISABLED
+              priority: HIGH
+              description: 'System audit policy was changed.'
+        -
+          name: 'Windows Security (ID4765)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4765$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'SID History was added to an account.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'SID History was added to an account.'
+              priority: HIGH
+              description: 'SID History was added to an account.'
+        -
+          name: 'Windows Security (ID4766)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4766$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'An attempt to add SID History to an account failed.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'An attempt to add SID History to an account failed.'
+              priority: HIGH
+              description: 'An attempt to add SID History to an account failed.'
+        -
+          name: 'Windows Security (ID4794)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4794$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'An attempt was made to set the Directory Services Restore Mode.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'An attempt was made to set the Directory Services Restore Mode.'
+              priority: HIGH
+              description: 'An attempt was made to set the Directory Services Restore Mode.'
+        -
+          name: 'Windows Security (ID4897)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4897$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'Role separation enabled.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'Role separation enabled.'
+              priority: HIGH
+              description: 'Role separation enabled.'
+        -
+          name: 'Windows Security (ID4964)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^4964$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'Special groups have been assigned to a new logon.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'Special groups have been assigned to a new logon.'
+              priority: HIGH
+              description: 'Special groups have been assigned to a new logon.'
+        -
+          name: 'Windows Security (ID5124)'
+          type: ZABBIX_ACTIVE
+          key: 'eventlog[Security,,,,^5124$,1,skip]'
+          delay: '{$SECURITY.EVENTLOG.FETCH}'
+          history: 1w
+          trends: '0'
+          value_type: LOG
+          description: 'A security setting was updated on the OCSP Responder Service.'
+          applications:
+            -
+              name: 'Security events'
+          triggers:
+            -
+              expression: '{logseverity(0)}>1 and {nodata(600)}=0'
+              name: 'A security setting was updated on the OCSP Responder Service'
+              priority: HIGH
+              description: 'A security setting was updated on the OCSP Responder Service'
+      macros:
+        -
+          macro: '{$SECURITY.EVENTLOG.FETCH}'
+          value: 1m

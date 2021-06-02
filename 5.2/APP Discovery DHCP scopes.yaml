@@ -1,0 +1,302 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-05-06T18:37:07Z'
+  groups:
+    -
+      name: 'Servers Microsoft/DHCP'
+  templates:
+    -
+      template: 'APP Discovery DHCP scopes'
+      name: 'APP Discovery DHCP scopes'
+      description: 'Dušan Priechodský'
+      groups:
+        -
+          name: 'Servers Microsoft/DHCP'
+      applications:
+        -
+          name: 'DHCP Server'
+      discovery_rules:
+        -
+          name: 'DHCP Scopes'
+          key: 'system.run["{$DHCPV4LLD}"]'
+          delay: 1h
+          item_prototypes:
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - Addresses Free On Partner Server'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.AddressesFreeOnPartnerServer[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.AddressesFreeOnPartnerServer
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - 'null'
+                    - '0'
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - Addresses Free On This Server'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.AddressesFreeOnThisServer[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.AddressesFreeOnThisServer
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - 'null'
+                    - '0'
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - AddressesFree'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.AddressesFree[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              status: DISABLED
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.AddressesFree
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - Addresses In Use On Partner Server'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.AddressesInUseOnPartnerServer[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.AddressesInUseOnPartnerServer
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - 'null'
+                    - '0'
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - Addresses In Use On This Server'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.AddressesInUseOnThisServer[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.AddressesInUseOnThisServer
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - 'null'
+                    - '0'
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - All Free IP (except the excluded and reserved)'
+              type: CALCULATED
+              key: 'DHCPv4ScopeStats.Allip[{#SCOPENETWORK}]'
+              history: 30d
+              params: 'last("DHCPv4ScopeStats.Free[{#SCOPENETWORK}]",0)+last("DHCPv4ScopeStats.InUse[{#SCOPENETWORK}]",0)'
+              applications:
+                -
+                  name: 'DHCP Server'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - Free'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.Free[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.Free
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - InUse'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.InUse[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.InUse
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - Pending'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.Pending[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.Pending
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - PercentageInUse'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.PercentageInUse[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              value_type: FLOAT
+              units: '%'
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.PercentageInUse
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+              trigger_prototypes:
+                -
+                  expression: '{last()}>97'
+                  name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - is full for free addresses'
+                  status: DISABLED
+                  priority: WARNING
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - Reserved'
+              type: DEPENDENT
+              key: 'DHCPv4ScopeStats.Reserved[{#SCOPENETWORK}]'
+              delay: '0'
+              history: 30d
+              applications:
+                -
+                  name: 'DHCP Server'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.Reserved
+              master_item:
+                key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - json object'
+              key: 'system.run[PowerShell -nologo -command "Get-DhcpServerv4ScopeStatistics -ScopeId {#SCOPENETWORK} -Failover | ConvertTo-Json -Depth 1 -Compress"]'
+              history: '0'
+              trends: '0'
+              value_type: TEXT
+              applications:
+                -
+                  name: 'DHCP Server'
+          trigger_prototypes:
+            -
+              expression: '{APP Discovery DHCP scopes:DHCPv4ScopeStats.Free[{#SCOPENETWORK}].last()}=0 and {APP Discovery DHCP scopes:DHCPv4ScopeStats.InUse[{#SCOPENETWORK}].last()}=0 and {APP Discovery DHCP scopes:DHCPv4ScopeStats.Pending[{#SCOPENETWORK}].last()}=0 and {APP Discovery DHCP scopes:DHCPv4ScopeStats.Reserved[{#SCOPENETWORK}].last()}=0'
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}] - Inactive state'
+              priority: INFO
+              manual_close: 'YES'
+          graph_prototypes:
+            -
+              name: 'DHCP Scope {#SSCOPENAME} -> {#SCOPENAME} [{#SCOPENETWORK}]'
+              ymin_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  drawtype: GRADIENT_LINE
+                  color: '000000'
+                  yaxisside: RIGHT
+                  item:
+                    host: 'APP Discovery DHCP scopes'
+                    key: 'DHCPv4ScopeStats.Allip[{#SCOPENETWORK}]'
+                -
+                  sortorder: '2'
+                  drawtype: GRADIENT_LINE
+                  color: '787878'
+                  yaxisside: RIGHT
+                  item:
+                    host: 'APP Discovery DHCP scopes'
+                    key: 'DHCPv4ScopeStats.Reserved[{#SCOPENETWORK}]'
+                -
+                  sortorder: '3'
+                  drawtype: BOLD_LINE
+                  color: 00FF00
+                  yaxisside: RIGHT
+                  item:
+                    host: 'APP Discovery DHCP scopes'
+                    key: 'DHCPv4ScopeStats.InUse[{#SCOPENETWORK}]'
+                -
+                  sortorder: '4'
+                  drawtype: DASHED_LINE
+                  color: 33691E
+                  yaxisside: RIGHT
+                  item:
+                    host: 'APP Discovery DHCP scopes'
+                    key: 'DHCPv4ScopeStats.AddressesInUseOnPartnerServer[{#SCOPENETWORK}]'
+                -
+                  sortorder: '5'
+                  drawtype: FILLED_REGION
+                  color: FFBF00
+                  yaxisside: RIGHT
+                  item:
+                    host: 'APP Discovery DHCP scopes'
+                    key: 'DHCPv4ScopeStats.Pending[{#SCOPENETWORK}]'
+                -
+                  sortorder: '6'
+                  drawtype: DOTTED_LINE
+                  color: 0080FF
+                  item:
+                    host: 'APP Discovery DHCP scopes'
+                    key: 'DHCPv4ScopeStats.PercentageInUse[{#SCOPENETWORK}]'
+          lld_macro_paths:
+            -
+              lld_macro: '{#SCOPENAME}'
+              path: $.Name
+            -
+              lld_macro: '{#SCOPENETWORK}'
+              path: $.ScopeId.IPAddressToString
+            -
+              lld_macro: '{#SSCOPENAME}'
+              path: $.SuperscopeName
+      macros:
+        -
+          macro: '{$DHCPV4LLD}'
+          value: 'PowerShell -nologo -command "Get-DhcpServerv4Scope | ConvertTo-Json -Depth 1 -Compress"'

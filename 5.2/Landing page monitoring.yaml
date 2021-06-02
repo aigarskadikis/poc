@@ -1,0 +1,53 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-05-06T18:14:28Z'
+  groups:
+    -
+      name: Templates/Modules
+  templates:
+    -
+      template: 'Landing page monitoring'
+      name: 'Landing page monitoring'
+      groups:
+        -
+          name: Templates/Modules
+      applications:
+        -
+          name: 'Landing page'
+      httptests:
+        -
+          name: 'Landing page'
+          application:
+            name: 'Landing page'
+          steps:
+            -
+              name: '1. Landing page'
+              url: 'https://{HOST.DNS}/'
+              required: '{$WEB.KEYWORD.TO.SEARCH}'
+              status_codes: '200'
+      tags:
+        -
+          tag: Action
+          value: Email
+      macros:
+        -
+          macro: '{$WEB.KEYWORD.TO.SEARCH}'
+        -
+          macro: '{$WEB.TRIGGER.THRESHOLD}'
+          value: '0.2'
+        -
+          macro: '{$WEB.TRIGGER.TIME}'
+          value: 5m
+  triggers:
+    -
+      expression: '{Landing page monitoring:web.test.fail[Landing page].min(#5)}>0'
+      name: 'Failed steps detected'
+      priority: HIGH
+    -
+      expression: '{Landing page monitoring:web.test.rspcode[Landing page,1. Landing page].count(#5,200,ne)}>4'
+      name: 'HTTP response code not 200 for 5 consecutive checks'
+      priority: HIGH
+    -
+      expression: '{Landing page monitoring:web.test.time[Landing page,1. Landing page,resp].min({$WEB.TRIGGER.TIME})}>{$WEB.TRIGGER.THRESHOLD}'
+      name: 'Response time bigger than {$WEB.TRIGGER.THRESHOLD} seconds for last {$WEB.TRIGGER.TIME}'
+      priority: AVERAGE

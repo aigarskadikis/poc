@@ -1,0 +1,54 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-05-06T19:27:01Z'
+  groups:
+    -
+      name: Templates/Modules
+  templates:
+    -
+      template: 'Windows Certificates Discovery'
+      name: 'Windows Certificates Discovery'
+      groups:
+        -
+          name: Templates/Modules
+      applications:
+        -
+          name: 'Local machine certificates'
+      discovery_rules:
+        -
+          name: 'Certificate discovery'
+          key: 'system.run["{$EXCHANGE.CERT.DISCOVERY}"]'
+          delay: 1d
+          lifetime: 5d
+          item_prototypes:
+            -
+              name: 'Certificate - {#CN_SHORT}'
+              key: 'system.run["{$EXCHANGE.CERT.GETEXPIRYDAYS} \"{#PSCHILDNAME}\""]'
+              delay: 1d
+              history: 3d
+              units: '!days'
+              applications:
+                -
+                  name: 'Local machine certificates'
+              trigger_prototypes:
+                -
+                  expression: '{last()}<=0'
+                  name: 'The Certificate : {#CN_SHORT} - {#NOTAFTER} expired'
+                  priority: INFO
+                  manual_close: 'YES'
+                -
+                  expression: '{last()}<31'
+                  name: 'The Certificate : {#CN_SHORT} - {#NOTAFTER} will expire in {#DAYSTOEXPIRE} days'
+                  priority: INFO
+                  manual_close: 'YES'
+                  dependencies:
+                    -
+                      name: 'The Certificate : {#CN_SHORT} - {#NOTAFTER} expired'
+                      expression: '{Windows Certificates Discovery:system.run["{$EXCHANGE.CERT.GETEXPIRYDAYS} \"{#PSCHILDNAME}\""].last()}<=0'
+      macros:
+        -
+          macro: '{$EXCHANGE.CERT.DISCOVERY}'
+          value: 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Program Files\Zabbix Agent\scripts\certificate_check.ps1" -ActionType discover'
+        -
+          macro: '{$EXCHANGE.CERT.GETEXPIRYDAYS}'
+          value: 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Program Files\Zabbix Agent\scripts\certificate_check.ps1" -ActionType get -PSCHILD'

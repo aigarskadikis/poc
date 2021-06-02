@@ -1,0 +1,49 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-05-06T19:22:03Z'
+  groups:
+    -
+      name: Templates/Modules
+  templates:
+    -
+      template: 'Microsoft RDP port 3389 is in listening state'
+      name: 'Microsoft RDP port 3389 is in listening state'
+      groups:
+        -
+          name: Templates/Modules
+      applications:
+        -
+          name: 'RDP service'
+      items:
+        -
+          name: 'State of 3386'
+          key: 'net.tcp.listen[3389]'
+          applications:
+            -
+              name: 'RDP service'
+          valuemap:
+            name: 'Service state'
+          triggers:
+            -
+              expression: '{min({$RDP.PORT.DOWN.THRESHOLD})}=0'
+              name: 'RDP port is down for more than {$RDP.PORT.DOWN.THRESHOLD}'
+              priority: HIGH
+              manual_close: 'YES'
+      tags:
+        -
+          tag: Action
+          value: Email
+      macros:
+        -
+          macro: '{$RDP.PORT.DOWN.THRESHOLD}'
+          value: 15m
+  value_maps:
+    -
+      name: 'Service state'
+      mappings:
+        -
+          value: '0'
+          newvalue: Down
+        -
+          value: '1'
+          newvalue: Up

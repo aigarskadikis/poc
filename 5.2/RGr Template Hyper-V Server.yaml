@@ -1,0 +1,549 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-05-06T18:32:33Z'
+  groups:
+    -
+      name: Templates
+  templates:
+    -
+      template: 'RGr Template Hyper-V Server'
+      name: 'RGr Template Hyper-V Server'
+      description: 'Template discover Hyper-V VMs and check some their parameters.'
+      groups:
+        -
+          name: Templates
+      applications:
+        -
+          name: 'Hyper-V Services'
+        -
+          name: 'Hyper-V VMs'
+      items:
+        -
+          name: no.data.has.collected
+          type: DEPENDENT
+          key: no.data.has.collected
+          delay: '0'
+          preprocessing:
+            -
+              type: JAVASCRIPT
+              parameters:
+                - 'return 1;'
+          master_item:
+            key: 'system.run["{$HYPER.FULL}"]'
+          triggers:
+            -
+              expression: '{nodata(30m)}=1'
+              name: 'Cannot obtain VMs data'
+              priority: WARNING
+              description: 'Cannot obtain virtual machine data from Hyper-V server.'
+              tags:
+                -
+                  tag: hyperv
+                  value: vm
+                -
+                  tag: 'master item'
+        -
+          name: 'Hyper-V VMs master item'
+          key: 'system.run["{$HYPER.FULL}"]'
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          description: 'Hyper-V JSON master item.'
+          applications:
+            -
+              name: 'Hyper-V VMs'
+          request_method: POST
+      discovery_rules:
+        -
+          name: 'Hyper-V VMs discovery'
+          key: 'system.run["{$HYPER.LLD}"]'
+          delay: 1h
+          filter:
+            conditions:
+              -
+                macro: '{#VM.NAME}'
+                value: ^ref
+                operator: NOT_MATCHES_REGEX
+                formulaid: A
+          lifetime: 1d
+          description: 'Discovery Hyper-V virtual machines'
+          item_prototypes:
+            -
+              name: 'VM {#VM.NAME} CPU usage'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"CPUUsage"]'
+              delay: '0'
+              description: '{#VM.NAME} CPU usage'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''CPUUsage'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+              request_method: POST
+              trigger_prototypes:
+                -
+                  expression: '{avg(30m)}>85'
+                  name: 'VM {#VM.NAME} CPU usage too high'
+                  priority: WARNING
+                  description: 'CPU usage more than 85% for last 30 minutes.'
+                  tags:
+                    -
+                      tag: hyperv
+                    -
+                      tag: vm
+                      value: 'cpu usage'
+            -
+              name: 'VM {#VM.NAME} Integration Services state'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"IntSvcState"]'
+              delay: '0'
+              description: '{#VM.NAME} Integration Services state'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              valuemap:
+                name: 'Hyper-V VM Integration Services State'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''IntSvcState'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+              request_method: POST
+              trigger_prototypes:
+                -
+                  expression: '{last()}=1'
+                  name: 'VM {#VM.NAME} integration services requires update'
+                  priority: INFO
+                  description: 'VM {#VM.NAME} requires to update Ingegration Services.'
+                  tags:
+                    -
+                      tag: hyperv
+                    -
+                      tag: vm
+                      value: 'integration services'
+            -
+              name: 'VM {#VM.NAME} Integration Services version'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"IntSvcVer"]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              description: '{#VM.NAME} Integration Services version'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''IntSvcVer'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+              request_method: POST
+            -
+              name: 'VM {#VM.NAME} Memory assigned'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"Memory"]'
+              delay: '0'
+              units: B
+              description: '{#VM.NAME} memory assigned'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''Memory'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+              request_method: POST
+            -
+              name: 'VM {#VM.NAME} Numa nodes count'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"NumaNodes"]'
+              delay: '0'
+              description: '{#VM.NAME} Numa nodes count'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''NumaNodes'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+              request_method: POST
+            -
+              name: 'VM {#VM.NAME} Numa sockets count'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"NumaSockets"]'
+              delay: '0'
+              description: '{#VM.NAME} Numa sockets count'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''NumaSockets'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+              request_method: POST
+            -
+              name: 'VM {#VM.NAME} Replication health'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"ReplHealth"]'
+              delay: '0'
+              description: '{#VM.NAME} replication health.'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              valuemap:
+                name: 'Hyper-V VM Replication Health'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''ReplHealth'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+            -
+              name: 'VM {#VM.NAME} Replication mode'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"ReplMode"]'
+              delay: '0'
+              description: '{#VM.NAME} replication mode.'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              valuemap:
+                name: 'Hyper-V VM Replication Mode'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''ReplMode'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+            -
+              name: 'VM {#VM.NAME} Replication state'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"ReplState"]'
+              delay: '0'
+              description: '{#VM.NAME} replication state.'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              valuemap:
+                name: 'Hyper-V VM Replication State'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''ReplState'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+            -
+              name: 'VM {#VM.NAME} State'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"State"]'
+              delay: '0'
+              description: '{#VM.NAME} State'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              valuemap:
+                name: 'Hyper-V VM State'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''State'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+              request_method: POST
+            -
+              name: 'VM {#VM.NAME} Uptime'
+              type: DEPENDENT
+              key: 'ms.hyperv.vm[{#VM.NAME},"Uptime"]'
+              delay: '0'
+              units: s
+              description: '{#VM.NAME} Uptime'
+              applications:
+                -
+                  name: 'Hyper-V VMs'
+              application_prototypes:
+                -
+                  name: 'VM {#VM.NAME}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''{#VM.NAME}''][''Uptime'']'
+              master_item:
+                key: 'system.run["{$HYPER.FULL}"]'
+              request_method: POST
+          trigger_prototypes:
+            -
+              expression: '{RGr Template Hyper-V Server:ms.hyperv.vm[{#VM.NAME},"ReplHealth"].count(#3,1,ne)}=3 and {RGr Template Hyper-V Server:ms.hyperv.vm[{#VM.NAME},"ReplMode"].last()}<>0'
+              name: 'VM {#VM.NAME} replicationg health is {ITEM.VALUE}'
+              priority: WARNING
+              description: |
+                VM {#VM.NAME} replicationg health is not good now.
+                Replication state: {ITEM.LASTVALUE}
+              tags:
+                -
+                  tag: hyperv
+                -
+                  tag: vm
+                  value: replication
+            -
+              expression: '{RGr Template Hyper-V Server:ms.hyperv.vm[{#VM.NAME},"ReplState"].count(#3,4,ne)}=3 and {RGr Template Hyper-V Server:ms.hyperv.vm[{#VM.NAME},"ReplMode"].last()}<>0'
+              name: 'VM {#VM.NAME} replicationg state is {ITEM.VALUE}'
+              priority: WARNING
+              description: |
+                VM {#VM.NAME} replicationg state is not replicating now.
+                Replication state: {ITEM.LASTVALUE}
+              tags:
+                -
+                  tag: hyperv
+                -
+                  tag: vm
+                  value: replication
+            -
+              expression: '{RGr Template Hyper-V Server:ms.hyperv.vm[{#VM.NAME},"State"].count(#3,2,ne)}=3 and {RGr Template Hyper-V Server:ms.hyperv.vm[{#VM.NAME},"ReplMode"].last()}=0'
+              name: 'VM {#VM.NAME} state is not running'
+              priority: AVERAGE
+              description: 'VM {#VM.NAME} not in "Running" state ({ITEM.LASTVALUE})'
+              tags:
+                -
+                  tag: hyperv
+                -
+                  tag: vm
+                  value: 'not running'
+          request_method: POST
+      macros:
+        -
+          macro: '{$HYPER.FULL}'
+          value: 'powershell -NoProfile -NoLogo -File "%ProgramFiles%\Zabbix Agent\Scripts\zbx-hyperv.ps1" full'
+        -
+          macro: '{$HYPER.LLD}'
+          value: 'powershell -NoProfile -NoLogo -File "%ProgramFiles%\Zabbix Agent\Scripts\zbx-hyperv.ps1" lld'
+        -
+          macro: '{$UPDATE}'
+          value: 1m
+  value_maps:
+    -
+      name: 'Hyper-V VM Integration Services State'
+      mappings:
+        -
+          value: '0'
+          newvalue: 'Up to date'
+        -
+          value: '1'
+          newvalue: 'Update required'
+        -
+          value: '2'
+          newvalue: Unknown
+    -
+      name: 'Hyper-V VM Replication Health'
+      mappings:
+        -
+          value: '0'
+          newvalue: NotApplicable
+        -
+          value: '1'
+          newvalue: Normal
+        -
+          value: '2'
+          newvalue: Warning
+        -
+          value: '3'
+          newvalue: Critical
+    -
+      name: 'Hyper-V VM Replication Mode'
+      mappings:
+        -
+          value: '0'
+          newvalue: None
+        -
+          value: '1'
+          newvalue: Primary
+        -
+          value: '2'
+          newvalue: Replica
+        -
+          value: '3'
+          newvalue: TestReplica
+        -
+          value: '4'
+          newvalue: ExtendedReplica
+    -
+      name: 'Hyper-V VM Replication State'
+      mappings:
+        -
+          value: '0'
+          newvalue: Disabled
+        -
+          value: '1'
+          newvalue: ReadyForInitialReplication
+        -
+          value: '2'
+          newvalue: InitialReplicationInProgress
+        -
+          value: '3'
+          newvalue: WaitingForInitialReplication
+        -
+          value: '4'
+          newvalue: Replicating
+        -
+          value: '5'
+          newvalue: PreparedForFailover
+        -
+          value: '6'
+          newvalue: FailedOverWaitingCompletion
+        -
+          value: '7'
+          newvalue: FailedOver
+        -
+          value: '8'
+          newvalue: Suspended
+        -
+          value: '9'
+          newvalue: Error
+        -
+          value: '10'
+          newvalue: WaitingForStartResynchronize
+        -
+          value: '11'
+          newvalue: Resynchronizing
+        -
+          value: '12'
+          newvalue: ResynchronizeSuspended
+        -
+          value: '13'
+          newvalue: RecoveryInProgress
+        -
+          value: '14'
+          newvalue: FailbackInProgress
+        -
+          value: '15'
+          newvalue: FailbackComplete
+    -
+      name: 'Hyper-V VM State'
+      mappings:
+        -
+          value: '1'
+          newvalue: Other
+        -
+          value: '2'
+          newvalue: Running
+        -
+          value: '3'
+          newvalue: 'Off'
+        -
+          value: '4'
+          newvalue: Stopping
+        -
+          value: '6'
+          newvalue: Saved
+        -
+          value: '9'
+          newvalue: Paused
+        -
+          value: '10'
+          newvalue: Starting
+        -
+          value: '11'
+          newvalue: Reset
+        -
+          value: '32773'
+          newvalue: Saving
+        -
+          value: '32776'
+          newvalue: Pausing
+        -
+          value: '32777'
+          newvalue: Resuming
+        -
+          value: '32779'
+          newvalue: FastSaved
+        -
+          value: '32780'
+          newvalue: FastSaving
+        -
+          value: '32781'
+          newvalue: RunningCritical
+        -
+          value: '32782'
+          newvalue: OffCritical
+        -
+          value: '32783'
+          newvalue: StoppingCritical
+        -
+          value: '32784'
+          newvalue: SavedCritical
+        -
+          value: '32785'
+          newvalue: PausedCritical
+        -
+          value: '32786'
+          newvalue: StartingCritical
+        -
+          value: '32787'
+          newvalue: ResetCritical
+        -
+          value: '32788'
+          newvalue: SavingCritical
+        -
+          value: '32789'
+          newvalue: PausingCritical
+        -
+          value: '32790'
+          newvalue: ResumingCritical
+        -
+          value: '32791'
+          newvalue: FastSavedCritical
+        -
+          value: '32792'
+          newvalue: FastSavingCritical

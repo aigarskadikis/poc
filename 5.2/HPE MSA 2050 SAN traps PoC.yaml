@@ -1,0 +1,38 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-05-06T18:23:20Z'
+  groups:
+    -
+      name: Templates/Modules
+  templates:
+    -
+      template: 'HPE MSA 2050 SAN traps PoC'
+      name: 'HPE MSA 2050 SAN traps PoC'
+      groups:
+        -
+          name: Templates/Modules
+      applications:
+        -
+          name: 'SNMP trap event'
+      items:
+        -
+          name: 'SNMP traps Event'
+          type: SNMP_TRAP
+          key: 'snmptrap["Event type"]'
+          delay: '0'
+          trends: '0'
+          value_type: LOG
+          applications:
+            -
+              name: 'SNMP trap event'
+          triggers:
+            -
+              expression: '{str()}=1'
+              name: '{{ITEM.VALUE}.regsub("(Event type.*).$", "\1")}'
+              priority: AVERAGE
+              type: MULTIPLE
+              manual_close: 'YES'
+              tags:
+                -
+                  tag: 'Event type'
+                  value: '{{ITEM.VALUE}.regsub("Event type: (\d+)", "\1")}'

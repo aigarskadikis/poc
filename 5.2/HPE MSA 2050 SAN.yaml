@@ -1,0 +1,344 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-05-06T18:22:45Z'
+  groups:
+    -
+      name: 'Templates/Network devices'
+  templates:
+    -
+      template: 'HPE MSA 2050 SAN'
+      name: 'HPE MSA 2050 SAN'
+      groups:
+        -
+          name: 'Templates/Network devices'
+      applications:
+        -
+          name: conn.unit.sensor.type
+        -
+          name: 'FCMGMT-MIB::connSet'
+        -
+          name: 'FCMGMT-MIB::connUnitServiceScalars'
+        -
+          name: 'FCMGMT-MIB::connUnitServiceTables'
+        -
+          name: 'FCMGMT-MIB::fcmgmt'
+        -
+          name: 'FCMGMT-MIB::statSet'
+        -
+          name: 'FCMGMT-MIB::trapReg'
+      items:
+        -
+          name: conn.unit.sensor.type
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#CONNUNITSENSORTYPE},.1.3.6.1.3.94.1.8.1.7,{#CONNUNITSENSORNAME},.1.3.6.1.3.94.1.8.1.3]'
+          key: conn.unit.sensor.type
+          delay: 1h
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          applications:
+            -
+              name: conn.unit.sensor.type
+        -
+          name: connUnitSnsMaxEntry
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.3.94.5.1.1.0
+          key: FCMGMT-MIB.connUnitSnsMaxEntry
+          delay: '60'
+          history: 1d
+          trends: 1d
+          value_type: FLOAT
+          description: 'The maximum number of entries in the table.'
+          applications:
+            -
+              name: 'FCMGMT-MIB::connUnitServiceScalars'
+        -
+          name: revisionNumber
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.3.94.3.0
+          key: FCMGMT-MIB.revisionNumber
+          delay: '60'
+          history: 1d
+          trends: '0'
+          value_type: TEXT
+          description: 'This is the revision number for this MIB. The format of the revision value is as follows (0) = high order major revision number (1) = low order major revision number (2) = high order minor revision number (3) = low order minor revision number The value will be stored as an ASCII value. The following is the current value of this object. (0) = ''0'' (1) = ''3'' (2) = ''0'' (3) = ''0'' This defines a revision of 03.00'
+          applications:
+            -
+              name: 'FCMGMT-MIB::fcmgmt'
+        -
+          name: systemURL
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.3.94.1.2.0
+          key: FCMGMT-MIB.systemURL
+          delay: '60'
+          history: 1d
+          trends: '0'
+          value_type: TEXT
+          description: 'The top-level URL of the system. If it does not exist the value is empty string. The URL format is implementation dependant and can have keywords embedded that are preceeded by a percent sign (eg, %USER). The following are the defined keywords that will be recognized and replaced with data during a launch. USER - replace with username PASSWORD - replace with password GLOBALID - replace with globalid SERIALNO - replace with serial number If write is not supported, then return invalid. This value will be retained across boots.'
+          applications:
+            -
+              name: 'FCMGMT-MIB::connSet'
+        -
+          name: trapClientCount
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.3.94.2.2.0
+          key: FCMGMT-MIB.trapClientCount
+          delay: '60'
+          history: 1d
+          trends: 1d
+          value_type: FLOAT
+          description: 'The current number of rows in the trap table.'
+          applications:
+            -
+              name: 'FCMGMT-MIB::trapReg'
+        -
+          name: trapMaxClients
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.3.94.2.1.0
+          key: FCMGMT-MIB.trapMaxClients
+          delay: '60'
+          history: 1d
+          trends: 1d
+          value_type: FLOAT
+          description: 'The maximum number of SNMP trap recipients supported by the connectivity unit.'
+          applications:
+            -
+              name: 'FCMGMT-MIB::trapReg'
+        -
+          name: uNumber
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.3.94.1.1.0
+          key: FCMGMT-MIB.uNumber
+          delay: '60'
+          history: 1d
+          trends: 1d
+          value_type: FLOAT
+          description: 'The number of connectivity units present on this system (represented by this agent). May be a count of the boards in a chassis or the number of full boxes in a rack.'
+          applications:
+            -
+              name: 'FCMGMT-MIB::connSet'
+        -
+          name: 'SNMP Trap: FCMGMT-MIB::connUnitStatusChange'
+          type: SNMP_TRAP
+          key: 'snmptrap["\s\.1\.3\.6\.1\.3\.94\.0\.1\s"]'
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: LOG
+          description: |
+            The overall status of the connectivity unit has changed. Recommended severity level (for filtering): alert
+            
+            Varbinds:
+            0. connUnitStatus (INTEGER)
+                  Overall status of the connectivity unit. The goal of this object
+                  is to be the single poll point to check the status of the connunit.
+                  If there is any other component that has warning, then this should
+                  be set to warning, etc.
+            
+            1. connUnitState (INTEGER)
+                  Overall state of the connectivity unit.
+            
+            
+          applications:
+            -
+              name: 'FCMGMT-MIB::fcmgmt'
+          logtimefmt: 'hh:mm:ss dd/MM/yyyy'
+        -
+          name: 'SNMP Trap: FCMGMT-MIB::connUnitDeletedTrap'
+          type: SNMP_TRAP
+          key: 'snmptrap["\s\.1\.3\.6\.1\.3\.94\.0\.3\s"]'
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: LOG
+          description: |
+            A connUnit has been deleted from this agent. Recommended severity level (for filtering): warning
+            
+            Varbinds:
+            0. connUnitId (OCTETSTR)
+                  The unique identification for this connectivity unit
+                  among those within this proxy domain. 
+                  The value MUST be unique within the proxy domain
+                  because it is the index variable for connUnitTable.
+                  The value assigned to a given conectivity unit
+                  SHOULD be persistent across agent and unit resets.
+                  It SHOULD be the same as connUnitGlobalId
+                  if connUnitGlobalId is known and stable.
+            
+            
+          applications:
+            -
+              name: 'FCMGMT-MIB::fcmgmt'
+          logtimefmt: 'hh:mm:ss dd/MM/yyyy'
+        -
+          name: 'SNMP Trap: FCMGMT-MIB::connUnitEventTrap'
+          type: SNMP_TRAP
+          key: 'snmptrap["\s\.1\.3\.6\.1\.3\.94\.0\.4\s"]'
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: LOG
+          description: |
+            An event has been generated by the connectivity unit. Recommended severity level (for filtering): info
+            
+            Varbinds:
+            0. connUnitEventId (INTEGER)
+                  The internal event Id. Incremented for each 
+                  event, ranging between 1 and connUnitMaxEvents.
+                  Not used as table index to simplify 
+                  the agent implementation. When this
+                  reaches the end of the range specified by
+                  connUnitMaxEvents, the Id will roll over to start
+                  at one. This value will be set back to one at
+                  reset. The relationship of this value to the index
+                  is that internal event id may represent a smaller
+                  number than a 32 bit integer (eg max 100 entries) 
+                  and would only have a value range up to 
+                  connUnitMaxEvents.
+            
+            1. connUnitEventType (INTEGER)
+                  The type of this event.
+            
+            2. connUnitEventObject (OBJECTID)
+                  This is used with the connUnitEventType
+                  to identify which object the event refers to.
+                  Examples are connUnitPortStatus.connUnitId.connUnitPortIndex,
+                  connUnitStatus.connUnitId, etc.
+            
+            3. connUnitEventDescr (OCTETSTR)
+                  The description of the event.
+            
+            
+          applications:
+            -
+              name: 'FCMGMT-MIB::fcmgmt'
+          logtimefmt: 'hh:mm:ss dd/MM/yyyy'
+        -
+          name: 'SNMP Trap: FCMGMT-MIB::connUnitSensorStatusChange'
+          type: SNMP_TRAP
+          key: 'snmptrap["\s\.1\.3\.6\.1\.3\.94\.0\.5\s"]'
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: LOG
+          description: |
+            The overall status of the connectivity unit has changed. Recommended severity level (for filtering): alert
+            
+            Varbinds:
+            0. connUnitSensorStatus (INTEGER)
+                  The status indicated by the sensor.
+            
+            
+          applications:
+            -
+              name: 'FCMGMT-MIB::fcmgmt'
+          logtimefmt: 'hh:mm:ss dd/MM/yyyy'
+        -
+          name: 'SNMP Trap: FCMGMT-MIB::connUnitPortStatusChange'
+          type: SNMP_TRAP
+          key: 'snmptrap["\s\.1\.3\.6\.1\.3\.94\.0\.6\s"]'
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: LOG
+          description: |
+            The overall status of the connectivity unit has changed. Recommended severity level (for filtering): alert
+            
+            Varbinds:
+            0. connUnitPortStatus (INTEGER)
+                  An overall protocol status for the 
+                  port. This value of connUnitPortState is not
+                  online, then this is reported Unknown.
+            
+            1. connUnitPortState (INTEGER)
+                  The user selected state of the port hardware.
+            
+            
+          applications:
+            -
+              name: 'FCMGMT-MIB::fcmgmt'
+          logtimefmt: 'hh:mm:ss dd/MM/yyyy'
+        -
+          name: 'SNMP Trap: FCMGMT-MIB::fcmgmt#'
+          type: SNMP_TRAP
+          key: 'snmptrap["\s\.1\.3\.6\.1\.3\.94\.0\s"]'
+          delay: '0'
+          history: 1d
+          trends: '0'
+          value_type: LOG
+          applications:
+            -
+              name: 'FCMGMT-MIB::fcmgmt'
+          logtimefmt: 'hh:mm:ss dd/MM/yyyy'
+      discovery_rules:
+        -
+          name: 'Sensor discovery'
+          type: DEPENDENT
+          key: sensor.type
+          delay: '0'
+          lifetime: '0'
+          item_prototypes:
+            -
+              name: '{#CONNUNITSENSORNAME}'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.3.94.1.8.1.4.{#SNMPINDEX}'
+              key: 'sensor[{#SNMPINDEX}]'
+              valuemap:
+                name: 'FCMGMT-MIB::connUnitSensorStatus'
+              trigger_prototypes:
+                -
+                  expression: '{count(#5,5,eq)}>3'
+                  name: 'Failed: {#CONNUNITSENSORNAME}'
+                  priority: HIGH
+                -
+                  expression: '{count(#5,2,eq)}>3'
+                  name: 'Other status: {#CONNUNITSENSORNAME}'
+                  priority: INFO
+                -
+                  expression: '{count(#5,1,eq)}>3'
+                  name: 'Unknown status: {#CONNUNITSENSORNAME}'
+                  priority: INFO
+                -
+                  expression: '{count(#5,4,eq)}>3'
+                  name: 'Warning: {#CONNUNITSENSORNAME}'
+                  priority: AVERAGE
+          master_item:
+            key: conn.unit.sensor.type
+      macros:
+        -
+          macro: '{$MIB2ZABBIX_CMD}'
+          value: 'mib2zabbix -o .1.3.6.1.3.94 -f /root/file.xml -e -G custom -N hp storage --disc-delay=60 --history=1 --trends=1'
+        -
+          macro: '{$OID}'
+          value: .1.3.6.1.3.94
+        -
+          macro: '{$OID_MOD}'
+          value: FCMGMT-MIB
+        -
+          macro: '{$OID_PATH}'
+          value: iso.org.dod.internet.experimental.fcmgmt
+        -
+          macro: '{$SNMP_COMMUNITY}'
+          value: public
+        -
+          macro: '{$SNMP_PORT}'
+          value: '161'
+  value_maps:
+    -
+      name: 'FCMGMT-MIB::connUnitSensorStatus'
+      mappings:
+        -
+          value: '1'
+          newvalue: unknown
+        -
+          value: '2'
+          newvalue: other
+        -
+          value: '3'
+          newvalue: ok
+        -
+          value: '4'
+          newvalue: warning
+        -
+          value: '5'
+          newvalue: failed
