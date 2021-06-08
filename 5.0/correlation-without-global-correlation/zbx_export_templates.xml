@@ -1,27 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2021-06-01T22:16:13Z</date>
+    <date>2021-06-08T21:23:07Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
         </group>
+        <group>
+            <name>Templates/zProperty</name>
+        </group>
     </groups>
     <templates>
         <template>
-            <template>00000000 passive ping PoC</template>
-            <name>00000000 passive ping PoC</name>
-            <description>Agent:&#13;
-if (value == 0) {return 1} else {return 0}&#13;
-&#13;
-Switch:&#13;
-if (value == 0) {return 100} else {return 0}&#13;
-&#13;
-Router:&#13;
-if (value == 0) {return 100000} else {return 0}&#13;
-&#13;
-Firewall:&#13;
-if (value == 0) {return 10000000} else {return 0}</description>
+            <template>0000001 passive router</template>
+            <name>0000001 passive router</name>
             <groups>
                 <group>
                     <name>Templates/Modules</name>
@@ -29,81 +21,18 @@ if (value == 0) {return 10000000} else {return 0}</description>
             </groups>
             <applications>
                 <application>
-                    <name>Status</name>
-                </application>
-                <application>
-                    <name>Status in pool</name>
+                    <name>Device down router</name>
                 </application>
             </applications>
             <items>
                 <item>
-                    <name>Status in pool</name>
+                    <name>Device down switch after preprocessing</name>
                     <type>DEPENDENT</type>
                     <key>device.status.in.pool</key>
                     <delay>0</delay>
                     <applications>
                         <application>
-                            <name>Status in pool</name>
-                        </application>
-                    </applications>
-                    <preprocessing>
-                        <step>
-                            <type>JAVASCRIPT</type>
-                            <params>if (value == 0) {return 100} else {return 0}</params>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>icmpping</key>
-                    </master_item>
-                </item>
-                <item>
-                    <name>ICMP ping</name>
-                    <type>SIMPLE</type>
-                    <key>icmpping</key>
-                    <history>1w</history>
-                    <applications>
-                        <application>
-                            <name>Status</name>
-                        </application>
-                    </applications>
-                    <valuemap>
-                        <name>Service state</name>
-                    </valuemap>
-                </item>
-            </items>
-            <macros>
-                <macro>
-                    <macro>{$ICMP_LOSS_WARN}</macro>
-                    <value>20</value>
-                </macro>
-                <macro>
-                    <macro>{$ICMP_RESPONSE_TIME_WARN}</macro>
-                    <value>0.15</value>
-                </macro>
-            </macros>
-        </template>
-        <template>
-            <template>00000001 passive agent</template>
-            <name>00000001 passive agent</name>
-            <groups>
-                <group>
-                    <name>Templates/Modules</name>
-                </group>
-            </groups>
-            <applications>
-                <application>
-                    <name>Device down ZA</name>
-                </application>
-            </applications>
-            <items>
-                <item>
-                    <name>Device down ZA after preprocessing</name>
-                    <type>DEPENDENT</type>
-                    <key>device.status.in.pool</key>
-                    <delay>0</delay>
-                    <applications>
-                        <application>
-                            <name>Device down ZA</name>
+                            <name>Device down router</name>
                         </application>
                     </applications>
                     <preprocessing>
@@ -113,39 +42,36 @@ if (value == 0) {return 10000000} else {return 0}</description>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>zabbix[host,agent,available]</key>
+                        <key>zabbix[host,snmp,&quot;available&quot;]</key>
                     </master_item>
                 </item>
                 <item>
-                    <name>Device down ZA raw input</name>
+                    <name>Device down switch raw input</name>
                     <type>INTERNAL</type>
-                    <key>zabbix[host,agent,available]</key>
+                    <key>zabbix[host,snmp,&quot;available&quot;]</key>
                     <delay>{$RD.STTS}</delay>
-                    <history>1w</history>
+                    <history>14d</history>
+                    <trends>0</trends>
                     <applications>
                         <application>
-                            <name>Device down ZA</name>
+                            <name>Device down router</name>
                         </application>
                     </applications>
                     <valuemap>
-                        <name>Zabbix agent ping status</name>
+                        <name>zabbix.host.available</name>
                     </valuemap>
                 </item>
             </items>
             <macros>
                 <macro>
-                    <macro>{$FROM}</macro>
-                    <value>800000</value>
-                </macro>
-                <macro>
-                    <macro>{$TILL}</macro>
-                    <value>170000</value>
+                    <macro>{$RD.STTS}</macro>
+                    <value>10s</value>
                 </macro>
             </macros>
         </template>
         <template>
-            <template>00000100 passive switch</template>
-            <name>00000100 passive switch</name>
+            <template>0000100 passive switch</template>
+            <name>0000100 passive switch</name>
             <groups>
                 <group>
                     <name>Templates/Modules</name>
@@ -196,18 +122,14 @@ if (value == 0) {return 10000000} else {return 0}</description>
             </items>
             <macros>
                 <macro>
-                    <macro>{$CUSTOMER.ID}</macro>
-                    <value>123</value>
-                </macro>
-                <macro>
-                    <macro>{$SNMP_TIMEOUT}</macro>
-                    <value>3m</value>
+                    <macro>{$RD.STTS}</macro>
+                    <value>10s</value>
                 </macro>
             </macros>
         </template>
         <template>
-            <template>00100000 passive router</template>
-            <name>00100000 passive router</name>
+            <template>0100000 passive core switch</template>
+            <name>0100000 passive core switch</name>
             <groups>
                 <group>
                     <name>Templates/Modules</name>
@@ -215,7 +137,7 @@ if (value == 0) {return 10000000} else {return 0}</description>
             </groups>
             <applications>
                 <application>
-                    <name>Device down router</name>
+                    <name>Device down core switch</name>
                 </application>
             </applications>
             <items>
@@ -226,7 +148,7 @@ if (value == 0) {return 10000000} else {return 0}</description>
                     <delay>0</delay>
                     <applications>
                         <application>
-                            <name>Device down router</name>
+                            <name>Device down core switch</name>
                         </application>
                     </applications>
                     <preprocessing>
@@ -248,7 +170,7 @@ if (value == 0) {return 10000000} else {return 0}</description>
                     <trends>0</trends>
                     <applications>
                         <application>
-                            <name>Device down router</name>
+                            <name>Device down core switch</name>
                         </application>
                     </applications>
                     <valuemap>
@@ -258,18 +180,14 @@ if (value == 0) {return 10000000} else {return 0}</description>
             </items>
             <macros>
                 <macro>
-                    <macro>{$CUSTOMER.ID}</macro>
-                    <value>123</value>
-                </macro>
-                <macro>
-                    <macro>{$SNMP_TIMEOUT}</macro>
-                    <value>3m</value>
+                    <macro>{$RD.STTS}</macro>
+                    <value>10s</value>
                 </macro>
             </macros>
         </template>
         <template>
-            <template>10000000 passive firewall</template>
-            <name>10000000 passive firewall</name>
+            <template>1000000 passive firewall</template>
+            <name>1000000 passive firewall</name>
             <groups>
                 <group>
                     <name>Templates/Modules</name>
@@ -294,7 +212,7 @@ if (value == 0) {return 10000000} else {return 0}</description>
                     <preprocessing>
                         <step>
                             <type>JAVASCRIPT</type>
-                            <params>if (value == 0) {return 10000000} else {return 0}</params>
+                            <params>if (value == 0) {return 1000000} else {return 0}</params>
                         </step>
                     </preprocessing>
                     <master_item>
@@ -320,18 +238,14 @@ if (value == 0) {return 10000000} else {return 0}</description>
             </items>
             <macros>
                 <macro>
-                    <macro>{$CUSTOMER.ID}</macro>
-                    <value>123</value>
-                </macro>
-                <macro>
-                    <macro>{$SNMP_TIMEOUT}</macro>
-                    <value>3m</value>
+                    <macro>{$RD.STTS}</macro>
+                    <value>10s</value>
                 </macro>
             </macros>
         </template>
         <template>
             <template>calc</template>
-            <name>00000000 passive aggregate status</name>
+            <name>0000000 passive aggregate status</name>
             <groups>
                 <group>
                     <name>Templates/Modules</name>
@@ -339,24 +253,105 @@ if (value == 0) {return 10000000} else {return 0}</description>
             </groups>
             <applications>
                 <application>
+                    <name>Aggregated item</name>
+                </application>
+                <application>
+                    <name>Changes core</name>
+                </application>
+                <application>
+                    <name>Changes firewall</name>
+                </application>
+                <application>
+                    <name>Changes router</name>
+                </application>
+                <application>
+                    <name>Changes switch</name>
+                </application>
+                <application>
+                    <name>Device down core switch</name>
+                </application>
+                <application>
                     <name>Device down dummy</name>
                 </application>
                 <application>
-                    <name>Only changes</name>
+                    <name>Device down firewall</name>
                 </application>
                 <application>
-                    <name>Status of flapping</name>
+                    <name>Device down router</name>
+                </application>
+                <application>
+                    <name>Device down switch</name>
+                </application>
+                <application>
+                    <name>Status of flapped core switch</name>
+                </application>
+                <application>
+                    <name>Status of flapped firewall</name>
+                </application>
+                <application>
+                    <name>Status of flapped router</name>
+                </application>
+                <application>
+                    <name>Status of flapped switch</name>
                 </application>
             </applications>
             <items>
                 <item>
-                    <name>Only changes[agent]</name>
+                    <name>Status of changes[core]</name>
                     <type>DEPENDENT</type>
-                    <key>changes[agent]</key>
+                    <key>changes[core]</key>
                     <delay>0</delay>
                     <applications>
                         <application>
-                            <name>Only changes</name>
+                            <name>Changes core</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>if (value &gt; 99999) {return value.replace(/.....$/,&quot;&quot;) % 10} else {return 0}</params>
+                        </step>
+                        <step>
+                            <type>DISCARD_UNCHANGED</type>
+                            <params/>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>grpsum[&quot;{$PROPERTY_HOST_GROUP}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>Status of changes[firewall]</name>
+                    <type>DEPENDENT</type>
+                    <key>changes[firewall]</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>Changes firewall</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>if (value &gt; 999999) {return value.replace(/......$/,&quot;&quot;) % 10} else {return 0}</params>
+                        </step>
+                        <step>
+                            <type>DISCARD_UNCHANGED</type>
+                            <params/>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>grpsum[&quot;{$PROPERTY_HOST_GROUP}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>Status of changes[router]</name>
+                    <type>DEPENDENT</type>
+                    <key>changes[router]</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>Changes router</name>
                         </application>
                     </applications>
                     <preprocessing>
@@ -365,84 +360,36 @@ if (value == 0) {return 10000000} else {return 0}</description>
                             <params>return value % 100;</params>
                         </step>
                         <step>
-                            <type>DISCARD_UNCHANGED_HEARTBEAT</type>
-                            <params>1d</params>
+                            <type>DISCARD_UNCHANGED</type>
+                            <params/>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>grpsum[&quot;{$CUSTOMER}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
+                        <key>grpsum[&quot;{$PROPERTY_HOST_GROUP}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
                     </master_item>
                 </item>
                 <item>
-                    <name>Only changes[firewall]</name>
-                    <type>DEPENDENT</type>
-                    <key>changes[firewall]</key>
-                    <delay>0</delay>
-                    <applications>
-                        <application>
-                            <name>Only changes</name>
-                        </application>
-                    </applications>
-                    <preprocessing>
-                        <step>
-                            <type>JAVASCRIPT</type>
-                            <params>if (value &gt; 9999999) {return value.replace(/.......$/,&quot;&quot;) % 100} else {return 0}</params>
-                        </step>
-                        <step>
-                            <type>DISCARD_UNCHANGED_HEARTBEAT</type>
-                            <params>1d</params>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>grpsum[&quot;{$CUSTOMER}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
-                    </master_item>
-                </item>
-                <item>
-                    <name>Only changes[router]</name>
-                    <type>DEPENDENT</type>
-                    <key>changes[router]</key>
-                    <delay>0</delay>
-                    <applications>
-                        <application>
-                            <name>Only changes</name>
-                        </application>
-                    </applications>
-                    <preprocessing>
-                        <step>
-                            <type>JAVASCRIPT</type>
-                            <params>if (value &gt; 99999) {return value.replace(/.....$/,&quot;&quot;) % 100} else {return 0}</params>
-                        </step>
-                        <step>
-                            <type>DISCARD_UNCHANGED_HEARTBEAT</type>
-                            <params>1d</params>
-                        </step>
-                    </preprocessing>
-                    <master_item>
-                        <key>grpsum[&quot;{$CUSTOMER}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
-                    </master_item>
-                </item>
-                <item>
-                    <name>Only changes[switch]</name>
+                    <name>Status of changes[switch]</name>
                     <type>DEPENDENT</type>
                     <key>changes[switch]</key>
                     <delay>0</delay>
                     <applications>
                         <application>
-                            <name>Only changes</name>
+                            <name>Changes switch</name>
                         </application>
                     </applications>
                     <preprocessing>
                         <step>
                             <type>JAVASCRIPT</type>
-                            <params>if (value &gt; 99) {return value.replace(/..$/,&quot;&quot;) % 1000} else {return 0}</params>
+                            <params>if (value &gt; 99) {return value.replace(/..$/,&quot;&quot;) % 100} else {return 0}</params>
                         </step>
                         <step>
-                            <type>DISCARD_UNCHANGED_HEARTBEAT</type>
-                            <params>1d</params>
+                            <type>DISCARD_UNCHANGED</type>
+                            <params/>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>grpsum[&quot;{$CUSTOMER}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
+                        <key>grpsum[&quot;{$PROPERTY_HOST_GROUP}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
                     </master_item>
                 </item>
                 <item>
@@ -466,70 +413,50 @@ if (value == 0) {return 10000000} else {return 0}</description>
                     </master_item>
                 </item>
                 <item>
-                    <name>Status of down[agent]</name>
+                    <name>Status of down[core]</name>
                     <type>DEPENDENT</type>
-                    <key>down[agent]</key>
+                    <key>down[core]</key>
                     <delay>0</delay>
+                    <units>!core switch(es) down</units>
                     <applications>
                         <application>
-                            <name>Device down dummy</name>
+                            <name>Device down core switch</name>
                         </application>
                     </applications>
                     <preprocessing>
                         <step>
                             <type>JAVASCRIPT</type>
-                            <params>return value % 100;</params>
+                            <params>if (value &gt; 99999) {return value.replace(/.....$/,&quot;&quot;) % 10} else {return 0}</params>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>grpsum[&quot;{$CUSTOMER}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
+                        <key>grpsum[&quot;{$PROPERTY_HOST_GROUP}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
                     </master_item>
                     <triggers>
                         <trigger>
-                            <expression>{min({$SNS})}&gt;{$CNT.ZA}</expression>
-                            <name>{ITEM.VALUE1}</name>
-                            <opdata>{ITEM.LASTVALUE1}</opdata>
-                            <priority>INFO</priority>
+                            <expression>{min({$SNS})}=1</expression>
+                            <name>1 core switch down</name>
+                            <priority>HIGH</priority>
                             <manual_close>YES</manual_close>
                             <dependencies>
                                 <dependency>
-                                    <name>1 or more firewalls down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[firewall].min({$SNS})}&gt;0</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>1 router down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[router].min({$SNS})}=1</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>1 switch and 1 router down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[switch].min({$SNS})}=1&#13;
-and&#13;
-{calc:down[router].min({$SNS})}=1</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>1 switch down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[switch].min({$SNS})}=1</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>More than 1 router and more than 1 switch down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[switch].min({$SNS})}&gt;1&#13;
-and&#13;
-{calc:down[router].min({$SNS})}&gt;1</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>More than 1 router down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[router].min({$SNS})}&gt;1</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>More than 1 switch down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[switch].min({$SNS})}&gt;1</expression>
+                                    <name>1 firewall down</name>
+                                    <expression>{calc:down[firewall].min({$SNS})}=1</expression>
                                 </dependency>
                             </dependencies>
-                            <tags>
-                                <tag>
-                                    <tag>agent</tag>
-                                </tag>
-                            </tags>
+                        </trigger>
+                        <trigger>
+                            <expression>1&lt;{min({$SNS})}</expression>
+                            <name>At least 2 core switches down</name>
+                            <opdata>{ITEM.LASTVALUE1}</opdata>
+                            <priority>HIGH</priority>
+                            <manual_close>YES</manual_close>
+                            <dependencies>
+                                <dependency>
+                                    <name>1 firewall down</name>
+                                    <expression>{calc:down[firewall].min({$SNS})}=1</expression>
+                                </dependency>
+                            </dependencies>
                         </trigger>
                     </triggers>
                 </item>
@@ -541,30 +468,24 @@ and&#13;
                     <units>!firewall(s) down</units>
                     <applications>
                         <application>
-                            <name>Device down dummy</name>
+                            <name>Device down firewall</name>
                         </application>
                     </applications>
                     <preprocessing>
                         <step>
                             <type>JAVASCRIPT</type>
-                            <params>if (value &gt; 9999999) {return value.replace(/.......$/,&quot;&quot;) % 100} else {return 0}</params>
+                            <params>if (value &gt; 999999) {return value.replace(/......$/,&quot;&quot;) % 10} else {return 0}</params>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>grpsum[&quot;{$CUSTOMER}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
+                        <key>grpsum[&quot;{$PROPERTY_HOST_GROUP}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
                     </master_item>
                     <triggers>
                         <trigger>
-                            <expression>{min({$SNS})}&gt;0</expression>
-                            <name>1 or more firewalls down for {$CUSTOMER}</name>
-                            <opdata>{ITEM.LASTVALUE1} for {$CUSTOMER}</opdata>
+                            <expression>{min({$SNS})}=1</expression>
+                            <name>1 firewall down</name>
                             <priority>DISASTER</priority>
                             <manual_close>YES</manual_close>
-                            <tags>
-                                <tag>
-                                    <tag>firewall</tag>
-                                </tag>
-                            </tags>
                         </trigger>
                     </triggers>
                 </item>
@@ -576,70 +497,43 @@ and&#13;
                     <units>!router(s) down</units>
                     <applications>
                         <application>
-                            <name>Device down dummy</name>
+                            <name>Device down router</name>
                         </application>
                     </applications>
                     <preprocessing>
                         <step>
                             <type>JAVASCRIPT</type>
-                            <params>if (value &gt; 99999) {return value.replace(/.....$/,&quot;&quot;) % 100} else {return 0}</params>
+                            <params>return value % 100;</params>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>grpsum[&quot;{$CUSTOMER}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
+                        <key>grpsum[&quot;{$PROPERTY_HOST_GROUP}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
                     </master_item>
                     <triggers>
                         <trigger>
                             <expression>{min({$SNS})}=1</expression>
-                            <name>1 router down for {$CUSTOMER}</name>
-                            <opdata>{ITEM.LASTVALUE1} for {$CUSTOMER}</opdata>
+                            <name>1 router down</name>
+                            <priority>WARNING</priority>
+                            <manual_close>YES</manual_close>
+                            <dependencies>
+                                <dependency>
+                                    <name>1 switch down</name>
+                                    <expression>{calc:down[switch].min({$SNS})}=1</expression>
+                                </dependency>
+                            </dependencies>
+                        </trigger>
+                        <trigger>
+                            <expression>1&lt;{min({$SNS})}</expression>
+                            <name>At least 2 routers down</name>
+                            <opdata>{ITEM.LASTVALUE1}</opdata>
                             <priority>AVERAGE</priority>
                             <manual_close>YES</manual_close>
                             <dependencies>
                                 <dependency>
-                                    <name>1 or more firewalls down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[firewall].min({$SNS})}&gt;0</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>1 switch and 1 router down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[switch].min({$SNS})}=1&#13;
-and&#13;
-{calc:down[router].min({$SNS})}=1</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>More than 1 router down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[router].min({$SNS})}&gt;1</expression>
+                                    <name>1 switch down</name>
+                                    <expression>{calc:down[switch].min({$SNS})}=1</expression>
                                 </dependency>
                             </dependencies>
-                            <tags>
-                                <tag>
-                                    <tag>router</tag>
-                                </tag>
-                            </tags>
-                        </trigger>
-                        <trigger>
-                            <expression>{min({$SNS})}&gt;1</expression>
-                            <name>More than 1 router down for {$CUSTOMER}</name>
-                            <opdata>{ITEM.LASTVALUE1} for {$CUSTOMER}</opdata>
-                            <priority>HIGH</priority>
-                            <manual_close>YES</manual_close>
-                            <dependencies>
-                                <dependency>
-                                    <name>1 or more firewalls down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[firewall].min({$SNS})}&gt;0</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>More than 1 router and more than 1 switch down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[switch].min({$SNS})}&gt;1&#13;
-and&#13;
-{calc:down[router].min({$SNS})}&gt;1</expression>
-                                </dependency>
-                            </dependencies>
-                            <tags>
-                                <tag>
-                                    <tag>router</tag>
-                                </tag>
-                            </tags>
                         </trigger>
                     </triggers>
                 </item>
@@ -651,129 +545,106 @@ and&#13;
                     <units>!switch(es) down</units>
                     <applications>
                         <application>
-                            <name>Device down dummy</name>
+                            <name>Device down switch</name>
                         </application>
                     </applications>
                     <preprocessing>
                         <step>
                             <type>JAVASCRIPT</type>
-                            <params>if (value &gt; 99) {return value.replace(/..$/,&quot;&quot;) % 1000} else {return 0}</params>
+                            <params>if (value &gt; 99) {return value.replace(/..$/,&quot;&quot;) % 100} else {return 0}</params>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>grpsum[&quot;{$CUSTOMER}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
+                        <key>grpsum[&quot;{$PROPERTY_HOST_GROUP}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
                     </master_item>
                     <triggers>
                         <trigger>
                             <expression>{min({$SNS})}=1</expression>
-                            <name>1 switch down for {$CUSTOMER}</name>
-                            <opdata>{ITEM.LASTVALUE1} for {$CUSTOMER}</opdata>
+                            <name>1 switch down</name>
                             <priority>AVERAGE</priority>
                             <manual_close>YES</manual_close>
                             <dependencies>
                                 <dependency>
-                                    <name>1 or more firewalls down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[firewall].min({$SNS})}&gt;0</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>1 switch and 1 router down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[switch].min({$SNS})}=1&#13;
-and&#13;
-{calc:down[router].min({$SNS})}=1</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>More than 1 switch down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[switch].min({$SNS})}&gt;1</expression>
+                                    <name>1 core switch down</name>
+                                    <expression>{calc:down[core].min({$SNS})}=1</expression>
                                 </dependency>
                             </dependencies>
-                            <tags>
-                                <tag>
-                                    <tag>switch</tag>
-                                </tag>
-                            </tags>
                         </trigger>
                         <trigger>
-                            <expression>{min({$SNS})}&gt;1</expression>
-                            <name>More than 1 switch down for {$CUSTOMER}</name>
-                            <opdata>{ITEM.LASTVALUE1} for {$CUSTOMER}</opdata>
-                            <priority>HIGH</priority>
+                            <expression>1&lt;{min({$SNS})}</expression>
+                            <name>At least 2 switches down</name>
+                            <opdata>{ITEM.LASTVALUE1}</opdata>
+                            <priority>AVERAGE</priority>
                             <manual_close>YES</manual_close>
                             <dependencies>
                                 <dependency>
-                                    <name>1 or more firewalls down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[firewall].min({$SNS})}&gt;0</expression>
-                                </dependency>
-                                <dependency>
-                                    <name>More than 1 router and more than 1 switch down for {$CUSTOMER}</name>
-                                    <expression>{calc:down[switch].min({$SNS})}&gt;1&#13;
-and&#13;
-{calc:down[router].min({$SNS})}&gt;1</expression>
+                                    <name>1 core switch down</name>
+                                    <expression>{calc:down[core].min({$SNS})}=1</expression>
                                 </dependency>
                             </dependencies>
-                            <tags>
-                                <tag>
-                                    <tag>switch</tag>
-                                </tag>
-                            </tags>
                         </trigger>
                     </triggers>
                 </item>
                 <item>
-                    <name>Status of flapping[agents]</name>
+                    <name>Status of flapped[core]</name>
                     <type>CALCULATED</type>
-                    <key>flapped[agents]</key>
-                    <units>!time(s) has flapped</units>
-                    <params>count(&quot;changes[agent]&quot;,{$FLAP})</params>
+                    <key>flapped[core]</key>
+                    <delay>{$RD.STTS}</delay>
+                    <units>!time(s) core switch has flapped</units>
+                    <params>count(&quot;changes[core]&quot;,{$FLAP})</params>
                     <applications>
                         <application>
-                            <name>Status of flapping</name>
+                            <name>Status of flapped core switch</name>
                         </application>
                     </applications>
                 </item>
                 <item>
-                    <name>Status of flapping[firewalls]</name>
+                    <name>Status of flapped[firewall]</name>
                     <type>CALCULATED</type>
-                    <key>flapped[firewalls]</key>
-                    <units>!time(s) has flapped</units>
+                    <key>flapped[firewall]</key>
+                    <delay>{$RD.STTS}</delay>
+                    <units>!time(s) firewall has flapped</units>
                     <params>count(&quot;changes[firewall]&quot;,{$FLAP})</params>
                     <applications>
                         <application>
-                            <name>Status of flapping</name>
+                            <name>Status of flapped firewall</name>
                         </application>
                     </applications>
                 </item>
                 <item>
-                    <name>Status of flapping[routers]</name>
+                    <name>Status of flapped[router]</name>
                     <type>CALCULATED</type>
-                    <key>flapped[routers]</key>
-                    <units>!time(s) has flapped</units>
+                    <key>flapped[router]</key>
+                    <delay>{$RD.STTS}</delay>
+                    <units>!time(s) router has flapped</units>
                     <params>count(&quot;changes[router]&quot;,{$FLAP})</params>
                     <applications>
                         <application>
-                            <name>Status of flapping</name>
+                            <name>Status of flapped router</name>
                         </application>
                     </applications>
                 </item>
                 <item>
-                    <name>Status of flapping[switches]</name>
+                    <name>Status of flapped[switch]</name>
                     <type>CALCULATED</type>
-                    <key>flapped[switches]</key>
-                    <units>!time(s) has flapped</units>
+                    <key>flapped[switch]</key>
+                    <delay>{$RD.STTS}</delay>
+                    <units>!time(s) switch has flapped</units>
                     <params>count(&quot;changes[switch]&quot;,{$FLAP})</params>
                     <applications>
                         <application>
-                            <name>Status of flapping</name>
+                            <name>Status of flapped switch</name>
                         </application>
                     </applications>
                 </item>
                 <item>
                     <name>Device down aggregated status</name>
                     <type>AGGREGATE</type>
-                    <key>grpsum[&quot;{$CUSTOMER}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
+                    <key>grpsum[&quot;{$PROPERTY_HOST_GROUP}&quot;,&quot;device.status.in.pool&quot;,&quot;last&quot;,&quot;#1&quot;]</key>
                     <delay>{$RD.STTS}</delay>
                     <applications>
                         <application>
-                            <name>Device down dummy</name>
+                            <name>Aggregated item</name>
                         </application>
                     </applications>
                 </item>
@@ -802,14 +673,18 @@ and&#13;
             </items>
             <macros>
                 <macro>
-                    <macro>{$CNT.ZA}</macro>
-                    <value>0</value>
-                    <description>Agents down more than this threshold</description>
-                </macro>
-                <macro>
                     <macro>{$FLAP}</macro>
                     <value>1d</value>
                     <description>The time period to analyze for flapping</description>
+                </macro>
+                <macro>
+                    <macro>{$FLAP.CNT}</macro>
+                    <value>0</value>
+                    <description>How many flapping is not normal</description>
+                </macro>
+                <macro>
+                    <macro>{$RD.STTS}</macro>
+                    <value>10s</value>
                 </macro>
                 <macro>
                     <macro>{$SNS}</macro>
@@ -818,159 +693,38 @@ and&#13;
                 </macro>
             </macros>
         </template>
+        <template>
+            <template>Property passive for Riga Block7</template>
+            <name>Property passive for Riga Block7</name>
+            <groups>
+                <group>
+                    <name>Templates/zProperty</name>
+                </group>
+            </groups>
+            <macros>
+                <macro>
+                    <macro>{$PROPERTY_HOST_GROUP}</macro>
+                    <value>Riga/Block7</value>
+                </macro>
+            </macros>
+        </template>
     </templates>
     <triggers>
         <trigger>
-            <expression>{calc:down[switch].min({$SNS})}=1&#13;
-and&#13;
-{calc:down[router].min({$SNS})}=1</expression>
-            <name>1 switch and 1 router down for {$CUSTOMER}</name>
-            <opdata>{ITEM.LASTVALUE1}, {ITEM.LASTVALUE1} for {$CUSTOMER}</opdata>
-            <priority>AVERAGE</priority>
+            <expression>{calc:flapped[router].min({$FLAP})}&gt;{$FLAP.CNT}&#13;
+or&#13;
+{calc:flapped[switch].min({$FLAP})}&gt;{$FLAP.CNT}&#13;
+or&#13;
+{calc:flapped[core].min({$FLAP})}&gt;{$FLAP.CNT}&#13;
+or&#13;
+{calc:flapped[firewall].min({$FLAP})}&gt;{$FLAP.CNT}</expression>
+            <name>{ITEM.VALUE1}, {ITEM.VALUE2}, {ITEM.VALUE3}, {ITEM.VALUE4}</name>
+            <opdata>{ITEM.LASTVALUE1}, {ITEM.LASTVALUE2}, {ITEM.LASTVALUE3}, {ITEM.LASTVALUE4}</opdata>
+            <priority>INFO</priority>
             <manual_close>YES</manual_close>
-            <dependencies>
-                <dependency>
-                    <name>1 or more firewalls down for {$CUSTOMER}</name>
-                    <expression>{calc:down[firewall].min({$SNS})}&gt;0</expression>
-                </dependency>
-                <dependency>
-                    <name>More than 1 router and more than 1 switch down for {$CUSTOMER}</name>
-                    <expression>{calc:down[switch].min({$SNS})}&gt;1&#13;
-and&#13;
-{calc:down[router].min({$SNS})}&gt;1</expression>
-                </dependency>
-            </dependencies>
-            <tags>
-                <tag>
-                    <tag>router</tag>
-                </tag>
-                <tag>
-                    <tag>switch</tag>
-                </tag>
-            </tags>
-        </trigger>
-        <trigger>
-            <expression>{calc:down[switch].min({$SNS})}&gt;1&#13;
-and&#13;
-{calc:down[router].min({$SNS})}&gt;1</expression>
-            <name>More than 1 router and more than 1 switch down for {$CUSTOMER}</name>
-            <opdata>{ITEM.LASTVALUE1}, {ITEM.LASTVALUE1} for {$CUSTOMER}</opdata>
-            <priority>HIGH</priority>
-            <manual_close>YES</manual_close>
-            <dependencies>
-                <dependency>
-                    <name>1 or more firewalls down for {$CUSTOMER}</name>
-                    <expression>{calc:down[firewall].min({$SNS})}&gt;0</expression>
-                </dependency>
-            </dependencies>
-            <tags>
-                <tag>
-                    <tag>router</tag>
-                </tag>
-                <tag>
-                    <tag>switch</tag>
-                </tag>
-            </tags>
         </trigger>
     </triggers>
-    <graphs>
-        <graph>
-            <name>Devices down 30</name>
-            <yaxismax>30</yaxismax>
-            <type>STACKED</type>
-            <ymin_type_1>FIXED</ymin_type_1>
-            <ymax_type_1>FIXED</ymax_type_1>
-            <graph_items>
-                <graph_item>
-                    <sortorder>1</sortorder>
-                    <color>1A7C11</color>
-                    <item>
-                        <host>calc</host>
-                        <key>down[agent]</key>
-                    </item>
-                </graph_item>
-                <graph_item>
-                    <sortorder>2</sortorder>
-                    <color>F63100</color>
-                    <item>
-                        <host>calc</host>
-                        <key>down[firewall]</key>
-                    </item>
-                </graph_item>
-                <graph_item>
-                    <sortorder>3</sortorder>
-                    <color>2774A4</color>
-                    <item>
-                        <host>calc</host>
-                        <key>down[router]</key>
-                    </item>
-                </graph_item>
-                <graph_item>
-                    <sortorder>4</sortorder>
-                    <color>A54F10</color>
-                    <item>
-                        <host>calc</host>
-                        <key>down[switch]</key>
-                    </item>
-                </graph_item>
-            </graph_items>
-        </graph>
-        <graph>
-            <name>Devices down 300</name>
-            <yaxismax>300</yaxismax>
-            <type>STACKED</type>
-            <ymin_type_1>FIXED</ymin_type_1>
-            <ymax_type_1>FIXED</ymax_type_1>
-            <graph_items>
-                <graph_item>
-                    <sortorder>1</sortorder>
-                    <color>1A7C11</color>
-                    <item>
-                        <host>calc</host>
-                        <key>down[agent]</key>
-                    </item>
-                </graph_item>
-                <graph_item>
-                    <sortorder>2</sortorder>
-                    <color>F63100</color>
-                    <item>
-                        <host>calc</host>
-                        <key>down[firewall]</key>
-                    </item>
-                </graph_item>
-                <graph_item>
-                    <sortorder>3</sortorder>
-                    <color>2774A4</color>
-                    <item>
-                        <host>calc</host>
-                        <key>down[router]</key>
-                    </item>
-                </graph_item>
-                <graph_item>
-                    <sortorder>4</sortorder>
-                    <color>A54F10</color>
-                    <item>
-                        <host>calc</host>
-                        <key>down[switch]</key>
-                    </item>
-                </graph_item>
-            </graph_items>
-        </graph>
-    </graphs>
     <value_maps>
-        <value_map>
-            <name>Service state</name>
-            <mappings>
-                <mapping>
-                    <value>0</value>
-                    <newvalue>Down</newvalue>
-                </mapping>
-                <mapping>
-                    <value>1</value>
-                    <newvalue>Up</newvalue>
-                </mapping>
-            </mappings>
-        </value_map>
         <value_map>
             <name>zabbix.host.available</name>
             <mappings>
@@ -985,15 +739,6 @@ and&#13;
                 <mapping>
                     <value>2</value>
                     <newvalue>unknown</newvalue>
-                </mapping>
-            </mappings>
-        </value_map>
-        <value_map>
-            <name>Zabbix agent ping status</name>
-            <mappings>
-                <mapping>
-                    <value>1</value>
-                    <newvalue>Up</newvalue>
                 </mapping>
             </mappings>
         </value_map>
