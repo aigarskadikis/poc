@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-06-11T18:44:50Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Samba UNC smb Windows PowerShell Get-SmbMapping</template>
+            <name>Samba UNC smb Windows PowerShell Get-SmbMapping</name>
+            <description>UserParameter=unc.space.free[*],(dir $1: &gt; nul 2&gt;&amp;1 || net use $1: $2 &gt; nul 2&gt;&amp;1) &amp;&amp; PowerShell -command &quot;(Get-PSDrive $1).Free&quot;&#13;
+UserParameter=unc.space.used[*],(dir $1: &gt; nul 2&gt;&amp;1 || net use $1: $2 &gt; nul 2&gt;&amp;1) &amp;&amp; PowerShell -command &quot;(Get-PSDrive $1).Used&quot;</description>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>PSDrive</name>
+                </application>
+                <application>
+                    <name>UNC path space free</name>
+                </application>
+                <application>
+                    <name>UNC path space used</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Local Remote Path</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.run[&quot;{$LOCAL.REMOTE.PATH}&quot;]</key>
+                    <delay>15s</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>PSDrive</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// remove ':' from 'LocalPath' field
+
+var jsonData = JSON.parse(value);
+
+lenghtOfArray=jsonData.length;
+for(var row = 0; row &lt; lenghtOfArray; row++){
+jsonData[row].LocalPath = jsonData[row].LocalPath
+.replace(/:/g,&quot;&quot;);
+}
+
+return JSON.stringify(jsonData);</params>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Discover drive letter and path</name>
+                    <type>DEPENDENT</type>
+                    <key>letter.and.path</key>
+                    <delay>0</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Free space on {#UNC}</name>
+                            <type>DEPENDENT</type>
+                            <key>free.space[{#L},{#UNC}]</key>
+                            <delay>0</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>UNC path space free</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$.Free</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>system.run[&quot;(dir {#L}: &gt; nul 2&gt;&amp;1 || net use {#L}: {#UNC} &gt; nul 2&gt;&amp;1) &amp;&amp; powershell -command \&quot;get-psdrive {#L} | {$JSON.OUT}\&quot;&quot;]</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>check {#UNC}</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>system.run[&quot;(dir {#L}: &gt; nul 2&gt;&amp;1 || net use {#L}: {#UNC} &gt; nul 2&gt;&amp;1) &amp;&amp; powershell -command \&quot;get-psdrive {#L} | {$JSON.OUT}\&quot;&quot;]</key>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Used space on {#UNC}</name>
+                            <type>DEPENDENT</type>
+                            <key>used.space[{#L},{#UNC}]</key>
+                            <delay>0</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>UNC path space used</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$.Used</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>system.run[&quot;(dir {#L}: &gt; nul 2&gt;&amp;1 || net use {#L}: {#UNC} &gt; nul 2&gt;&amp;1) &amp;&amp; powershell -command \&quot;get-psdrive {#L} | {$JSON.OUT}\&quot;&quot;]</key>
+                            </master_item>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>system.run[&quot;{$LOCAL.REMOTE.PATH}&quot;]</key>
+                    </master_item>
+                    <lld_macro_paths>
+                        <lld_macro_path>
+                            <lld_macro>{#L}</lld_macro>
+                            <path>$.['LocalPath']</path>
+                        </lld_macro_path>
+                        <lld_macro_path>
+                            <lld_macro>{#UNC}</lld_macro>
+                            <path>$.['RemotePath']</path>
+                        </lld_macro_path>
+                    </lld_macro_paths>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$JSON.OUT}</macro>
+                    <value>select Name,DisplayRoot,Free,Used | ConvertTo-Json</value>
+                </macro>
+                <macro>
+                    <macro>{$LOCAL.REMOTE.PATH}</macro>
+                    <value>PowerShell -nologo -command &quot;Get-SmbMapping | select LocalPath,RemotePath | ConvertTo-Json&quot;</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
