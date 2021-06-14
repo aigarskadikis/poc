@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>4.0</version>
-    <date>2021-06-14T16:42:12Z</date>
+    <date>2021-06-14T16:55:05Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -9,8 +9,8 @@
     </groups>
     <templates>
         <template>
-            <template>Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s</template>
-            <name>Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s</name>
+            <template>Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s Zabbix 4.0</template>
+            <name>Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s Zabbix 4.0</name>
             <description/>
             <groups>
                 <group>
@@ -132,7 +132,7 @@
                             <snmp_oid/>
                             <key>instance[{#K.NAME},{#INSTANCE}]</key>
                             <delay>0</delay>
-                            <history>90d</history>
+                            <history>0</history>
                             <trends>0</trends>
                             <status>0</status>
                             <value_type>4</value_type>
@@ -265,11 +265,11 @@
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>value[{#INSTANCE},1]</name>
+                            <name>{#INSTANCE} value</name>
                             <type>18</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>value[{#INSTANCE},1]</key>
+                            <key>value[{#INSTANCE}]</key>
                             <delay>0</delay>
                             <history>90d</history>
                             <trends>365d</trends>
@@ -334,7 +334,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s:value[{#INSTANCE},1].min({$PRO.SNS})}=0</expression>
+                            <expression>{Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s Zabbix 4.0:value[{#INSTANCE}].min({$PRO.SNS})}=0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>{#INSTANCE} received 0 for the last {$PRO.SNS}</name>
