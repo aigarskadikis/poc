@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>4.0</version>
-    <date>2021-06-14T16:34:27Z</date>
+    <date>2021-06-14T16:42:12Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -9,8 +9,8 @@
     </groups>
     <templates>
         <template>
-            <template>Prometheus instant vector monitoring JSON zabbix_js</template>
-            <name>Prometheus instant vector monitoring JSON zabbix_js</name>
+            <template>Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s</template>
+            <name>Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s</name>
             <description/>
             <groups>
                 <group>
@@ -19,12 +19,6 @@
             </groups>
             <applications>
                 <application>
-                    <name>Prometheus initiator</name>
-                </application>
-                <application>
-                    <name>Prometheus input JSON</name>
-                </application>
-                <application>
                     <name>Prometheus metric array</name>
                 </application>
                 <application>
@@ -32,6 +26,9 @@
                 </application>
                 <application>
                     <name>Prometheus metric time</name>
+                </application>
+                <application>
+                    <name>Zabbix raw items</name>
                 </application>
             </applications>
             <items>
@@ -42,7 +39,7 @@
                     <snmp_oid/>
                     <key>data.result.json</key>
                     <delay>30s</delay>
-                    <history>90d</history>
+                    <history>0</history>
                     <trends>0</trends>
                     <status>0</status>
                     <value_type>4</value_type>
@@ -67,7 +64,7 @@
                     <inventory_link>0</inventory_link>
                     <applications>
                         <application>
-                            <name>Prometheus input JSON</name>
+                            <name>Zabbix raw items</name>
                         </application>
                     </applications>
                     <valuemap/>
@@ -97,7 +94,7 @@
             </items>
             <discovery_rules>
                 <discovery_rule>
-                    <name>data.result.lld</name>
+                    <name>Discover k8s instances</name>
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
@@ -337,7 +334,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Prometheus instant vector monitoring JSON zabbix_js:value[{#INSTANCE},1].min({$PRO.SNS})}=0</expression>
+                            <expression>{Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s:value[{#INSTANCE},1].min({$PRO.SNS})}=0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>{#INSTANCE} received 0 for the last {$PRO.SNS}</name>
@@ -379,7 +376,7 @@
             <macros>
                 <macro>
                     <macro>{$PATH.FILE}</macro>
-                    <value>pro40.json</value>
+                    <value/>
                 </macro>
                 <macro>
                     <macro>{$PRO.CONN}</macro>
