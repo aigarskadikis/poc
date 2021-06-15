@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
-    <version>4.0</version>
-    <date>2021-06-14T16:55:05Z</date>
+    <version>4.2</version>
+    <date>2021-06-15T12:53:40Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -72,7 +72,7 @@
                     <preprocessing/>
                     <jmx_endpoint/>
                     <timeout>3s</timeout>
-                    <url>{$PRO.TRANSPORT}://{$PRO.CONN}:{$PRO.PORT}/{$PATH.FILE}</url>
+                    <url>{$PRO.TRANSPORT}://{HOST.CONN}:{$PRO.PORT}/{$PATH.FILE}</url>
                     <query_fields/>
                     <posts/>
                     <status_codes>200</status_codes>
@@ -98,7 +98,7 @@
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>prometheus40.sh[{$PRO.TRANSPORT},{$PRO.CONN},{$PRO.PORT},{$PATH.FILE}]</key>
+                    <key>prometheus40.sh[{$PRO.TRANSPORT},{HOST.CONN},{$PRO.PORT},{$PATH.FILE}]</key>
                     <delay>1d</delay>
                     <status>0</status>
                     <allowed_hosts/>
@@ -166,6 +166,8 @@
                                 <step>
                                     <type>12</type>
                                     <params>$.data.result.[?(@.metric.instance == &quot;{#INSTANCE}&quot;)].value</params>
+                                    <error_handler>0</error_handler>
+                                    <error_handler_params/>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -233,11 +235,15 @@
                                 <step>
                                     <type>12</type>
                                     <params>$.[0][0]</params>
+                                    <error_handler>0</error_handler>
+                                    <error_handler_params/>
                                 </step>
                                 <step>
                                     <type>5</type>
                                     <params>^(\d+)
 \1</params>
+                                    <error_handler>0</error_handler>
+                                    <error_handler_params/>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -305,6 +311,8 @@
                                 <step>
                                     <type>12</type>
                                     <params>$.[0][1]</params>
+                                    <error_handler>0</error_handler>
+                                    <error_handler_params/>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -370,21 +378,20 @@
                     <ssl_key_password/>
                     <verify_peer>0</verify_peer>
                     <verify_host>0</verify_host>
+                    <lld_macro_paths/>
+                    <preprocessing/>
+                    <master_item/>
                 </discovery_rule>
             </discovery_rules>
             <httptests/>
             <macros>
                 <macro>
                     <macro>{$PATH.FILE}</macro>
-                    <value/>
-                </macro>
-                <macro>
-                    <macro>{$PRO.CONN}</macro>
-                    <value>127.0.0.1</value>
+                    <value>api/v1/query?query=probe_success</value>
                 </macro>
                 <macro>
                     <macro>{$PRO.PORT}</macro>
-                    <value>80</value>
+                    <value>40000</value>
                 </macro>
                 <macro>
                     <macro>{$PRO.SNS}</macro>
@@ -397,6 +404,7 @@
             </macros>
             <templates/>
             <screens/>
+            <tags/>
         </template>
     </templates>
 </zabbix_export>
