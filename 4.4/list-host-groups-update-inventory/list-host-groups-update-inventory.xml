@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>4.4</version>
+    <date>2021-06-17T13:47:01Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>List exisitng host groups and install them as an inventory value Zabbix API JavaScript</template>
+            <name>List exisitng host groups and install them as an inventory value Zabbix API JavaScript</name>
+            <description>Before continue, install global macros:&#13;
+{$ZABBIX_URL}&#13;
+{$Z_API_SESSIONID}&#13;
+&#13;
+For example if we access the zabbix under zabbix.contoso.com, then value of &#13;
+{$ZABBIX_URL} = http://zabbix.contoso.com/&#13;
+&#13;
+To generate a value for {$Z_API_SESSIONID} use:&#13;
+curl -s -i -X POST -H 'Content-Type: application/json-rpc' -d '{&#13;
+&quot;jsonrpc&quot;: &quot;2.0&quot;,&#13;
+&quot;method&quot;: &quot;user.login&quot;,&#13;
+&quot;params&quot;: {&#13;
+&quot;user&quot;: &quot;Admin&quot;,&#13;
+&quot;password&quot;: &quot;zabbix&quot;&#13;
+},&#13;
+&quot;id&quot;: 1,&#13;
+&quot;auth&quot;: null&#13;
+}' http://zabbix.contoso.com/api_jsonrpc.php | grep -E -o &quot;([0-9a-f]{32,32})&quot;&#13;
+&#13;
+For the host object If inventory mode is automatic, then the value will be available automatically behind:&#13;
+{INVENTORY.SITE.ADDRESS.C1}</description>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <name>hostid.of.current.host</name>
+                    <type>HTTP_AGENT</type>
+                    <key>hostid.of.current.host</key>
+                    <delay>1d</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <inventory_link>SITE_ADDRESS_C</inventory_link>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.result[0].hostid</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var req = new CurlHttpRequest();
+
+// Zabbix API
+var json_rpc='{$ZABBIX_URL}/api_jsonrpc.php'
+
+// lib curl header
+req.AddHeader('Content-Type: application/json');
+
+// query all host group names which belongs to hostid
+var hostgroups = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;hostgroup.get&quot;,&quot;params&quot;:{&quot;output&quot;:&quot;extend&quot;,&quot;hostids&quot;:['+value+']},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;:1}'
+)).result;
+
+// count how many host groups were found
+var lenghtOfArray=hostgroups.length;
+
+// reset the variable which will hold the answer - all host groups together in one line
+var allHostGroupsCSV = &quot;&quot;;
+
+// start a loop to go through array elements
+for(var row = 0; row &lt; lenghtOfArray; row++){
+allHostGroupsCSV += hostgroups[row].name + &quot;, &quot;;
+}
+
+// Delete last comma at the end because no additional host groups will be added
+allHostGroupsCSV = allHostGroupsCSV.replace(/, $/,&quot;&quot;);
+
+// return the answer
+return allHostGroupsCSV;</params>
+                        </step>
+                    </preprocessing>
+                    <url>{$ZABBIX_URL}/api_jsonrpc.php</url>
+                    <posts>{&#13;
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,&#13;
+    &quot;method&quot;: &quot;host.get&quot;,&#13;
+    &quot;params&quot;: {&#13;
+        &quot;output&quot;:[&quot;hostid&quot;],&#13;
+        &quot;filter&quot;: {&#13;
+            &quot;host&quot;: [&#13;
+                &quot;{HOST.HOST}&quot;&#13;
+            ]&#13;
+        }&#13;
+    },&#13;
+    &quot;auth&quot;: &quot;{$Z_API_SESSIONID}&quot;,&#13;
+    &quot;id&quot;: 1&#13;
+}</posts>
+                    <post_type>JSON</post_type>
+                </item>
+            </items>
+        </template>
+    </templates>
+</zabbix_export>

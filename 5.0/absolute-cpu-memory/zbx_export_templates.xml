@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-06-29T11:21:58Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>absolute CPU and memory usage per user eats</template>
+            <name>absolute CPU and memory usage per user eats</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>CPU</name>
+                </application>
+                <application>
+                    <name>CPU absolute</name>
+                </application>
+                <application>
+                    <name>Memory</name>
+                </application>
+                <application>
+                    <name>Table Size</name>
+                </application>
+                <application>
+                    <name>Zabbix server</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Maximum number of opened files</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>kernel.maxfiles</key>
+                    <delay>1h</delay>
+                    <history>1w</history>
+                    <description>It could be increased by using sysctrl utility or modifying file /etc/sysctl.conf.</description>
+                    <triggers>
+                        <trigger>
+                            <expression>{last(0)}&lt;1024</expression>
+                            <name>Configured max number of opened files is too low on {HOST.NAME}</name>
+                            <priority>INFO</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Maximum number of processes</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>kernel.maxproc</key>
+                    <delay>1h</delay>
+                    <history>1w</history>
+                    <description>It could be increased by using sysctrl utility or modifying file /etc/sysctl.conf.</description>
+                    <triggers>
+                        <trigger>
+                            <expression>{last(0)}&lt;256</expression>
+                            <name>Configured max number of processes is too low on {HOST.NAME}</name>
+                            <priority>INFO</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>proc.cpu.util</name>
+                    <key>proc.cpu.util</key>
+                    <delay>0;s2</delay>
+                    <value_type>FLOAT</value_type>
+                    <applications>
+                        <application>
+                            <name>CPU</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Number of running processes</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>proc.num[,,run]</key>
+                    <history>1w</history>
+                    <description>Number of processes in running state.</description>
+                </item>
+                <item>
+                    <name>Number of processes</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>proc.num[]</key>
+                    <history>1w</history>
+                    <description>Total number of processes in any state.</description>
+                    <triggers>
+                        <trigger>
+                            <expression>{avg(5m)}&gt;{$PROC.NUM}</expression>
+                            <name>More than {$PROC.NUM} processes on {HOST.NAME}</name>
+                            <opdata>{ITEM.LASTVALUE1} processes on {HOST.NAME}</opdata>
+                            <priority>HIGH</priority>
+                            <description>ps auxww | tee /var/log/zabbix/ps.auxww.$(date +%Y%m%d%H%M%S).log</description>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Processor load (1 min average per core)</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.cpu.load[percpu,avg1]</key>
+                    <history>1w</history>
+                    <value_type>FLOAT</value_type>
+                    <description>The processor load is calculated as system CPU load divided by number of CPU cores.</description>
+                    <triggers>
+                        <trigger>
+                            <expression>{avg(5m)}&gt;5</expression>
+                            <name>Processor load is too high on {HOST.NAME}</name>
+                            <priority>WARNING</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Processor load (5 min average per core)</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.cpu.load[percpu,avg5]</key>
+                    <history>1w</history>
+                    <value_type>FLOAT</value_type>
+                    <description>The processor load is calculated as system CPU load divided by number of CPU cores.</description>
+                </item>
+                <item>
+                    <name>Processor load (15 min average per core)</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.cpu.load[percpu,avg15]</key>
+                    <history>1w</history>
+                    <value_type>FLOAT</value_type>
+                    <description>The processor load is calculated as system CPU load divided by number of CPU cores.</description>
+                </item>
+                <item>
+                    <name>CPU $2 time</name>
+                    <key>system.cpu.util[,iowait]</key>
+                    <history>1w</history>
+                    <value_type>FLOAT</value_type>
+                    <units>%</units>
+                    <description>Amount of time the CPU has been waiting for I/O to complete.</description>
+                    <triggers>
+                        <trigger>
+                            <expression>{avg(5m)}&gt;20</expression>
+                            <name>Disk I/O is overloaded on {HOST.NAME}</name>
+                            <priority>WARNING</priority>
+                            <description>OS spends significant time waiting for I/O (input/output) operations. It could be indicator of performance issues with storage system.</description>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Additional information about memory stored in INVENTORY.POC.PRIMARY.NOTES</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.run[&quot;ps aux --sort -rss | head -5 | cut -c-150 | awk '{print $4,$2,$6,$11}'&quot;]</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <inventory_link>POC_1_NOTES</inventory_link>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Used swap space</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.swap.size[,used]</key>
+                    <history>1w</history>
+                    <units>B</units>
+                </item>
+                <item>
+                    <name>Used memory</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>vm.memory.size[used]</key>
+                    <history>1w</history>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>User discovery</name>
+                    <key>vfs.file.contents[/etc/passwd]</key>
+                    <delay>1h</delay>
+                    <filter>
+                        <evaltype>OR</evaltype>
+                        <conditions>
+                            <condition>
+                                <macro>{#USER}</macro>
+                                <value>{$USER.MATCHES}</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>proc.cpu.util.absolute.{#USER}</name>
+                            <type>CALCULATED</type>
+                            <key>proc.cpu.util.absolute[{#USER}]</key>
+                            <delay>0;s15</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>%</units>
+                            <params>100/last(&quot;proc.cpu.util&quot;)*last(&quot;proc.cpu.util[,{#USER}]&quot;)</params>
+                            <applications>
+                                <application>
+                                    <name>CPU absolute</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>proc.cpu.util.{#USER}</name>
+                            <key>proc.cpu.util[,{#USER}]</key>
+                            <delay>0;s5</delay>
+                            <value_type>FLOAT</value_type>
+                            <applications>
+                                <application>
+                                    <name>CPU</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Memory used for {#USER} data</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>proc.mem[,{#USER},,,data]</key>
+                            <delay>30s</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Memory used for {#USER} rss</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>proc.mem[,{#USER},,,rss]</key>
+                            <delay>30s</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Memory used for {#USER} swap</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>proc.mem[,{#USER},,,swap]</key>
+                            <delay>30s</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>CPU for {#USER}</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <ymax_type_1>FIXED</ymax_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <drawtype>BOLD_LINE</drawtype>
+                                    <color>000000</color>
+                                    <yaxisside>RIGHT</yaxisside>
+                                    <item>
+                                        <host>absolute CPU and memory usage per user eats</host>
+                                        <key>proc.cpu.util[,{#USER}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>Memory for {#USER}</name>
+                            <yaxismax>1024000000</yaxismax>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <ymax_type_1>FIXED</ymax_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <drawtype>BOLD_LINE</drawtype>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>absolute CPU and memory usage per user eats</host>
+                                        <key>proc.mem[,{#USER},,,rss]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <drawtype>BOLD_LINE</drawtype>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>absolute CPU and memory usage per user eats</host>
+                                        <key>proc.mem[,{#USER},,,swap]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.match(/^[0-9a-zA-Z-]+/gm).join(&quot;\n&quot;);</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var lld = [];
+var lines = value.split(&quot;\n&quot;);
+var lines_num = lines.length;
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+  row[&quot;{#USER}&quot;] = lines[i]
+  lld.push(row);
+}
+return JSON.stringify(lld);
+</params>
+                        </step>
+                    </preprocessing>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$PROC.NUM}</macro>
+                    <value>390</value>
+                </macro>
+                <macro>
+                    <macro>{$USER.MATCHES}</macro>
+                    <value>^(www-data|apache|root|zabbix|z30srv|z40srv|z44srv|z50srv)$</value>
+                </macro>
+            </macros>
+            <screens>
+                <screen>
+                    <name>Absolute CPU</name>
+                    <hsize>1</hsize>
+                    <vsize>1</vsize>
+                    <screen_items>
+                        <screen_item>
+                            <resourcetype>19</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <key>proc.cpu.util.absolute[{#USER}]</key>
+                                <host>absolute CPU and memory usage per user eats</host>
+                            </resource>
+                            <width>450</width>
+                            <height>100</height>
+                            <x>0</x>
+                            <y>0</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>1</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                    </screen_items>
+                </screen>
+                <screen>
+                    <name>CPU usage</name>
+                    <hsize>1</hsize>
+                    <vsize>1</vsize>
+                    <screen_items>
+                        <screen_item>
+                            <resourcetype>20</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>CPU for {#USER}</name>
+                                <host>absolute CPU and memory usage per user eats</host>
+                            </resource>
+                            <width>450</width>
+                            <height>100</height>
+                            <x>0</x>
+                            <y>0</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>1</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                    </screen_items>
+                </screen>
+                <screen>
+                    <name>Memory usage</name>
+                    <hsize>1</hsize>
+                    <vsize>1</vsize>
+                    <screen_items>
+                        <screen_item>
+                            <resourcetype>20</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>Memory for {#USER}</name>
+                                <host>absolute CPU and memory usage per user eats</host>
+                            </resource>
+                            <width>450</width>
+                            <height>100</height>
+                            <x>0</x>
+                            <y>0</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>1</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                    </screen_items>
+                </screen>
+                <screen>
+                    <name>Precious resources</name>
+                    <hsize>2</hsize>
+                    <vsize>2</vsize>
+                    <screen_items>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>CPU usage</name>
+                                <host>absolute CPU and memory usage per user eats</host>
+                            </resource>
+                            <width>640</width>
+                            <height>200</height>
+                            <x>1</x>
+                            <y>0</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>1</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>Memory usage 2</name>
+                                <host>absolute CPU and memory usage per user eats</host>
+                            </resource>
+                            <width>640</width>
+                            <height>200</height>
+                            <x>0</x>
+                            <y>1</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>1</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                    </screen_items>
+                </screen>
+            </screens>
+        </template>
+    </templates>
+    <triggers>
+        <trigger>
+            <expression>{absolute CPU and memory usage per user eats:vm.memory.size[used].last()}&gt;1G or {absolute CPU and memory usage per user eats:system.run[&quot;ps aux --sort -rss | head -5 | cut -c-150 | awk '{print $4,$2,$6,$11}'&quot;].str()}=2</expression>
+            <name>Memory used with details</name>
+            <priority>AVERAGE</priority>
+            <manual_close>YES</manual_close>
+        </trigger>
+    </triggers>
+    <graphs>
+        <graph>
+            <name>CPU usage</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>B71C1C</color>
+                    <item>
+                        <host>absolute CPU and memory usage per user eats</host>
+                        <key>system.cpu.load[percpu,avg1]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>EF5350</color>
+                    <item>
+                        <host>absolute CPU and memory usage per user eats</host>
+                        <key>system.cpu.load[percpu,avg5]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>FFCDD2</color>
+                    <item>
+                        <host>absolute CPU and memory usage per user eats</host>
+                        <key>system.cpu.load[percpu,avg15]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>4</sortorder>
+                    <color>0F0F0F</color>
+                    <yaxisside>RIGHT</yaxisside>
+                    <item>
+                        <host>absolute CPU and memory usage per user eats</host>
+                        <key>proc.num[]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>Memory usage 2</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <color>BF00FF</color>
+                    <item>
+                        <host>absolute CPU and memory usage per user eats</host>
+                        <key>vm.memory.size[used]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>F63100</color>
+                    <item>
+                        <host>absolute CPU and memory usage per user eats</host>
+                        <key>system.swap.size[,used]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+    </graphs>
+</zabbix_export>

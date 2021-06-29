@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>4.2</version>
+    <date>2021-06-17T12:54:36Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>List exisitng host groups and install them as an inventory value Zabbix API JavaScript</template>
+            <name>List exisitng host groups and install them as an inventory value Zabbix API JavaScript</name>
+            <description/>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications/>
+            <items>
+                <item>
+                    <name>hostid.of.current.host</name>
+                    <type>19</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>hostid.of.current.host</key>
+                    <delay>30s</delay>
+                    <history>90d</history>
+                    <trends>0</trends>
+                    <status>0</status>
+                    <value_type>4</value_type>
+                    <allowed_hosts/>
+                    <units/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <description/>
+                    <inventory_link>50</inventory_link>
+                    <applications/>
+                    <valuemap/>
+                    <logtimefmt/>
+                    <preprocessing>
+                        <step>
+                            <type>12</type>
+                            <params>$.result[0].hostid</params>
+                            <error_handler>0</error_handler>
+                            <error_handler_params/>
+                        </step>
+                        <step>
+                            <type>21</type>
+                            <params>var req = new CurlHttpRequest();
+
+// Zabbix API
+var json_rpc='{$ZABBIX_URL}/api_jsonrpc.php'
+
+// lib curl header
+req.AddHeader('Content-Type: application/json');
+
+// query all host group names which belongs to hostid
+var hostgroups = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;hostgroup.get&quot;,&quot;params&quot;:{&quot;output&quot;:&quot;extend&quot;,&quot;hostids&quot;:['+value+']},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;:1}'
+)).result;
+
+// count how many host groups were found
+var lenghtOfArray=hostgroups.length;
+
+// reset the variable which will hold the answer - all host groups together in one line
+var allHostGroupsCSV = &quot;&quot;;
+
+// start a loop to go through array elements
+for(var row = 0; row &lt; lenghtOfArray; row++){
+allHostGroupsCSV += hostgroups[row].name + &quot;, &quot;;
+}
+
+// Delete last comma at the end because no additional host groups will be added
+allHostGroupsCSV = allHostGroupsCSV.replace(/, $/,&quot;&quot;);
+
+// return the answer
+return allHostGroupsCSV;</params>
+                            <error_handler>0</error_handler>
+                            <error_handler_params/>
+                        </step>
+                    </preprocessing>
+                    <jmx_endpoint/>
+                    <timeout>3s</timeout>
+                    <url>{$ZABBIX_URL}/api_jsonrpc.php</url>
+                    <query_fields/>
+                    <posts>{&#13;
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,&#13;
+    &quot;method&quot;: &quot;host.get&quot;,&#13;
+    &quot;params&quot;: {&#13;
+        &quot;output&quot;:[&quot;hostid&quot;],&#13;
+        &quot;filter&quot;: {&#13;
+            &quot;host&quot;: [&#13;
+                &quot;{HOST.HOST}&quot;&#13;
+            ]&#13;
+        }&#13;
+    },&#13;
+    &quot;auth&quot;: &quot;{$Z_API_SESSIONID}&quot;,&#13;
+    &quot;id&quot;: 1&#13;
+}</posts>
+                    <status_codes>200</status_codes>
+                    <follow_redirects>1</follow_redirects>
+                    <post_type>2</post_type>
+                    <http_proxy/>
+                    <headers/>
+                    <retrieve_mode>0</retrieve_mode>
+                    <request_method>0</request_method>
+                    <output_format>0</output_format>
+                    <allow_traps>0</allow_traps>
+                    <ssl_cert_file/>
+                    <ssl_key_file/>
+                    <ssl_key_password/>
+                    <verify_peer>0</verify_peer>
+                    <verify_host>0</verify_host>
+                    <master_item/>
+                </item>
+            </items>
+            <discovery_rules/>
+            <httptests/>
+            <macros/>
+            <templates/>
+            <screens/>
+            <tags/>
+        </template>
+    </templates>
+</zabbix_export>
