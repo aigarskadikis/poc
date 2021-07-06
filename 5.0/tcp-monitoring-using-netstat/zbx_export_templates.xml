@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-07-06T10:20:16Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>TCP port monitoring using netstat</template>
+            <name>TCP port monitoring using netstat</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>lab</name>
+                </application>
+                <application>
+                    <name>TCP port</name>
+                </application>
+                <application>
+                    <name>Zabbix raw items</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>run netstat command</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.run[&quot;netstat -tln&quot;]</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Listening TCP port discovery</name>
+                    <type>DEPENDENT</type>
+                    <key>tcp.ports.listen</key>
+                    <delay>0</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#PORT}</macro>
+                                <value>{$TCP.PORT.NOT_MATCHES}</value>
+                                <operator>NOT_MATCHES_REGEX</operator>
+                                <formulaid>A</formulaid>
+                            </condition>
+                            <condition>
+                                <macro>{#PORT}</macro>
+                                <value>{$TCP.PORT.MATCHES}</value>
+                                <formulaid>B</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <description>Install UserParameter for zabbix-agent:&#13;
+echo 'UserParameter=tcp.listening.ports,netstat -tln' | sudo tee /etc/zabbix/zabbix_agentd.d/tcp.listening.ports.conf&#13;
+&#13;
+Install UserParameter for zabbix-agent2:&#13;
+echo 'UserParameter=tcp.listening.ports,netstat -tln' | sudo tee /etc/zabbix/zabbix_agent2.d/ss.tcp.listening.conf&#13;
+&#13;
+Restart Zabbix agent&#13;
+systemctl restart zabbix-agent&#13;
+systemctl restart zabbix-agent2&#13;
+&#13;
+In this section replace Key:&#13;
+system.run[&quot;ss --tcp --listening --numeric&quot;]&#13;
+with:&#13;
+netstat.tcp.listening</description>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Port {#PORT} is listening</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>net.tcp.listen[{#PORT}]</key>
+                            <delay>5m</delay>
+                            <applications>
+                                <application>
+                                    <name>TCP port</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Service state</name>
+                            </valuemap>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{max(#5)}=0</expression>
+                                    <name>Port {#PORT} is down for some time</name>
+                                    <priority>AVERAGE</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>system.run[&quot;netstat -tln&quot;]</key>
+                    </master_item>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var lld = [];
+var lines = value.match(/:[0-9]+ /gm).reduce(function(a,b){if(a.indexOf(b) &lt; 0)a.push(b);return a;},[]).join(&quot;\n&quot;).replace(/:/g,&quot;&quot;).replace(/ /g,&quot;&quot;).split(&quot;\n&quot;);
+var lines_num = lines.length;
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+  row[&quot;{#PORT}&quot;] = lines[i]
+  lld.push(row);
+}
+return JSON.stringify(lld);</params>
+                        </step>
+                    </preprocessing>
+                    <overrides>
+                        <override>
+                            <name>Deluge management:58846 web:8112</name>
+                            <step>4</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^(8112|58846)$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <operator>LIKE</operator>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                        <override>
+                            <name>Java gateway as JMX application 12345</name>
+                            <step>10</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^12345$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <operator>LIKE</operator>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                        <override>
+                            <name>SSH port 22</name>
+                            <step>6</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^22$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <operator>LIKE</operator>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                        <override>
+                            <name>Secondary trapper process for zabbix_proxy 20051</name>
+                            <step>8</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^20051$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                        <override>
+                            <name>Web standard 80 443</name>
+                            <step>3</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^(80|443)$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <operator>LIKE</operator>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                        <override>
+                            <name>Zabbix GUI set disaster trigger 1XX</name>
+                            <step>1</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^1[23456789][024]$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <operator>LIKE</operator>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                        <override>
+                            <name>Zabbix agent 1 and Zabbix agent 2 passive checks 10050 15050</name>
+                            <step>5</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^(15050|10050)$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <operator>LIKE</operator>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                        <override>
+                            <name>Zabbix java gateway 10052</name>
+                            <step>9</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^10052$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <operator>LIKE</operator>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                        <override>
+                            <name>Zabbix trapper port set disaster trigger 1XX51</name>
+                            <step>2</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^1[0-9][024]51$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <operator>LIKE</operator>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                        <override>
+                            <name>rpcbind utility port 111</name>
+                            <step>7</step>
+                            <filter>
+                                <conditions>
+                                    <condition>
+                                        <macro>{#PORT}</macro>
+                                        <value>^111$</value>
+                                        <formulaid>A</formulaid>
+                                    </condition>
+                                </conditions>
+                            </filter>
+                            <operations>
+                                <operation>
+                                    <operationobject>TRIGGER_PROTOTYPE</operationobject>
+                                    <operator>LIKE</operator>
+                                    <severity>DISASTER</severity>
+                                </operation>
+                            </operations>
+                        </override>
+                    </overrides>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$TCP.PORT.MATCHES}</macro>
+                    <value>.*</value>
+                </macro>
+                <macro>
+                    <macro>{$TCP.PORT.NOT_MATCHES}</macro>
+                    <value>^(43100|40738|35281|37649|45363)$</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <value_maps>
+        <value_map>
+            <name>Service state</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>Down</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>Up</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>
