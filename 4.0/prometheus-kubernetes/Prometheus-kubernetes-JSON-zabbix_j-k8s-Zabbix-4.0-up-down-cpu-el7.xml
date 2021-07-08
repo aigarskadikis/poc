@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
-    <version>4.2</version>
-    <date>2021-06-15T12:53:40Z</date>
+    <version>4.0</version>
+    <date>2021-07-08T11:26:20Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -9,9 +9,13 @@
     </groups>
     <templates>
         <template>
-            <template>Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s Zabbix 4.0</template>
-            <name>Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s Zabbix 4.0</name>
-            <description/>
+            <template>Prometheus kubernetes JSON zabbix_js k8s Zabbix 4.0 up down cpu</template>
+            <name>Prometheus kubernetes JSON zabbix_js k8s Zabbix 4.0 up down cpu</name>
+            <description>POD up/down status&#13;
+http://ip.of.prometheus.endpoint:40000/api/v1/query?query=probe_success&#13;
+&#13;
+CPU metrics:&#13;
+http://ip.of.prometheus.endpoint:40000/api/v1/query?query=rate(container_cpu_usage_seconds_total%7Bnamespace=~&quot;gtld-testbed%7Cgtld-testbed-external&quot;%7D%5B5m%5D)</description>
             <groups>
                 <group>
                     <name>Templates/Modules</name>
@@ -19,13 +23,13 @@
             </groups>
             <applications>
                 <application>
-                    <name>Prometheus metric array</name>
+                    <name>K8S POD CPU</name>
                 </application>
                 <application>
-                    <name>Prometheus metric monitored</name>
+                    <name>K8S POD status</name>
                 </application>
                 <application>
-                    <name>Prometheus metric time</name>
+                    <name>K8S POD time</name>
                 </application>
                 <application>
                     <name>Zabbix raw items</name>
@@ -33,11 +37,11 @@
             </applications>
             <items>
                 <item>
-                    <name>Data result JSON</name>
+                    <name>POD CPU usage</name>
                     <type>19</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>data.result.json</key>
+                    <key>result.usage[cpu]</key>
                     <delay>30s</delay>
                     <history>0</history>
                     <trends>0</trends>
@@ -72,7 +76,66 @@
                     <preprocessing/>
                     <jmx_endpoint/>
                     <timeout>3s</timeout>
-                    <url>{$PRO.TRANSPORT}://{HOST.CONN}:{$PRO.PORT}/{$PATH.FILE}</url>
+                    <url>{$PRO.TRANSPORT}://{HOST.CONN}:{$PRO.PORT}/{$PATH.FILE.CPU}</url>
+                    <query_fields/>
+                    <posts/>
+                    <status_codes>200</status_codes>
+                    <follow_redirects>1</follow_redirects>
+                    <post_type>0</post_type>
+                    <http_proxy/>
+                    <headers/>
+                    <retrieve_mode>0</retrieve_mode>
+                    <request_method>0</request_method>
+                    <output_format>0</output_format>
+                    <allow_traps>0</allow_traps>
+                    <ssl_cert_file/>
+                    <ssl_key_file/>
+                    <ssl_key_password/>
+                    <verify_peer>0</verify_peer>
+                    <verify_host>0</verify_host>
+                    <master_item/>
+                </item>
+                <item>
+                    <name>POD up/down status</name>
+                    <type>19</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>result.usage[status]</key>
+                    <delay>30s</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <status>0</status>
+                    <value_type>4</value_type>
+                    <allowed_hosts/>
+                    <units/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <description/>
+                    <inventory_link>0</inventory_link>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <valuemap/>
+                    <logtimefmt/>
+                    <preprocessing/>
+                    <jmx_endpoint/>
+                    <timeout>3s</timeout>
+                    <url>{$PRO.TRANSPORT}://{HOST.CONN}:{$PRO.PORT}/{$PATH.FILE.STATUS}</url>
                     <query_fields/>
                     <posts/>
                     <status_codes>200</status_codes>
@@ -94,11 +157,11 @@
             </items>
             <discovery_rules>
                 <discovery_rule>
-                    <name>Discover k8s instances</name>
+                    <name>POD up down</name>
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>prometheus40.sh[{$PRO.TRANSPORT},{HOST.CONN},{$PRO.PORT},{$PATH.FILE}]</key>
+                    <key>prometheus40.sh[{$PRO.TRANSPORT},{HOST.CONN},{$PRO.PORT},{$PATH.FILE.STATUS}]</key>
                     <delay>1d</delay>
                     <status>0</status>
                     <allowed_hosts/>
@@ -122,20 +185,20 @@
                         <formula/>
                         <conditions/>
                     </filter>
-                    <lifetime>30d</lifetime>
+                    <lifetime>0</lifetime>
                     <description/>
                     <item_prototypes>
                         <item_prototype>
-                            <name>{#K.NAME} {#INSTANCE}</name>
+                            <name>status {#K.NAME} {#INSTANCE}</name>
                             <type>18</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>instance[{#K.NAME},{#INSTANCE}]</key>
+                            <key>probe_success[{#K.NAME},{#INSTANCE}]</key>
                             <delay>0</delay>
-                            <history>0</history>
-                            <trends>0</trends>
+                            <history>90d</history>
+                            <trends>365d</trends>
                             <status>0</status>
-                            <value_type>4</value_type>
+                            <value_type>3</value_type>
                             <allowed_hosts/>
                             <units/>
                             <snmpv3_contextname/>
@@ -157,7 +220,7 @@
                             <inventory_link>0</inventory_link>
                             <applications>
                                 <application>
-                                    <name>Prometheus metric array</name>
+                                    <name>K8S POD status</name>
                                 </application>
                             </applications>
                             <valuemap/>
@@ -165,9 +228,7 @@
                             <preprocessing>
                                 <step>
                                     <type>12</type>
-                                    <params>$.data.result.[?(@.metric.instance == &quot;{#INSTANCE}&quot;)].value</params>
-                                    <error_handler>0</error_handler>
-                                    <error_handler_params/>
+                                    <params>$.data.result.[?(@.metric.instance == &quot;{#INSTANCE}&quot;)].value[1].first()</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -191,11 +252,11 @@
                             <verify_host>0</verify_host>
                             <application_prototypes/>
                             <master_item>
-                                <key>data.result.json</key>
+                                <key>result.usage[status]</key>
                             </master_item>
                         </item_prototype>
                         <item_prototype>
-                            <name>Time {#K.NAME} {#INSTANCE}</name>
+                            <name>time {#K.NAME} {#INSTANCE}</name>
                             <type>18</type>
                             <snmp_community/>
                             <snmp_oid/>
@@ -204,7 +265,7 @@
                             <history>90d</history>
                             <trends>365d</trends>
                             <status>0</status>
-                            <value_type>3</value_type>
+                            <value_type>0</value_type>
                             <allowed_hosts/>
                             <units>unixtime</units>
                             <snmpv3_contextname/>
@@ -226,7 +287,7 @@
                             <inventory_link>0</inventory_link>
                             <applications>
                                 <application>
-                                    <name>Prometheus metric time</name>
+                                    <name>K8S POD time</name>
                                 </application>
                             </applications>
                             <valuemap/>
@@ -234,16 +295,7 @@
                             <preprocessing>
                                 <step>
                                     <type>12</type>
-                                    <params>$.[0][0]</params>
-                                    <error_handler>0</error_handler>
-                                    <error_handler_params/>
-                                </step>
-                                <step>
-                                    <type>5</type>
-                                    <params>^(\d+)
-\1</params>
-                                    <error_handler>0</error_handler>
-                                    <error_handler_params/>
+                                    <params>$.data.result.[?(@.metric.instance == &quot;{#INSTANCE}&quot;)].value[0].first()</params>
                                 </step>
                             </preprocessing>
                             <jmx_endpoint/>
@@ -267,82 +319,13 @@
                             <verify_host>0</verify_host>
                             <application_prototypes/>
                             <master_item>
-                                <key>instance[{#K.NAME},{#INSTANCE}]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>{#INSTANCE} value</name>
-                            <type>18</type>
-                            <snmp_community/>
-                            <snmp_oid/>
-                            <key>value[{#INSTANCE}]</key>
-                            <delay>0</delay>
-                            <history>90d</history>
-                            <trends>365d</trends>
-                            <status>0</status>
-                            <value_type>3</value_type>
-                            <allowed_hosts/>
-                            <units/>
-                            <snmpv3_contextname/>
-                            <snmpv3_securityname/>
-                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
-                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
-                            <snmpv3_authpassphrase/>
-                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
-                            <snmpv3_privpassphrase/>
-                            <params/>
-                            <ipmi_sensor/>
-                            <authtype>0</authtype>
-                            <username/>
-                            <password/>
-                            <publickey/>
-                            <privatekey/>
-                            <port/>
-                            <description/>
-                            <inventory_link>0</inventory_link>
-                            <applications>
-                                <application>
-                                    <name>Prometheus metric monitored</name>
-                                </application>
-                            </applications>
-                            <valuemap/>
-                            <logtimefmt/>
-                            <preprocessing>
-                                <step>
-                                    <type>12</type>
-                                    <params>$.[0][1]</params>
-                                    <error_handler>0</error_handler>
-                                    <error_handler_params/>
-                                </step>
-                            </preprocessing>
-                            <jmx_endpoint/>
-                            <timeout>3s</timeout>
-                            <url/>
-                            <query_fields/>
-                            <posts/>
-                            <status_codes>200</status_codes>
-                            <follow_redirects>1</follow_redirects>
-                            <post_type>0</post_type>
-                            <http_proxy/>
-                            <headers/>
-                            <retrieve_mode>0</retrieve_mode>
-                            <request_method>0</request_method>
-                            <output_format>0</output_format>
-                            <allow_traps>0</allow_traps>
-                            <ssl_cert_file/>
-                            <ssl_key_file/>
-                            <ssl_key_password/>
-                            <verify_peer>0</verify_peer>
-                            <verify_host>0</verify_host>
-                            <application_prototypes/>
-                            <master_item>
-                                <key>instance[{#K.NAME},{#INSTANCE}]</key>
+                                <key>result.usage[status]</key>
                             </master_item>
                         </item_prototype>
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Prometheus kubernetes instant vector monitoring JSON zabbix_js k8s Zabbix 4.0:value[{#INSTANCE}].min({$PRO.SNS})}=0</expression>
+                            <expression>{Prometheus kubernetes JSON zabbix_js k8s Zabbix 4.0 up down cpu:probe_success[{#K.NAME},{#INSTANCE}].min({$PRO.SNS})}=0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>{#INSTANCE} received 0 for the last {$PRO.SNS}</name>
@@ -353,7 +336,7 @@
                             <priority>3</priority>
                             <description/>
                             <type>0</type>
-                            <manual_close>1</manual_close>
+                            <manual_close>0</manual_close>
                             <dependencies/>
                             <tags/>
                         </trigger_prototype>
@@ -378,15 +361,142 @@
                     <ssl_key_password/>
                     <verify_peer>0</verify_peer>
                     <verify_host>0</verify_host>
-                    <lld_macro_paths/>
-                    <preprocessing/>
-                    <master_item/>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>CPU nodes</name>
+                    <type>10</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>prometheus40cpu.sh[{$PRO.TRANSPORT},{HOST.CONN},{$PRO.PORT},{$PATH.FILE.CPU}]</key>
+                    <delay>1d</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>
+                        <evaltype>0</evaltype>
+                        <formula/>
+                        <conditions/>
+                    </filter>
+                    <lifetime>0</lifetime>
+                    <description/>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>CPU {#POD} {#ID}</name>
+                            <type>18</type>
+                            <snmp_community/>
+                            <snmp_oid/>
+                            <key>cpu[{#POD},{#ID}]</key>
+                            <delay>0</delay>
+                            <history>90d</history>
+                            <trends>365d</trends>
+                            <status>0</status>
+                            <value_type>0</value_type>
+                            <allowed_hosts/>
+                            <units>%</units>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description/>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>K8S POD CPU</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <preprocessing>
+                                <step>
+                                    <type>12</type>
+                                    <params>$.data.result.[?(@.metric.id == &quot;{#ID}&quot;)].value[1].first()</params>
+                                </step>
+                                <step>
+                                    <type>1</type>
+                                    <params>100</params>
+                                </step>
+                            </preprocessing>
+                            <jmx_endpoint/>
+                            <timeout>3s</timeout>
+                            <url/>
+                            <query_fields/>
+                            <posts/>
+                            <status_codes>200</status_codes>
+                            <follow_redirects>1</follow_redirects>
+                            <post_type>0</post_type>
+                            <http_proxy/>
+                            <headers/>
+                            <retrieve_mode>0</retrieve_mode>
+                            <request_method>0</request_method>
+                            <output_format>0</output_format>
+                            <allow_traps>0</allow_traps>
+                            <ssl_cert_file/>
+                            <ssl_key_file/>
+                            <ssl_key_password/>
+                            <verify_peer>0</verify_peer>
+                            <verify_host>0</verify_host>
+                            <application_prototypes/>
+                            <master_item>
+                                <key>result.usage[cpu]</key>
+                            </master_item>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes/>
+                    <graph_prototypes/>
+                    <host_prototypes/>
+                    <jmx_endpoint/>
+                    <timeout>3s</timeout>
+                    <url/>
+                    <query_fields/>
+                    <posts/>
+                    <status_codes>200</status_codes>
+                    <follow_redirects>1</follow_redirects>
+                    <post_type>0</post_type>
+                    <http_proxy/>
+                    <headers/>
+                    <retrieve_mode>0</retrieve_mode>
+                    <request_method>0</request_method>
+                    <allow_traps>0</allow_traps>
+                    <ssl_cert_file/>
+                    <ssl_key_file/>
+                    <ssl_key_password/>
+                    <verify_peer>0</verify_peer>
+                    <verify_host>0</verify_host>
                 </discovery_rule>
             </discovery_rules>
             <httptests/>
             <macros>
                 <macro>
-                    <macro>{$PATH.FILE}</macro>
+                    <macro>{$PATH.FILE.CPU}</macro>
+                    <value>api/v1/query?query=rate(container_cpu_usage_seconds_total%7Bnamespace=~&quot;gtld-testbed%7Cgtld-testbed-external&quot;%7D%5B5m%5D)</value>
+                </macro>
+                <macro>
+                    <macro>{$PATH.FILE.STATUS}</macro>
                     <value>api/v1/query?query=probe_success</value>
                 </macro>
                 <macro>
@@ -404,7 +514,6 @@
             </macros>
             <templates/>
             <screens/>
-            <tags/>
         </template>
     </templates>
 </zabbix_export>
