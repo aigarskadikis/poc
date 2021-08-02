@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>4.4</version>
+    <date>2021-08-02T12:07:53Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>s</template>
+            <name>Check and repair Zabbix API token</name>
+            <description>1) Create a user 'api' with password 'zabbix'&#13;
+2) Configure global macros:&#13;
+Let's say you access zabbix GUI via http://zabbix.contoso.com/index.php&#13;
+This means we need to configure&#13;
+{$Z_API_PHP} = http://zabbix.contoso.com/api_jsonrpc.php&#13;
+{$Z_API_USER} = api&#13;
+{$Z_API_PASSWORD} = zabbix&#13;
+and empty:&#13;
+{$Z_API_SESSIONID}</description>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Zabbix API</name>
+                </application>
+                <application>
+                    <name>Zabbix raw items</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Validate session key raw</name>
+                    <type>HTTP_AGENT</type>
+                    <key>check</key>
+                    <delay>30s</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>DISCARD_UNCHANGED_HEARTBEAT</type>
+                            <params>1h</params>
+                        </step>
+                    </preprocessing>
+                    <timeout>25s</timeout>
+                    <url>{$Z_API_PHP}</url>
+                    <posts>{&#13;
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,&#13;
+    &quot;method&quot;: &quot;proxy.get&quot;,&#13;
+    &quot;params&quot;: {&#13;
+        &quot;output&quot;: [&quot;name&quot;]&#13;
+    },&#13;
+    &quot;auth&quot;: &quot;{$Z_API_SESSIONID}&quot;,&#13;
+    &quot;id&quot;: 1&#13;
+}</posts>
+                    <status_codes/>
+                    <post_type>JSON</post_type>
+                    <request_method>POST</request_method>
+                </item>
+                <item>
+                    <name>Repair session key</name>
+                    <type>DEPENDENT</type>
+                    <key>repair</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>Zabbix API</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>API repair</name>
+                    </valuemap>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>if (value.match(/Session terminated/)) {
+
+var req = new CurlHttpRequest();
+
+// Zabbix API
+var json_rpc='{$Z_API_PHP}'
+
+// lib curl header
+req.AddHeader('Content-Type: application/json');
+
+// first request to obtain authorization tokken of Zabbix API
+var token =  JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;user.login&quot;,&quot;params&quot;:{&quot;user&quot;:&quot;{$Z_API_USER}&quot;,&quot;password&quot;:&quot;{$Z_API_PASSWORD}&quot;},&quot;id&quot;:1,&quot;auth&quot;:null}'
+));
+
+// if authorization was not succesfull
+if ( token.error )
+{
+// Login name or password is incorrect
+return 32500;
+}
+
+else {
+// update the macro
+
+// get the global macro ID
+// we cannot plot here a very native Zabbix macro because it will be automatically expanded
+// must use a workaround to distinguish a dollar sign from the actual macro name like and merge together with '+'
+var id = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;usermacro.get&quot;,&quot;params&quot;:{&quot;output&quot;:[&quot;globalmacroid&quot;],&quot;globalmacro&quot;:true,&quot;filter&quot;:{&quot;macro&quot;:&quot;{$'+'Z_API_SESSIONID'+'}&quot;}},&quot;auth&quot;:&quot;'+token.result+'&quot;,&quot;id&quot;:1}'
+)).result[0].globalmacroid;
+
+// this line contains a keywork '+value+' which will grab exactly the previous value outside this javascript snippet
+var overwrite = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;usermacro.updateglobal&quot;,&quot;params&quot;:{&quot;globalmacroid&quot;:&quot;'+id+'&quot;,&quot;value&quot;:&quot;'+token.result+'&quot;},&quot;auth&quot;:&quot;'+token.result+'&quot;,&quot;id&quot;:1}'
+));
+
+// return the id (an iteger) of the macro which was updated
+return overwrite.result.globalmacroids[0];
+}
+
+} else {
+return 0;
+}</params>
+                        </step>
+                        <step>
+                            <type>DISCARD_UNCHANGED_HEARTBEAT</type>
+                            <params>1h</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>check</key>
+                    </master_item>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}=32500</expression>
+                            <name>Install Z_API_USER and Z_API_PASSWORD in global level</name>
+                            <priority>AVERAGE</priority>
+                            <description>Make sure macros:&#13;
+Z_API_PHP = http://zabbix.contoso.com/api_jsonrpc.php&#13;
+Z_API_USER = api&#13;
+Z_API_PASSWORD = zabbix&#13;
+Z_API_SESSIONID =&#13;
+&#13;
+Open {$ZABBIX_URL}/adm.macros.php</description>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Status</name>
+                    <type>DEPENDENT</type>
+                    <key>status</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>Zabbix API</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>API status</name>
+                    </valuemap>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>(404 Not Found|value is too long|Session terminated|result)
+\1;result=0;value is too long=1;Session terminated=2;404 Not Found=404</params>
+                        </step>
+                        <step>
+                            <type>REGEX</type>
+                            <params>(404 Not Found|value is too long|Session terminated|result)(?=.*;\1=(\d+))
+\2</params>
+                        </step>
+                        <step>
+                            <type>DISCARD_UNCHANGED_HEARTBEAT</type>
+                            <params>1h</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>check</key>
+                    </master_item>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}=404</expression>
+                            <name>Invalid URL configureded for Zabbix API</name>
+                            <priority>DISASTER</priority>
+                            <description>Configure a correct Z_API_PHP at:&#13;
+{$ZABBIX_URL}/adm.macros.php&#13;
+&#13;
+If you access Zabbix GUI at:&#13;
+http://zabbix.contoso.com/index.php&#13;
+then install:&#13;
+Z_API_PHP = http://zabbix.contoso.com/api_jsonrpc.php</description>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                        <trigger>
+                            <expression>{last()}=2</expression>
+                            <name>Repairing Zabbix API session key in background</name>
+                            <priority>AVERAGE</priority>
+                            <description>Session key is not valid. HTTP works fine.</description>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                        <trigger>
+                            <expression>{last()}=1</expression>
+                            <name>Z_API_SESSIONID value too long</name>
+                            <priority>AVERAGE</priority>
+                            <description>Must configure Z_API_SESSIONID at:&#13;
+{$ZABBIX_URL}/adm.macros.php</description>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+            </items>
+        </template>
+    </templates>
+    <value_maps>
+        <value_map>
+            <name>API repair</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>OK</newvalue>
+                </mapping>
+                <mapping>
+                    <value>32500</value>
+                    <newvalue>Login name or password is incorrect</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>API status</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>OK</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>sessionid too long</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>must relogin</newvalue>
+                </mapping>
+                <mapping>
+                    <value>404</value>
+                    <newvalue>page not found</newvalue>
+                </mapping>
+                <mapping>
+                    <value>32500</value>
+                    <newvalue>incorrect creds</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>
