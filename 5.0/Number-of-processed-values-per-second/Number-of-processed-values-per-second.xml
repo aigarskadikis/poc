@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-08-09T07:44:20Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Number of processed values per second</template>
+            <name>Number of processed values per second</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Zabbix server</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Number of processed numeric (float) values per second</name>
+                    <type>INTERNAL</type>
+                    <key>zabbix[wcache,values,float]</key>
+                    <delay>30s</delay>
+                    <history>5d</history>
+                    <value_type>FLOAT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix server</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>CHANGE_PER_SECOND</type>
+                            <params/>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Number of processed log values per second</name>
+                    <type>INTERNAL</type>
+                    <key>zabbix[wcache,values,log]</key>
+                    <delay>30s</delay>
+                    <history>5d</history>
+                    <value_type>FLOAT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix server</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>CHANGE_PER_SECOND</type>
+                            <params/>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Number of processed character values per second</name>
+                    <type>INTERNAL</type>
+                    <key>zabbix[wcache,values,str]</key>
+                    <delay>30s</delay>
+                    <history>5d</history>
+                    <value_type>FLOAT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix server</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>CHANGE_PER_SECOND</type>
+                            <params/>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Number of processed text values per second</name>
+                    <type>INTERNAL</type>
+                    <key>zabbix[wcache,values,text]</key>
+                    <delay>30s</delay>
+                    <history>5d</history>
+                    <value_type>FLOAT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix server</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>CHANGE_PER_SECOND</type>
+                            <params/>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Number of processed numeric (unsigned) values per second</name>
+                    <type>INTERNAL</type>
+                    <key>zabbix[wcache,values,uint]</key>
+                    <delay>30s</delay>
+                    <history>5d</history>
+                    <value_type>FLOAT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix server</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>CHANGE_PER_SECOND</type>
+                            <params/>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+        </template>
+    </templates>
+    <graphs>
+        <graph>
+            <name>Zabbix Number of processed values per second detailed</name>
+            <type>STACKED</type>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>2774A4</color>
+                    <item>
+                        <host>Number of processed values per second</host>
+                        <key>zabbix[wcache,values,float]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>A54F10</color>
+                    <item>
+                        <host>Number of processed values per second</host>
+                        <key>zabbix[wcache,values,uint]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>1A7C11</color>
+                    <item>
+                        <host>Number of processed values per second</host>
+                        <key>zabbix[wcache,values,str]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>4</sortorder>
+                    <color>FC6EA3</color>
+                    <item>
+                        <host>Number of processed values per second</host>
+                        <key>zabbix[wcache,values,text]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>5</sortorder>
+                    <color>F63100</color>
+                    <item>
+                        <host>Number of processed values per second</host>
+                        <key>zabbix[wcache,values,log]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+    </graphs>
+</zabbix_export>
