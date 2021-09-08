@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>4.4</version>
-    <date>2021-08-02T12:07:53Z</date>
+    <date>2021-09-08T07:13:05Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -94,12 +94,12 @@ var json_rpc='{$Z_API_PHP}'
 // lib curl header
 req.AddHeader('Content-Type: application/json');
 
-// first request to obtain authorization tokken of Zabbix API
+// First request to get authorization token
 var token =  JSON.parse(req.Post(json_rpc,
 '{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;user.login&quot;,&quot;params&quot;:{&quot;user&quot;:&quot;{$Z_API_USER}&quot;,&quot;password&quot;:&quot;{$Z_API_PASSWORD}&quot;},&quot;id&quot;:1,&quot;auth&quot;:null}'
 ));
 
-// if authorization was not succesfull
+// If authorization was unsuccessful
 if ( token.error )
 {
 // Login name or password is incorrect
@@ -109,19 +109,19 @@ return 32500;
 else {
 // update the macro
 
-// get the global macro ID
-// we cannot plot here a very native Zabbix macro because it will be automatically expanded
-// must use a workaround to distinguish a dollar sign from the actual macro name like and merge together with '+'
+// Get the global macro ID
+// We cannot plot here a very native Zabbix macro because it will be automatically expanded
+// Must use a workaround to distinguish a dollar sign from the actual macro name and merge together with '+'
 var id = JSON.parse(req.Post(json_rpc,
 '{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;usermacro.get&quot;,&quot;params&quot;:{&quot;output&quot;:[&quot;globalmacroid&quot;],&quot;globalmacro&quot;:true,&quot;filter&quot;:{&quot;macro&quot;:&quot;{$'+'Z_API_SESSIONID'+'}&quot;}},&quot;auth&quot;:&quot;'+token.result+'&quot;,&quot;id&quot;:1}'
 )).result[0].globalmacroid;
 
-// this line contains a keywork '+value+' which will grab exactly the previous value outside this javascript snippet
+// This line contains a keywork '+value+' which will grab exactly the previous value outside this javascript snippet
 var overwrite = JSON.parse(req.Post(json_rpc,
 '{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;usermacro.updateglobal&quot;,&quot;params&quot;:{&quot;globalmacroid&quot;:&quot;'+id+'&quot;,&quot;value&quot;:&quot;'+token.result+'&quot;},&quot;auth&quot;:&quot;'+token.result+'&quot;,&quot;id&quot;:1}'
 ));
 
-// return the id (an iteger) of the macro which was updated
+// Return the id (an iteger) of the macro which was updated
 return overwrite.result.globalmacroids[0];
 }
 
