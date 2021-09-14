@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-09-13T10:41:41Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>mikrotik ssh simulate</template>
+            <name>mikrotik ssh simulate</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <name>ip address print</name>
+                    <type>SSH</type>
+                    <key>ssh.run[&quot;ip address print&quot;,{HOST.IP},22]</key>
+                    <delay>10s</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <params>ip address print</params>
+                    <username>admin</username>
+                </item>
+            </items>
+        </template>
+    </templates>
+</zabbix_export>
