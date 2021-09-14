@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>4.2</version>
-    <date>2021-09-14T12:27:06Z</date>
+    <date>2021-09-14T12:39:19Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -124,7 +124,14 @@
                     <filter>
                         <evaltype>0</evaltype>
                         <formula/>
-                        <conditions/>
+                        <conditions>
+                            <condition>
+                                <macro>{#DIR}</macro>
+                                <value>{$DIR.IGNORE}</value>
+                                <operator>9</operator>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
                     </filter>
                     <lifetime>30d</lifetime>
                     <description/>
@@ -336,6 +343,10 @@ return JSON.stringify(lld);</params>
             </discovery_rules>
             <httptests/>
             <macros>
+                <macro>
+                    <macro>{$DIR.IGNORE}</macro>
+                    <value>^(/boot$|/tmp$|/etc$|/run$|/proc$)</value>
+                </macro>
                 <macro>
                     <macro>{$LIST.ROOT.DIRS}</macro>
                     <value>find / -type d -maxdepth 1</value>
