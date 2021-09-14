@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>4.2</version>
-    <date>2021-09-14T12:39:19Z</date>
+    <date>2021-09-14T12:47:09Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -122,14 +122,20 @@
                     <privatekey/>
                     <port/>
                     <filter>
-                        <evaltype>0</evaltype>
+                        <evaltype>1</evaltype>
                         <formula/>
                         <conditions>
                             <condition>
                                 <macro>{#DIR}</macro>
-                                <value>{$DIR.IGNORE}</value>
+                                <value>{$DIR.NOT_MATCHES}</value>
                                 <operator>9</operator>
                                 <formulaid>A</formulaid>
+                            </condition>
+                            <condition>
+                                <macro>{#DIR}</macro>
+                                <value>{$DIR.MATCHES}</value>
+                                <operator>8</operator>
+                                <formulaid>B</formulaid>
                             </condition>
                         </conditions>
                     </filter>
@@ -269,7 +275,7 @@
                             <expression>{Total space has changed filesystem monitoring:vfs.fs.size[&quot;{#DIR}&quot;,total].diff()}=1</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
-                            <name>Total size is changed. Now {ITEM.VALUE}</name>
+                            <name>Total size now {ITEM.VALUE} on {#DIR}</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
                             <url/>
@@ -285,7 +291,7 @@
                             <expression>{Total space has changed filesystem monitoring:vfs.dir.count[&quot;{#DIR}&quot;,,,,,1,,,,,].max(#3)}=0</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
-                            <name>{ITEM.VALUE} found</name>
+                            <name>{ITEM.VALUE} found on {#DIR}</name>
                             <correlation_mode>0</correlation_mode>
                             <correlation_tag/>
                             <url/>
@@ -344,7 +350,11 @@ return JSON.stringify(lld);</params>
             <httptests/>
             <macros>
                 <macro>
-                    <macro>{$DIR.IGNORE}</macro>
+                    <macro>{$DIR.MATCHES}</macro>
+                    <value>^.*$</value>
+                </macro>
+                <macro>
+                    <macro>{$DIR.NOT_MATCHES}</macro>
                     <value>^(/boot$|/tmp$|/etc$|/run$|/proc$)</value>
                 </macro>
                 <macro>
