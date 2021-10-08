@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2021-10-08T14:01:37Z</date>
+    <date>2021-10-08T14:20:07Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -12,7 +12,9 @@
             <template>Template test EventLogs</template>
             <name>Template test EventLogs</name>
             <description>eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'User peter failed from 192.168.88.12'&#13;
-eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'User john failed from 192.168.88.11'</description>
+eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'User john failed from 192.168.88.11'&#13;
+eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'User john failed from 192.168.88.15'&#13;
+eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'User anna failed from 192.168.88.11'</description>
             <groups>
                 <group>
                     <name>Templates</name>
@@ -63,9 +65,9 @@ eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'Us
                     <lifetime>1d</lifetime>
                     <item_prototypes>
                         <item_prototype>
-                            <name>Count {#USERID}</name>
+                            <name>Count per {#USERID} from {#USERIP}</name>
                             <type>ZABBIX_ACTIVE</type>
-                            <key>eventlog[System,.*{#USERID}.*,,,998,,skip]</key>
+                            <key>eventlog[System,&quot;.*{#USERID}.*{#USERIP}&quot;,,,998,,skip]</key>
                             <delay>1s</delay>
                             <applications>
                                 <application>
@@ -93,8 +95,9 @@ eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'Us
                                     <expression>{sum(15m)}&gt;10</expression>
                                     <recovery_mode>RECOVERY_EXPRESSION</recovery_mode>
                                     <recovery_expression>{sum(30m)}&lt;10</recovery_expression>
-                                    <name>Too much failed connection {#USERID}</name>
+                                    <name>Too much failed connection {#USERID} from {#USERIP}</name>
                                     <priority>AVERAGE</priority>
+                                    <manual_close>YES</manual_close>
                                 </trigger_prototype>
                             </trigger_prototypes>
                         </item_prototype>
