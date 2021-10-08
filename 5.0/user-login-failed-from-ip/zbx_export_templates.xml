@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-10-08T14:01:37Z</date>
+    <groups>
+        <group>
+            <name>Templates</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Template test EventLogs</template>
+            <name>Template test EventLogs</name>
+            <description>eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'User peter failed from 192.168.88.12'&#13;
+eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'User john failed from 192.168.88.11'</description>
+            <groups>
+                <group>
+                    <name>Templates</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>EventLogs</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Search failed connections {#USERID}</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>eventlog[System,,,,998,,skip]</key>
+                    <delay>1s</delay>
+                    <history>1d</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>EventLogs</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>User+\s+(\w+).*from (\d+\.\d+\.\d+\.\d+)
+[ { &quot;{#USERID}&quot;:&quot;\1&quot;, &quot;{#USERIP}&quot;:&quot;\2&quot; }  ]</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>test test</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>eventlog[System,\(.peter.*)\w+\g,,,998,,skip]</key>
+                    <delay>10s</delay>
+                    <trends>0</trends>
+                    <value_type>LOG</value_type>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>userid</name>
+                    <type>DEPENDENT</type>
+                    <key>userid.descovery</key>
+                    <delay>0</delay>
+                    <lifetime>1d</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Count {#USERID}</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>eventlog[System,.*{#USERID}.*,,,998,,skip]</key>
+                            <delay>1s</delay>
+                            <applications>
+                                <application>
+                                    <name>EventLogs</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>REGEX</type>
+                                    <params>from (\d+\.\d+\.\d+\.\d+)
+\1</params>
+                                </step>
+                                <step>
+                                    <type>MATCHES_REGEX</type>
+                                    <params>{#USERIP}</params>
+                                </step>
+                                <step>
+                                    <type>STR_REPLACE</type>
+                                    <params>{#USERIP}
+1</params>
+                                </step>
+                            </preprocessing>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{sum(15m)}&gt;10</expression>
+                                    <recovery_mode>RECOVERY_EXPRESSION</recovery_mode>
+                                    <recovery_expression>{sum(30m)}&lt;10</recovery_expression>
+                                    <name>Too much failed connection {#USERID}</name>
+                                    <priority>AVERAGE</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>eventlog[System,,,,998,,skip]</key>
+                    </master_item>
+                </discovery_rule>
+            </discovery_rules>
+        </template>
+    </templates>
+</zabbix_export>

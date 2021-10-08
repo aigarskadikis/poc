@@ -1,0 +1,59 @@
+zabbix_export:
+  version: '5.4'
+  date: '2021-09-29T17:53:58Z'
+  groups:
+    -
+      uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    -
+      uuid: f41ef207872c499bbb45559aed80ebf5
+      template: 'Long queries MySQL'
+      name: 'Long queries MySQL'
+      groups:
+        -
+          name: Templates/Modules
+      items:
+        -
+          uuid: 52ae954a236c4660801c41b7d1878129
+          name: length.of.sql.query
+          type: DEPENDENT
+          key: length.of.sql.query
+          delay: '0'
+          preprocessing:
+            -
+              type: JAVASCRIPT
+              parameters:
+                - 'return value.length;'
+          master_item:
+            key: 'system.run["{$LONG.MYSQL.QUERIES}"]'
+        -
+          uuid: abe5002ffc1f4c98a2635331a61c49d8
+          name: 'Long MySQL queries'
+          type: ZABBIX_ACTIVE
+          key: 'system.run["{$LONG.MYSQL.QUERIES}"]'
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+      tags:
+        -
+          tag: action
+          value: email
+      macros:
+        -
+          macro: '{$LONG.MYSQL.QUERIES}'
+          value: 'mysql --defaults-file=/var/lib/zabbix/my.root.cnf -sN --batch zabbix -e "SELECT INFO FROM information_schema.processlist WHERE COMMAND != ''Sleep'' and TIME > 1 and USER != ''event_scheduler'' AND STATE=''executing'' ORDER BY TIME DESC, id"'
+  triggers:
+    -
+      uuid: 1b8a6c8e3c9147e1a2aa5e008bf004ff
+      expression: |
+        last(/Long queries MySQL/length.of.sql.query)>0
+        and
+        find(/Long queries MySQL/system.run["{$LONG.MYSQL.QUERIES}"])<>2
+      name: 'Long query: {{ITEM.VALUE2}.regsub("(.*)",\1)}'
+      priority: AVERAGE
+      manual_close: 'YES'

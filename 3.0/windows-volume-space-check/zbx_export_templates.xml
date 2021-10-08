@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>3.0</version>
+    <date>2018-06-01T11:04:33Z</date>
+    <groups>
+        <group>
+            <name>Custom Templates</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Windows volume space check</template>
+            <name>Windows volume space check</name>
+            <description/>
+            <groups>
+                <group>
+                    <name>Custom Templates</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Volume</name>
+                </application>
+            </applications>
+            <items/>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Windows volume discovery</name>
+                    <type>7</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>discover.win.vol</key>
+                    <delay>30</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <delay_flex/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>
+                        <evaltype>0</evaltype>
+                        <formula/>
+                        <conditions/>
+                    </filter>
+                    <lifetime>30</lifetime>
+                    <description>Sample response looks like:&#13;
+ {&#13;
+ 	&quot;data&quot;: [&#13;
+&#13;
+ 		{&#13;
+ 			&quot;{#DEVICEID}&quot;: &quot;\\\\?\\Volume{b442274e-0000-0000-0000-100000000000}\\&quot;,&#13;
+ 			&quot;{#NAME}&quot;: &quot;\\\\?\\Volume{b442274e-0000-0000-0000-100000000000}\\&quot;,&#13;
+ 			&quot;{#SERIAL}&quot;: &quot;2523926995&quot;,&#13;
+ 			&quot;{#LABEL}&quot;: &quot;SYSTEM &quot;,&#13;
+ 			&quot;{#CAPACITY}&quot;: &quot;1074786304&quot;&#13;
+ 		},&#13;
+ 		{&#13;
+ 			&quot;{#DEVICEID}&quot;: &quot;\\\\?\\Volume{8bb38cb3-655d-11e8-8811-fc3fdb8d518b}\\&quot;,&#13;
+ 			&quot;{#NAME}&quot;: &quot;D:\\&quot;,&#13;
+ 			&quot;{#SERIAL}&quot;: &quot;1353569825&quot;,&#13;
+ 			&quot;{#LABEL}&quot;: &quot;VOLUME LAB&quot;,&#13;
+ 			&quot;{#CAPACITY}&quot;: &quot;1073446912&quot;&#13;
+ 		},&#13;
+ 		{&#13;
+ 			&quot;{#DEVICEID}&quot;: &quot;\\\\?\\Volume{b442274e-0000-0000-0000-204000000000}\\&quot;,&#13;
+ 			&quot;{#NAME}&quot;: &quot;C:\\&quot;,&#13;
+ 			&quot;{#SERIAL}&quot;: &quot;36860227&quot;,&#13;
+ 			&quot;{#LABEL}&quot;: &quot;Windows&quot;,&#13;
+ 			&quot;{#CAPACITY}&quot;: &quot;94662291456&quot;&#13;
+ 		},&#13;
+ 		{&#13;
+ 			&quot;{#DEVICEID}&quot;: &quot;\\\\?\\Volume{8bb38bdf-655d-11e8-8811-fc3fdb8d518b}\\&quot;,&#13;
+ 			&quot;{#NAME}&quot;: &quot;C:\\Folder 1\\another one\\&quot;,&#13;
+ 			&quot;{#SERIAL}&quot;: &quot;3938666812&quot;,&#13;
+ 			&quot;{#LABEL}&quot;: &quot;hello&quot;,&#13;
+ 			&quot;{#CAPACITY}&quot;: &quot;1073737728&quot;&#13;
+ 		},&#13;
+ 		{&#13;
+ 			&quot;{#DEVICEID}&quot;: &quot;\\\\?\\Volume{8bb38c95-655d-11e8-8811-fc3fdb8d518b}\\&quot;,&#13;
+ 			&quot;{#NAME}&quot;: &quot;C:\\Folder 1\\third\\&quot;,&#13;
+ 			&quot;{#SERIAL}&quot;: &quot;2218338058&quot;,&#13;
+ 			&quot;{#LABEL}&quot;: &quot;New Volume&quot;,&#13;
+ 			&quot;{#CAPACITY}&quot;: &quot;1073737728&quot;&#13;
+ 		},&#13;
+ 		{&#13;
+ 			&quot;{#DEVICEID}&quot;: &quot;\\\\?\\Volume{56c300c0-63ca-11e8-880f-fc3fdb8d518b}\\&quot;,&#13;
+ 			&quot;{#NAME}&quot;: &quot;R:\\&quot;,&#13;
+ 			&quot;{#SERIAL}&quot;: &quot;1432778632&quot;,&#13;
+ 			&quot;{#LABEL}&quot;: &quot;&quot;,&#13;
+ 			&quot;{#CAPACITY}&quot;: &quot;402649088&quot;&#13;
+ 		}&#13;
+&#13;
+ 	]&#13;
+ }</description>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Free space on &quot;{#NAME}&quot;, Serial number:{#SERIAL}</name>
+                            <type>7</type>
+                            <snmp_community/>
+                            <multiplier>0</multiplier>
+                            <snmp_oid/>
+                            <key>get.free.space.vol[{#DEVICEID}]</key>
+                            <delay>30</delay>
+                            <history>90</history>
+                            <trends>365</trends>
+                            <status>0</status>
+                            <value_type>3</value_type>
+                            <allowed_hosts/>
+                            <units>B</units>
+                            <delta>0</delta>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <formula>1</formula>
+                            <delay_flex/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <data_type>0</data_type>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description/>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>Volume</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <application_prototypes/>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>({TRIGGER.VALUE}=0 and {Windows volume space check:get.free.space.vol[{#DEVICEID}].last()} &lt; {$VOL_ALERT:&quot;{#SERIAL}&quot;}) or ({TRIGGER.VALUE}=1 and {Windows volume space check:get.free.space.vol[{#DEVICEID}].last()} &lt; {$VOL_ALERT:&quot;{#SERIAL}&quot;} + 100M)</expression>
+                            <name>There is only {ITEM.LASTVALUE1} free on {#NAME}</name>
+                            <url/>
+                            <status>0</status>
+                            <priority>2</priority>
+                            <description/>
+                            <type>0</type>
+                            <dependencies/>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes/>
+                    <host_prototypes/>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$VOL_ALERT}</macro>
+                    <value>500M</value>
+                </macro>
+            </macros>
+            <templates/>
+            <screens/>
+        </template>
+    </templates>
+</zabbix_export>

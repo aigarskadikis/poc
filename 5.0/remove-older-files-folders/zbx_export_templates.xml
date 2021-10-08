@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-09-20T22:21:11Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>rm</template>
+            <name>Remove files and directories if not used filesystem</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Orphaned access time dir</name>
+                </application>
+                <application>
+                    <name>Orphaned access time file</name>
+                </application>
+                <application>
+                    <name>Orphaned dir</name>
+                </application>
+                <application>
+                    <name>Orphaned files</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>access.time[dir]</name>
+                    <type>DEPENDENT</type>
+                    <key>access.time[dir]</key>
+                    <delay>0</delay>
+                    <units>unixtime</units>
+                    <applications>
+                        <application>
+                            <name>Orphaned access time dir</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>^(\d+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>system.run[&quot;{$TMP.ORPH.DIR}&quot;]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>access.time[file]</name>
+                    <type>DEPENDENT</type>
+                    <key>access.time[file]</key>
+                    <delay>0</delay>
+                    <units>unixtime</units>
+                    <applications>
+                        <application>
+                            <name>Orphaned access time file</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>^(\d+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>system.run[&quot;{$TMP.ORPH.FILE}&quot;]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>Orphaned dir</name>
+                    <key>system.run[&quot;{$TMP.ORPH.DIR}&quot;]</key>
+                    <delay>4h</delay>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <applications>
+                        <application>
+                            <name>Orphaned dir</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>DISCARD_UNCHANGED</type>
+                            <params/>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Orphaned file</name>
+                    <key>system.run[&quot;{$TMP.ORPH.FILE}&quot;]</key>
+                    <delay>4h</delay>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <applications>
+                        <application>
+                            <name>Orphaned files</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>DISCARD_UNCHANGED</type>
+                            <params/>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+            <tags>
+                <tag>
+                    <tag>action</tag>
+                    <value>after1d</value>
+                </tag>
+            </tags>
+            <macros>
+                <macro>
+                    <macro>{$RM.OLDER.THAN}</macro>
+                    <value>3d</value>
+                </macro>
+                <macro>
+                    <macro>{$TMP.ORPH.DIR}</macro>
+                    <value>find /tmp -type d -maxdepth 1 | grep -v '^/tmp$' | xargs -I{} stat --format='%X &quot;%n&quot;' '{}' | sort | head -1</value>
+                </macro>
+                <macro>
+                    <macro>{$TMP.ORPH.FILE}</macro>
+                    <value>find /tmp -type f -maxdepth 1 | grep -v '^/tmp$' | xargs -I{} stat --format='%X &quot;%n&quot;' '{}' | sort | head -1</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <triggers>
+        <trigger>
+            <expression>{rm:system.run[&quot;{$TMP.ORPH.DIR}&quot;].diff()}&lt;&gt;2&#13;
+and&#13;
+{rm:access.time[dir].now()} - {rm:access.time[dir].last()} &gt; {$RM.OLDER.THAN}</expression>
+            <name>Dir {{ITEM.VALUE1}.regsub(&quot;(\&quot;.*\&quot;)&quot;,\1)} comes from {ITEM.VALUE2} and will be removed</name>
+            <priority>AVERAGE</priority>
+            <description>rm -rf {{ITEM.VALUE1}.regsub(&quot;(\&quot;.*\&quot;)&quot;,\1)}</description>
+            <manual_close>YES</manual_close>
+        </trigger>
+        <trigger>
+            <expression>{rm:system.run[&quot;{$TMP.ORPH.FILE}&quot;].diff()}&lt;&gt;2&#13;
+and&#13;
+{rm:access.time[file].now()} - {rm:access.time[file].last()} &gt; {$RM.OLDER.THAN}</expression>
+            <name>File {{ITEM.VALUE1}.regsub(&quot;(\&quot;.*\&quot;)&quot;,\1)} comes from {ITEM.VALUE2} and will be removed</name>
+            <priority>AVERAGE</priority>
+            <description>rm -rf {{ITEM.VALUE1}.regsub(&quot;(\&quot;.*\&quot;)&quot;,\1)}</description>
+            <manual_close>YES</manual_close>
+        </trigger>
+    </triggers>
+</zabbix_export>
