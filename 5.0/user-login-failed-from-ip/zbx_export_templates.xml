@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2021-10-08T14:20:07Z</date>
+    <date>2021-10-08T14:24:58Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -42,7 +42,7 @@ eventcreate /t ERROR /id 998 /l system /so &quot;Event in blacklist&quot; /d 'Us
                     <preprocessing>
                         <step>
                             <type>REGEX</type>
-                            <params>User+\s+(\w+).*from (\d+\.\d+\.\d+\.\d+)
+                            <params>User\s+(\w+).*from (\d+\.\d+\.\d+\.\d+)
 [ { &quot;{#USERID}&quot;:&quot;\1&quot;, &quot;{#USERIP}&quot;:&quot;\2&quot; }  ]</params>
                         </step>
                     </preprocessing>
