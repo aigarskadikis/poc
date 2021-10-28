@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-10-28T08:04:06Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>create LLD only if match condition</template>
+            <name>create LLD only if match condition</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>cksum of</name>
+                </application>
+                <application>
+                    <name>Data of file</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>check if zabbix user is installed in OS</name>
+                    <key>vfs.file.contents[&quot;/etc/passwd&quot;]</key>
+                    <delay>1d</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// search for pattern in the input
+if (value.search(&quot;zabbix&quot;) &gt; 0) {
+// if found then generate some JSON for discovery
+return '[{&quot;{#FILE}&quot;:&quot;\/etc\/hosts&quot;}]';
+}
+else {
+// report an empty discovery
+return '[]'
+}
+</params>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>lld.rule</name>
+                    <type>DEPENDENT</type>
+                    <key>lld.rule</key>
+                    <delay>0</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>cksum of {#FILE}</name>
+                            <key>vfs.file.cksum[&quot;{#FILE}&quot;]</key>
+                            <delay>1h</delay>
+                            <applications>
+                                <application>
+                                    <name>cksum of</name>
+                                </application>
+                                <application>
+                                    <name>Data of file</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>DISCARD_UNCHANGED_HEARTBEAT</type>
+                                    <params>1d</params>
+                                </step>
+                            </preprocessing>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{diff()}=1</expression>
+                                    <name>File {#FILE} is been modified</name>
+                                    <priority>AVERAGE</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>pick up data from {#FILE}</name>
+                            <key>vfs.file.contents[&quot;{#FILE}&quot;]</key>
+                            <delay>1h</delay>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <applications>
+                                <application>
+                                    <name>Data of file</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>DISCARD_UNCHANGED_HEARTBEAT</type>
+                                    <params>1d</params>
+                                </step>
+                            </preprocessing>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>vfs.file.contents[&quot;/etc/passwd&quot;]</key>
+                    </master_item>
+                </discovery_rule>
+            </discovery_rules>
+        </template>
+    </templates>
+</zabbix_export>
