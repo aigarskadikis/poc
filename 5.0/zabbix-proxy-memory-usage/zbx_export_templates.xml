@@ -1,0 +1,708 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-11-17T17:27:57Z</date>
+    <groups>
+        <group>
+            <name>Templates/Applications</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Zabbix Proxy Memory Usage</template>
+            <name>Zabbix Proxy Memory Usage</name>
+            <groups>
+                <group>
+                    <name>Templates/Applications</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Memory Usage - Data</name>
+                </application>
+                <application>
+                    <name>Memory Usage - RSS</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>{$PROC_NAME} - &quot;poller&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;: poller #&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;poller&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;: poller #&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;configuration syncer&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;configuration syncer&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;configuration syncer&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;configuration syncer&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;data sender&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;data sender&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;data sender&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;data sender&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;discoverer&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;discoverer&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;discoverer&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;discoverer&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;heartbeat sender&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;heartbeat sender&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;heartbeat sender&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;heartbeat sender&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;history syncer&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;history syncer&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;history syncer&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;history syncer&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;housekeeper&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;housekeeper&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;housekeeper&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;housekeeper&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;http poller&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;http poller&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;http poller&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;http poller&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;icmp pinger&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;icmp pinger&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;icmp pinger&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;icmp pinger&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;preprocessing manager&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;preprocessing manager&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;preprocessing manager&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;preprocessing manager&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;preprocessing worker&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;preprocessing worker&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;preprocessing worker&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;preprocessing worker&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;self-monitoring&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;self-monitoring&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;self-monitoring&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;self-monitoring&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;trapper&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;trapper&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;trapper&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;trapper&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;unreachable poller&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;unreachable poller&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;unreachable poller&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;unreachable poller&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;vmware collector&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;vmware collector&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;vmware collector&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;vmware collector&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - RSS</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;main&quot; memory usage (data)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;\.conf&quot;,data]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>{$PROC_NAME} - &quot;main&quot; memory usage (rss)</name>
+                    <key>proc.mem[{$PROC_NAME},,sum,&quot;\.conf&quot;,rss]</key>
+                    <delay>30s</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>Memory Usage - Data</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$PROC_NAME}</macro>
+                    <value>zabbix_proxy</value>
+                </macro>
+            </macros>
+            <screens>
+                <screen>
+                    <name>Memory usage backend</name>
+                    <hsize>2</hsize>
+                    <vsize>1</vsize>
+                    <screen_items>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>Process - Memory usage (rss)</name>
+                                <host>Zabbix Proxy Memory Usage</host>
+                            </resource>
+                            <width>768</width>
+                            <height>200</height>
+                            <x>0</x>
+                            <y>0</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>1</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>Process - Memory usage (data)</name>
+                                <host>Zabbix Proxy Memory Usage</host>
+                            </resource>
+                            <width>768</width>
+                            <height>200</height>
+                            <x>1</x>
+                            <y>0</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>1</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                    </screen_items>
+                </screen>
+            </screens>
+        </template>
+    </templates>
+    <graphs>
+        <graph>
+            <name>Process - Memory usage (data)</name>
+            <graph_items>
+                <graph_item>
+                    <color>1A7C11</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;heartbeat sender&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>F63100</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;data sender&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>2774A4</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;configuration syncer&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>A54F10</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;discoverer&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>5</sortorder>
+                    <color>6C59DC</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;history syncer&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>6</sortorder>
+                    <color>AC8C14</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;housekeeper&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>7</sortorder>
+                    <color>611F27</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;http poller&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>8</sortorder>
+                    <color>F230E0</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;icmp pinger&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>9</sortorder>
+                    <color>5CCD18</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;\.conf&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>10</sortorder>
+                    <color>BB2A02</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;: poller #&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>11</sortorder>
+                    <color>5A2B57</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;preprocessing manager&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>12</sortorder>
+                    <color>89ABF8</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;preprocessing worker&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>14</sortorder>
+                    <color>274482</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;self-monitoring&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>17</sortorder>
+                    <color>FD5434</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;trapper&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>18</sortorder>
+                    <color>790E1F</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;unreachable poller&quot;,data]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>19</sortorder>
+                    <color>87AC4D</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;vmware collector&quot;,data]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>Process - Memory usage (rss)</name>
+            <graph_items>
+                <graph_item>
+                    <color>1A7C11</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;heartbeat sender&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>F63100</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;data sender&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>2774A4</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;configuration syncer&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>A54F10</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;discoverer&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>5</sortorder>
+                    <color>6C59DC</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;history syncer&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>6</sortorder>
+                    <color>AC8C14</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;housekeeper&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>7</sortorder>
+                    <color>611F27</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;http poller&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>8</sortorder>
+                    <color>F230E0</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;icmp pinger&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>9</sortorder>
+                    <color>5CCD18</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;\.conf&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>10</sortorder>
+                    <color>BB2A02</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;: poller #&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>11</sortorder>
+                    <color>5A2B57</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;preprocessing manager&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>12</sortorder>
+                    <color>89ABF8</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;preprocessing worker&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>14</sortorder>
+                    <color>274482</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;self-monitoring&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>17</sortorder>
+                    <color>FD5434</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;trapper&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>18</sortorder>
+                    <color>790E1F</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;unreachable poller&quot;,rss]</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>19</sortorder>
+                    <color>87AC4D</color>
+                    <item>
+                        <host>Zabbix Proxy Memory Usage</host>
+                        <key>proc.mem[{$PROC_NAME},,sum,&quot;vmware collector&quot;,rss]</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+    </graphs>
+</zabbix_export>
