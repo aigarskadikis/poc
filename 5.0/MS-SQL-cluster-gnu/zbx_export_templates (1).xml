@@ -1,0 +1,1615 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-11-24T21:28:56Z</date>
+    <groups>
+        <group>
+            <name>Templates/Databases</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Template App MS SQL cluster gnu</template>
+            <name>Template App MS SQL cluster gnu</name>
+            <description>Solution is based on windows performance counter</description>
+            <groups>
+                <group>
+                    <name>Templates/Databases</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>MS SQL</name>
+                </application>
+                <application>
+                    <name>MS SQL Memory</name>
+                </application>
+                <application>
+                    <name>MS SQL Physical Disk</name>
+                </application>
+                <application>
+                    <name>MS SQL Processor</name>
+                </application>
+                <application>
+                    <name>MS SQL Server</name>
+                </application>
+                <application>
+                    <name>MS SQL Services</name>
+                </application>
+                <application>
+                    <name>MS SQL Statistics</name>
+                </application>
+            </applications>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Database Discovery</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>discover.mssql.dbs</key>
+                    <delay>12h</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#DBNAME}</macro>
+                                <value>@MS SQL Databases for discovery</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <lifetime>10d</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Active Transactions</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Active Transactions&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of active transactions for the database.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Data File Size</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Data File(s) Size (KB)&quot;]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>Cumulative size (in kilobytes) of all the data files in the database including any automatic growth. Monitoring this counter is useful, for example, for determining the correct size of tempdb.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Physical Disk</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1024</params>
+                                </step>
+                            </preprocessing>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Log Bytes Flushed/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Log Bytes Flushed/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>Total number of log bytes flushed per second. Useful for determining trends and utilization of the transaction log</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Log File Size</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Log File(s) Size (KB)&quot;]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>Cumulative size (in kilobytes) of all the transaction log files in the database.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Physical Disk</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1024</params>
+                                </step>
+                            </preprocessing>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Log File Used Size</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Log File(s) Used Size (KB)&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>The cumulative used size of all the log files in the database.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Physical Disk</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1024</params>
+                                </step>
+                            </preprocessing>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Log Flushes/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Log Flushes/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of log flushes per second.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Log Flush Waits/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Log Flush Waits/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of commits per second waiting for the log flush.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;1</expression>
+                                    <name>{#INSTANCE}:Databases: Log Flush Waits/sec {#DBNAME}</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Log Flush Wait Time</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Log Flush Wait Time&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>ms</units>
+                            <description>Total wait time (in milliseconds) to flush the log. On an AlwaysOn secondary database, this value indicates the wait time for log records to be hardened to disk.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;5</expression>
+                                    <name>{#INSTANCE}:Databases: Log Flush Wait Time {#DBNAME}</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Log Growths</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Log Growths&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Total number of times the transaction log for the database has been expanded.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;1</expression>
+                                    <name>{#INSTANCE}:Databases: Log Growths {#DBNAME}</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Log Shrinks</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Log Shrinks&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Total number of times the transaction log for the database has been shrunk.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;15</expression>
+                                    <name>{#INSTANCE}:Databases: Log Shrinks {#DBNAME}</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Log Truncations</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Log Truncations&quot;]</key>
+                            <value_type>FLOAT</value_type>
+                            <description>The number of times the transaction log has been shrunk.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Percent Log Used</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Percent Log Used&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>%</units>
+                            <description>Percentage of space in the log that is in use.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Physical Disk</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;80</expression>
+                                    <name>{#INSTANCE}:Databases: Percent Log Used {#DBNAME}</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, {#DBNAME}: Transactions per second</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases({#DBNAME})\Transactions/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Instance Discovery</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>discover.mssql.instances</key>
+                    <delay>12h</delay>
+                    <lifetime>10d</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Number of Failed Jobs</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\SQLAgent:Jobs(_Total)\Failed jobs&quot;]</key>
+                            <delay>1h</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>The number of jobs with a last run status of Failed.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Access Methods: Forwarded Records per second</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Forwarded Records/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of records per second fetched through forwarded record pointers.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Access Methods: Full Scans/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Full Scans/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of unrestricted full scans per second. These can be either base-table or full-index scans.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Access Methods: Index Searches/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Index Searches/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of index searches per second. These are used to start a range scan, reposition a range scan, revalidate a scan point, fetch a single index record, and search down the index to locate where to insert a new row.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Access Methods: Page Splits/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Page Splits/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of page splits per second that occur as the result of overflowing index pages.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Access Methods: Work files created/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Workfiles Created/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of work files created per second. For example, work files could be used to store temporary results for hash joins and hash aggregates.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;300</expression>
+                                    <name>{#INSTANCE}, Access Methods: Work files created/sec</name>
+                                    <priority>AVERAGE</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Access Methods: Work tables created/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Worktables Created/sec&quot;]</key>
+                            <delay>60</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of work tables created per second. For example, work tables could be used to store temporary results for query spool, lob variables, XML variables, and cursors.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;50</expression>
+                                    <name>{#INSTANCE}, Access Methods: Work tables created/sec</name>
+                                    <priority>AVERAGE</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: % Buffer cache hit ratio</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Buffer cache hit ratio&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>%</units>
+                            <description>Indicates the percentage of pages found in the buffer cache without having to read from disk. The ratio is the total number of cache hits divided by the total number of cache lookups over the last few thousand page accesses. After a long period of time, the ratio moves very little. Because reading from the cache is much less expensive than reading from disk, you want this ratio to be high. Generally, you can increase the buffer cache hit ratio by increasing the amount of memory available to SQL Server or by using the buffer pool extension feature.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&lt;30</expression>
+                                    <name>{#INSTANCE}, Buffer Manager: Buffer cache hit ratio</name>
+                                    <priority>HIGH</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Checkpoint pages/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Checkpoint pages/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Indicates the number of pages flushed to disk per second by a checkpoint or other operation that require all dirty pages to be flushed.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Database pages</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Database pages&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Indicates the number of pages in the buffer pool with database content.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Free list stalls/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Free list stalls/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Indicates the number of requests per second that had to wait for a free page.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;2</expression>
+                                    <name>{#INSTANCE}, Buffer Manager: Free list stalls/sec</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Lazy writes/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Lazy writes/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Indicates the number of buffers written per second by the buffer manager's lazy writer. The lazy writer is a system process that flushes out batches of dirty, aged buffers (buffers that contain changes that must be written back to disk before the buffer can be reused for a different page) and makes them available to user processes. The lazy writer eliminates the need to perform frequent checkpoints in order to create available buffers.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;20</expression>
+                                    <name>{#INSTANCE}, Buffer Manager: Lazy writes/sec</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Page life expectancy</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Page life expectancy&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>min</units>
+                            <description>Indicates the number of seconds a page will stay in the buffer pool without references.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&lt;5</expression>
+                                    <name>{#INSTANCE}, Buffer Manager: Page life expectancy</name>
+                                    <priority>HIGH</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Page lookups/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Page lookups/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Page reads/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Page reads/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Indicates the number of physical database page reads that are issued per second. This statistic displays the total number of physical page reads across all databases. Because physical I/O is expensive, you may be able to minimize the cost, either by using a larger data cache, intelligent indexes, and more efficient queries, or by changing the database design.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;90</expression>
+                                    <name>{#INSTANCE}, Buffer Manager: Page reads/sec</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Page writes/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Page writes/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Indicates the number of physical database page writes that are issued per second.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;90</expression>
+                                    <name>{#INSTANCE}, Buffer Manager: Page writes/sec</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Read-ahead pages/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Readahead pages/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Indicates the number of pages read per second in anticipation of use.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Target pages</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Target pages&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>The optimum number of pages in the buffer pool.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Data File Size (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases(_Total)\Data File(s) Size (KB)&quot;]</key>
+                            <delay>5m</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>Total size (in kilobytes) of all the data files.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Physical Disk</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Log File Size (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases(_Total)\Log File(s) Size (KB)&quot;]</key>
+                            <delay>5m</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>Total size (in kilobytes) of all the transaction log files.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Physical Disk</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Log File Used Size (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases(_Total)\Log File(s) Used Size (KB)&quot;]</key>
+                            <delay>5m</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>The cumulative used size of all the log files in the database.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Physical Disk</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Transactions per second (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Databases(_Total)\Transactions/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <description>Total number of transactions started for all databases per second.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Logins/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:General Statistics\Logins/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Total number of logins started per second. This does not include pooled connections.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Server</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Logouts/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:General Statistics\Logouts/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Total number of logout operations started per second.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Server</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Number of Blocked Processes</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:General Statistics\Processes blocked&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of currently blocked processes.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Server</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Number Users Connected</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:General Statistics\User Connections&quot;]</key>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of users connected to MS SQL Server.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Server</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Latches: Average Latch Wait Time</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Latches\Average Latch Wait Time (ms)&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>ms</units>
+                            <description>Average latch wait time (in milliseconds) for latch requests that had to wait.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Latches: Latch Waits/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Latches\Latch Waits/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of latch requests that could not be granted immediately.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Latches: Total Latch Wait Time</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Latches\Total Latch Wait Time (ms)&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>ms</units>
+                            <description>Total latch wait time (in milliseconds) for latch requests in the last second.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Locks: Average Wait Time (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Average Wait Time (ms)&quot;]</key>
+                            <delay>30s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>60s</units>
+                            <description>Total wait time (in milliseconds) for locks in the last second.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;500</expression>
+                                    <name>{#INSTANCE}, Locks: Average Wait Time (Total)</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Locks: Lock Requests/sec (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Lock Requests/sec&quot;]</key>
+                            <delay>30s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>60s</units>
+                            <description>Number of new locks and lock conversions per second requested from the lock manager.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;3000</expression>
+                                    <name>{#INSTANCE}, Locks: Lock Requests/sec (Total)</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Locks: Lock Timeouts/sec (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Lock Timeouts/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of lock requests per second that timed out, including requests for NOWAIT locks.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;1</expression>
+                                    <name>{#INSTANCE}, Locks: Lock Timeouts/sec (Total)</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Locks: Lock Waits per second (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Lock Waits/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of lock requests per second that required the caller to wait.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Locks: Lock Wait Time (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Lock Wait Time (ms)&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>ms</units>
+                            <description>Average amount of wait time (in milliseconds) for each lock request that resulted in a wait.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Locks: Number of Deadlocks/sec (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Number of Deadlocks/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of lock requests per second that resulted in a deadlock.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&lt;&gt;0</expression>
+                                    <name>{#INSTANCE}, Deadlocks exists on the {HOST.NAME}</name>
+                                    <priority>AVERAGE</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Memory Manager: Granted Workspace Memory</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Granted Workspace Memory (KB)&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>Specifies the total amount of memory currently granted to executing processes, such as hash, sort, bulk copy, and index creation operations.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Memory Manager: Maximum Workspace Memory</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Maximum Workspace Memory (KB)&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>Indicates the maximum amount of memory available for executing processes, such as hash, sort, bulk copy, and index creation operations.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Memory Manager: Memory Grants Outstanding</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Memory Grants Outstanding&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Specifies the total number of processes that have successfully acquired a workspace memory grant.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Memory Manager: Memory Grants Pending</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Memory Grants Pending&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Specifies the total number of processes waiting for a workspace memory grant.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Memory Manager: Target Server Memory</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Target Server Memory (KB)&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>Indicates the ideal amount of memory the server can consume.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Memory Manager: Total Server Memory</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Total Server Memory (KB)&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <units>B</units>
+                            <description>Specifies the amount of memory the server has committed using the memory manager.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Cache: Cache Hit Ratio</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Plan Cache(_Total)\Cache Hit Ratio&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Ratio between cache hits and lookups.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Cache: Cache Object Counts</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Plan Cache(_Total)\Cache Object Counts&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of cache objects in the cache.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Cache: Cache Objects in use</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Plan Cache(_Total)\Cache Objects in use&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of cache objects in use.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Cache: Cache Pages</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Plan Cache(_Total)\Cache Pages&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of 8-kilobyte (KB) pages used by cache objects.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Memory</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Errors: Errors/sec (DB Offline Errors)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(DB Offline Errors)\Errors/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of errors/sec.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Errors: Errors/sec (Info Errors)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(Info Errors)\Errors/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of errors/sec.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Errors: Errors/sec (Kill Connection Errors)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(Kill Connection Errors)\Errors/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of errors/sec.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Errors: Errors/sec (User Errors)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(User Errors)\Errors/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of errors/sec.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Errors: Errors/sec (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(_Total)\Errors/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of errors/sec.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Statistics: Auto-Param Attempts/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Auto-Param Attempts/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of auto-parameterization attempts per second. Total should be the sum of the failed, safe, and unsafe auto-parameterizations. Auto-parameterization occurs when an instance of SQL Server tries to parameterize a Transact-SQL request by replacing some literals with parameters so that reuse of the resulting cached execution plan across multiple similar-looking requests is possible. Note that auto-parameterizations are also known as simple parameterizations in newer versions of SQL Server. This counter does not include forced parameterizations.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Statistics: Batch Requests/Sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Batch Requests/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of Transact-SQL command batches received per second. This statistic is affected by all constraints (such as I/O, number of users, cache size, complexity of requests, and so on). High batch requests mean good throughput.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Statistics: Failed Auto-Params/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Failed Auto-Params/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of failed auto-parameterization attempts per second. This should be small. Note that auto-parameterizations are also known as simple parameterizations in later versions of SQL Server.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Statistics: Safe Auto-Params/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Safe Auto-Params/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of safe auto-parameterization attempts per second. Safe refers to a determination that a cached execution plan can be shared between different similar-looking Transact-SQL statements. SQL Server makes many auto-parameterization attempts some of which turn out to be safe and others fail. Note that auto-parameterizations are also known as simple parameterizations in later versions of SQL Server. This does not include forced parameterizations.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Statistics: SQL Compilations/Sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\SQL Compilations/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of SQL compilations per second. Indicates the number of times the compile code path is entered. Includes compiles caused by statement-level recompilations in SQL Server. After SQL Server user activity is stable, this value reaches a steady state.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Statistics: SQL Re-Compilations/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\SQL Re-Compilations/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of statement recompiles per second. Counts the number of times statement recompiles are triggered. Generally, you want the recompiles to be low.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Statistics: Unsafe Auto-Params/sec</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Unsafe Auto-Params/sec&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>Number of unsafe auto-parameterization attempts per second. For example, the query has some characteristics that prevent the cached plan from being shared. These are designated as unsafe. This does not count the number of forced parameterizations.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#INSTANCE}, Transactions Number (Total)</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>perf_counter[&quot;\{#INSTANCE}:Transactions\Transactions&quot;]</key>
+                            <delay>60s</delay>
+                            <value_type>FLOAT</value_type>
+                            <description>The number of currently active transactions of all types.</description>
+                            <applications>
+                                <application>
+                                    <name>MS SQL Statistics</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Access Methods</name>
+                            <yaxismin>0.0009</yaxismin>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Forwarded Records/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Full Scans/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>2</sortorder>
+                                    <color>2774A4</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Index Searches/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>3</sortorder>
+                                    <color>A54F10</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Page Splits/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>4</sortorder>
+                                    <color>FC6EA3</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Workfiles Created/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>5</sortorder>
+                                    <color>6C59DC</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Access Methods\Worktables Created/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Database pages</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Database pages&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Target pages&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Page life expectancy</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <drawtype>GRADIENT_LINE</drawtype>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Page life expectancy&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Buffer Manager: Pages</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Page lookups/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Page reads/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>2</sortorder>
+                                    <color>2774A4</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Page writes/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>3</sortorder>
+                                    <color>A54F10</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Readahead pages/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>4</sortorder>
+                                    <color>FC6EA3</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Checkpoint pages/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>5</sortorder>
+                                    <color>6C59DC</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Free list stalls/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>6</sortorder>
+                                    <color>AC8C14</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Lazy writes/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Cache Objects</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Plan Cache(_Total)\Cache Object Counts&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Plan Cache(_Total)\Cache Objects in use&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>2</sortorder>
+                                    <color>2774A4</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Plan Cache(_Total)\Cache Pages&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Compilations</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\SQL Compilations/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\SQL Re-Compilations/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, CPU/Memory/Cache load</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Buffer Manager\Buffer cache hit ratio&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>0000C8</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Plan Cache(_Total)\Cache Hit Ratio&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Errors</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(_Total)\Errors/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(DB Offline Errors)\Errors/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>2</sortorder>
+                                    <color>2774A4</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(Info Errors)\Errors/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>3</sortorder>
+                                    <color>A54F10</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(Kill Connection Errors)\Errors/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>4</sortorder>
+                                    <color>FC6EA3</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Errors(User Errors)\Errors/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Locks</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Lock Requests/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Lock Timeouts/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>2</sortorder>
+                                    <color>2774A4</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Number of Deadlocks/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Logins/sec and Logouts/sec</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:General Statistics\Logins/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:General Statistics\Logouts/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Memory Grants Outstanding and Pending</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Memory Grants Outstanding&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Memory Grants Pending&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Processes blocked</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:General Statistics\Processes blocked&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Server Memory</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Target Server Memory (KB)&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Total Server Memory (KB)&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>2</sortorder>
+                                    <color>2774A4</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Granted Workspace Memory (KB)&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>3</sortorder>
+                                    <color>A54F10</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Memory Manager\Maximum Workspace Memory (KB)&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Statistics: Auto-Params</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Auto-Param Attempts/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Failed Auto-Params/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>2</sortorder>
+                                    <color>2774A4</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Safe Auto-Params/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>3</sortorder>
+                                    <color>A54F10</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Unsafe Auto-Params/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Transactions</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:SQL Statistics\Batch Requests/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Databases(_Total)\Transactions/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>{#INSTANCE}, Waits per second</name>
+                            <ymin_type_1>FIXED</ymin_type_1>
+                            <graph_items>
+                                <graph_item>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Latches\Latch Waits/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template App MS SQL cluster gnu</host>
+                                        <key>perf_counter[&quot;\{#INSTANCE}:Locks(_Total)\Lock Waits/sec&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
+            </discovery_rules>
+        </template>
+    </templates>
+</zabbix_export>

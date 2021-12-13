@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-11-24T20:41:12Z</date>
+    <groups>
+        <group>
+            <name>Templates/SNMP traps</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>generate snmp trap items from manual discovery</template>
+            <name>generate snmp trap items from manual discovery</name>
+            <groups>
+                <group>
+                    <name>Templates/SNMP traps</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>trap regex</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>fallback</name>
+                    <type>SNMP_TRAP</type>
+                    <key>snmptrap.fallback</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>LOG</value_type>
+                    <applications>
+                        <application>
+                            <name>trap regex</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>network discovery</name>
+                    <type>TRAP</type>
+                    <key>net.if.discovery.manual</key>
+                    <delay>0</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>SNMPTRAP - Port status of interface {#IFNAME}</name>
+                            <type>SNMP_TRAP</type>
+                            <key>snmptrap[&quot;IF-MIB::(linkDown|linkUp)(?:(?:.|[[:space:]])*?)ifIndex.{#SNMPINDEX}\D&quot;]</key>
+                            <delay>0</delay>
+                            <trends>0</trends>
+                            <value_type>LOG</value_type>
+                            <applications>
+                                <application>
+                                    <name>trap regex</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                </discovery_rule>
+            </discovery_rules>
+        </template>
+    </templates>
+</zabbix_export>

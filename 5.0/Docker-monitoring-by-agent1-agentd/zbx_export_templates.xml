@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-12-13T16:38:45Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Docker monitoring by agent1 agentd</template>
+            <name>Docker monitoring by agent1 agentd</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Docker cpuacct.usage</name>
+                </application>
+                <application>
+                    <name>Docker memory.stat</name>
+                </application>
+                <application>
+                    <name>Docker memory rss</name>
+                </application>
+                <application>
+                    <name>Docker memory swap</name>
+                </application>
+                <application>
+                    <name>Find Docker IDs</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Find Docker IDs</name>
+                    <key>system.run[&quot;{$FIND.IDS}&quot;]</key>
+                    <delay>1d</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Find Docker IDs</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>discover.containers.ids</name>
+                    <type>DEPENDENT</type>
+                    <key>discover.containers.ids</key>
+                    <delay>0</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#NAME}</macro>
+                                <value>asdf</value>
+                                <operator>NOT_MATCHES_REGEX</operator>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>container.rss[{#NAME}]</name>
+                            <type>DEPENDENT</type>
+                            <key>container.rss[{#NAME}]</key>
+                            <delay>0</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Docker memory rss</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>REGEX</type>
+                                    <params>rss (\d+)
+\1</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>vfs.file.contents[/sys/fs/cgroup/memory/docker/{#ID}/memory.stat]</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>container.swap[{#NAME}]</name>
+                            <type>DEPENDENT</type>
+                            <key>container.swap[{#NAME}]</key>
+                            <delay>0</delay>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Docker memory swap</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>REGEX</type>
+                                    <params>swap (\d+)
+\1</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>vfs.file.contents[/sys/fs/cgroup/memory/docker/{#ID}/memory.stat]</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Container {#NAME}: cpuacct.usage</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>vfs.file.contents[/sys/fs/cgroup/cpu/docker/{#ID}/cpuacct.usage]</key>
+                            <delay>30s</delay>
+                            <applications>
+                                <application>
+                                    <name>Docker cpuacct.usage</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>SIMPLE_CHANGE</type>
+                                    <params/>
+                                </step>
+                            </preprocessing>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Container {#NAME}: memory.stat</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>vfs.file.contents[/sys/fs/cgroup/memory/docker/{#ID}/memory.stat]</key>
+                            <delay>30s</delay>
+                            <history>0</history>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <applications>
+                                <application>
+                                    <name>Docker memory.stat</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>system.run[&quot;{$FIND.IDS}&quot;]</key>
+                    </master_item>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$FIND.IDS}</macro>
+                    <value>echo '[' &amp;&amp; docker stats --all --no-stream --no-trunc --format &quot;{\&quot;{#NAME}\&quot;:\&quot;{{.Name}}\&quot;,\&quot;{#ID}\&quot;:\&quot;{{.ID}}\&quot;},&quot; &amp;&amp; echo '{&quot;{#NAME}&quot;:&quot;asdf&quot;,&quot;{#ID}&quot;:&quot;asdf&quot;}]'</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>

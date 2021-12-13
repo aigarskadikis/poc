@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-11-24T21:08:26Z</date>
+    <groups>
+        <group>
+            <name>Templates/SNMP traps</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Generate traps per each interface</template>
+            <name>Generate traps per each interface</name>
+            <groups>
+                <group>
+                    <name>Templates/SNMP traps</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Interfaces</name>
+                </application>
+                <application>
+                    <name>trap</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Number of network interfaces</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>IF-MIB::ifNumber.0</snmp_oid>
+                    <key>ifNumber</key>
+                    <history>30d</history>
+                    <description>The number of network interfaces (regardless of their current state) present on this system.</description>
+                    <applications>
+                        <application>
+                            <name>Interfaces</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>snmptrap.fallback</name>
+                    <type>SNMP_TRAP</type>
+                    <key>snmptrap.fallback</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>LOG</value_type>
+                    <applications>
+                        <application>
+                            <name>trap</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Network interfaces</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#IFNAME},IF-MIB::ifName,{#IFDESCR},IF-MIB::ifDescr,{#IFALIAS},IF-MIB::ifAlias,{#IFTYPE},IF-MIB::ifType]</snmp_oid>
+                    <key>ifName_ifDescr_ifAlias_ifType</key>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#IFNAME}</macro>
+                                <value>@Network interfaces for discovery</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <lifetime>7d</lifetime>
+                    <description>You may also consider using IF-MIB::ifType or IF-MIB::ifAlias for discovery depending on your filtering needs.&#13;
+&#13;
+{$SNMP_COMMUNITY} is a global macro.</description>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Alias of interface {#IFNAME}</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>IF-MIB::ifAlias.{#SNMPINDEX}</snmp_oid>
+                            <key>ifAlias[{#IFNAME}]</key>
+                            <delay>1h</delay>
+                            <history>30d</history>
+                            <trends>0</trends>
+                            <value_type>CHAR</value_type>
+                            <applications>
+                                <application>
+                                    <name>Interfaces</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>SNMPTRAP - Port status of interface {#IFNAME}</name>
+                            <type>SNMP_TRAP</type>
+                            <key>snmptrap[&quot;IF-MIB::(linkDown|linkUp).*{#IFNAME}&quot;]</key>
+                            <delay>0</delay>
+                            <history>30d</history>
+                            <trends>0</trends>
+                            <value_type>LOG</value_type>
+                            <description>IF-MIB::(linkDown|linkUp).*enp2s0&#13;
+&#13;
+&#13;
+&#13;
+snmptrap[&quot;IF-MIB::(linkDown|linkUp)(?:(?:.|[[:space:]])*?)ifIndex.{#SNMPINDEX}\D&quot;]</description>
+                            <applications>
+                                <application>
+                                    <name>trap</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>({Generate traps per each interface:snmptrap[&quot;IF-MIB::(linkDown|linkUp).*{#IFNAME}&quot;].str(linkDown)}=1) and ({Generate traps per each interface:ifAlias[{#IFNAME}].regexp(.*,#1)}=1)</expression>
+                            <name>SNMPTRAP - Port status of interface is down - Interface {#IFNAME} : {ITEM.VALUE2}</name>
+                            <priority>HIGH</priority>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                </discovery_rule>
+            </discovery_rules>
+        </template>
+    </templates>
+</zabbix_export>

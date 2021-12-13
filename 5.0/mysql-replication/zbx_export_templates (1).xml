@@ -1,0 +1,610 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-11-24T21:39:18Z</date>
+    <groups>
+        <group>
+            <name>Templates</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Template_MySQL_Replication</template>
+            <name>Template_MySQL_Replication</name>
+            <description>UserParameter=mysql.slave_status[*],mysql -u $1 -p$2 -e &quot;show slave status \G&quot;&#13;
+UserParameter=mysql.master_status[*],mysql -u $1 -p$2 -e &quot;show master status \G&quot;</description>
+            <groups>
+                <group>
+                    <name>Templates</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>MySQL Master</name>
+                </application>
+                <application>
+                    <name>MySQL Slave</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Master status</name>
+                    <key>mysql.master_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    <delay>30s</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>MySQL Master</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Slave status</name>
+                    <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    <delay>30s</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>MySQL - Slave Exec_Master_Log_Pos</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Exec_Master_Log_Pos,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>90d</trends>
+                    <value_type>FLOAT</value_type>
+                    <description>he position in the current master binary log file to which the SQL thread has read and executed, marking the start of the next transaction or event to be processed.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Exec_Master_Log_Pos: (\d+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Master File</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[File,master]</key>
+                    <delay>0</delay>
+                    <history>30d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <applications>
+                        <application>
+                            <name>MySQL Master</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>File: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.master_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Gtid_IO_Pos</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Gtid_IO_Pos,slave]</key>
+                    <delay>0</delay>
+                    <history>2d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>Current global transaction ID value.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Gtid_IO_Pos: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Last_SQL_Errno</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Last_SQL_Errno,slave]</key>
+                    <delay>0</delay>
+                    <history>30d</history>
+                    <value_type>FLOAT</value_type>
+                    <description>The error number and error message of the most recent error that caused the SQL thread to stop. An error number of 0 and message of the empty string mean “no error.” If the Last_SQL_Error value is not empty, the error values also appear in the slave's error log.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Last_SQL_Errno: (\d+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Last_SQL_Error</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Last_SQL_Error,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>The error number and error message of the most recent error that caused the SQL thread to stop. An error number of 0 and message of the empty string mean “no error.” If the Last_SQL_Error value is not empty, the error values also appear in the slave's error log.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Last_SQL_Error: (.*)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Master_Host</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Master_Host,slave]</key>
+                    <delay>0</delay>
+                    <history>30d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>The master host that the slave is connected to.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Master_Host: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Master_Log_File</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Master_Log_File,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>The name of the master binary log file from which the I/O thread is currently reading.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params> Master_Log_File: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Master_Port</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Master_Port,slave]</key>
+                    <delay>0</delay>
+                    <history>30d</history>
+                    <value_type>FLOAT</value_type>
+                    <description>The port used to connect to the master.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Master_Port: (\d+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Master_User</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Master_User,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>The user name of the account used to connect to the master.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Master_User: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Master Position</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Position,master]</key>
+                    <delay>0</delay>
+                    <history>30d</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>MySQL Master</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Position: (\d+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.master_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Read_Master_Log_Pos</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Read_Master_Log_Pos,slave]</key>
+                    <delay>0</delay>
+                    <history>30d</history>
+                    <value_type>FLOAT</value_type>
+                    <description>The position in the current master binary log file up to which the I/O thread has read.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Read_Master_Log_Pos: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Relay_Log_File</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Relay_Log_File,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>The name of the relay log file from which the SQL thread is currently reading and executing.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Relay_Log_File: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Relay_Log_Pos</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Relay_Log_Pos,slave]</key>
+                    <delay>0</delay>
+                    <history>30d</history>
+                    <trends>90d</trends>
+                    <value_type>FLOAT</value_type>
+                    <description>The position in the current relay log file up to which the SQL thread has read and executed.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Relay_Log_Pos: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Relay_Log_Space</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Relay_Log_Space,slave]</key>
+                    <delay>0</delay>
+                    <history>30d</history>
+                    <trends>90d</trends>
+                    <value_type>FLOAT</value_type>
+                    <description>The total combined size of all existing relay log files.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Relay_Log_Space: (\d+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Relay_Master_Log_File</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Relay_Master_Log_File,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>The name of the master binary log file containing the most recent event executed by the SQL thread.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Relay_Master_Log_File: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave Seconds_Behind_Master</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Seconds_Behind_Master,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>90d</trends>
+                    <value_type>FLOAT</value_type>
+                    <description>This field is an indication of how “late” the slave is:&#13;
+1. When the slave is actively processing updates, this field shows the difference between the current timestamp on the slave and the original timestamp logged on the master for the event currently being processed on the slave.&#13;
+2. When no event is currently being processed on the slave, this value is 0.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Seconds_Behind_Master: (\d*)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}=-1</expression>
+                            <name>MySQL Replication - can not connect to database</name>
+                            <priority>HIGH</priority>
+                            <description>Please check {$DB_USER} and {$DB_PASSWORD} macros.</description>
+                        </trigger>
+                        <trigger>
+                            <expression>{avg(#3)}&gt;120</expression>
+                            <name>MySQL Replication is slow on {HOSTNAME}</name>
+                            <priority>AVERAGE</priority>
+                            <description>Replication is slow :&#13;
+  - check server disk IO&#13;
+  - check server CPU and Load Average</description>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>MySQL - Slave Skip_Counter</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Skip_Counter,slave]</key>
+                    <delay>0</delay>
+                    <history>30d</history>
+                    <trends>90d</trends>
+                    <value_type>FLOAT</value_type>
+                    <description>The current value of the sql_slave_skip_counter system variable.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Skip_Counter: (\d+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave IO Running</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Slave_IO_Running,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>Whether the I/O thread is started and has connected successfully to the master. Internally, the state of this thread is represented by one of the following three values:&#13;
+1. MYSQL_SLAVE_NOT_RUN.  The slave I/O thread is not running. For this state, Slave_IO_Running is No.&#13;
+2. MYSQL_SLAVE_RUN_NOT_CONNECT.  The slave I/O thread is running, but is not connected to a replication master. For this state, Slave_IO_Running is Connecting.&#13;
+3. MYSQL_SLAVE_RUN_CONNECT.  The slave I/O thread is running, and is connected to a replication master. For this state, Slave_IO_Running is Yes.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Slave_IO_Running: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                    <triggers>
+                        <trigger>
+                            <expression>{str(&quot;Connecting&quot;)}</expression>
+                            <name>MySQL Replication is connecting to master</name>
+                            <priority>AVERAGE</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>MySQL - Slave IO state</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Slave_IO_State,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>Official documentation: https://dev.mysql.com/doc/refman/5.7/en/slave-io-thread-states.html</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Slave_IO_State:(.*)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>MySQL - Slave_SQL_Running</name>
+                    <type>DEPENDENT</type>
+                    <key>mysql[Slave_SQL_Running,slave]</key>
+                    <delay>0</delay>
+                    <history>7d</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>Whether the SQL thread is started.</description>
+                    <applications>
+                        <application>
+                            <name>MySQL Slave</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>Slave_SQL_Running: (\S+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>mysql.slave_status[{$DB_USER},{$DB_PASSWORD}]</key>
+                    </master_item>
+                    <triggers>
+                        <trigger>
+                            <expression>{str(&quot;Waiting&quot;)}</expression>
+                            <name>MySQL Replication is waiting</name>
+                            <priority>AVERAGE</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$DB_HOST}</macro>
+                    <value>localhost</value>
+                </macro>
+                <macro>
+                    <macro>{$DB_PASSWORD}</macro>
+                    <value>zabbix</value>
+                </macro>
+                <macro>
+                    <macro>{$DB_USER}</macro>
+                    <value>zabbix</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <triggers>
+        <trigger>
+            <expression>{Template_MySQL_Replication:mysql[Slave_SQL_Running,slave].str(&quot;No&quot;)} or {Template_MySQL_Replication:mysql[Slave_IO_Running,slave].str(&quot;No&quot;)}</expression>
+            <name>MySQL Replication stopped on {HOSTNAME}</name>
+            <priority>HIGH</priority>
+        </trigger>
+    </triggers>
+</zabbix_export>

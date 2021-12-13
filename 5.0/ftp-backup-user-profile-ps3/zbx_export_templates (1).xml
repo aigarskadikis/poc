@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-11-24T22:21:10Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>FTP backup user profile ps3</template>
+            <name>FTP backup user profile ps3</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>FTP service</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>ping</name>
+                    <type>SIMPLE</type>
+                    <key>icmpping</key>
+                    <delay>20s</delay>
+                </item>
+                <item>
+                    <name>FTP service is running</name>
+                    <type>SIMPLE</type>
+                    <key>net.tcp.service[tcp,,21]</key>
+                    <delay>3m</delay>
+                    <history>1w</history>
+                    <applications>
+                        <application>
+                            <name>FTP service</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>Service state</name>
+                    </valuemap>
+                </item>
+            </items>
+            <tags>
+                <tag>
+                    <tag>action</tag>
+                    <value>proxy</value>
+                </tag>
+            </tags>
+        </template>
+    </templates>
+    <triggers>
+        <trigger>
+            <expression>{FTP backup user profile ps3:net.tcp.service[tcp,,21].min(#100)}=1</expression>
+            <recovery_mode>RECOVERY_EXPRESSION</recovery_mode>
+            <recovery_expression>{FTP backup user profile ps3:icmpping.max(#100)}=0</recovery_expression>
+            <name>PS3 FTP is online, let's do backup</name>
+            <priority>AVERAGE</priority>
+            <description>folder=/home/user/Dropbox/PS3/backup/`date '+%Y%m%d%H%M'`/savedata&#13;
+mkdir -p $folder&#13;
+cd $folder&#13;
+/usr/bin/lftp -f &quot;&#13;
+open {HOST.CONN}&#13;
+cd /dev_hdd0/home/00000001/savedata&#13;
+mirror -c --parallel=2&#13;
+bye&#13;
+&quot;&#13;
+sudo chown -R user:user /home/user/Dropbox/PS3/backup</description>
+            <manual_close>YES</manual_close>
+        </trigger>
+    </triggers>
+    <value_maps>
+        <value_map>
+            <name>Service state</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>Down</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>Up</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-11-24T21:38:50Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Template_MySQL_Partitioning</template>
+            <name>Template_MySQL_Partitioning</name>
+            <description>Need to create user on db with select permissions on zabbix and create userparameter:&#13;
+&#13;
+UserParameter=mysql.partitions[*],HOME=/etc/zabbix /usr/bin/mysql -umonitoring -pparole -N -e &quot;select count(*) from  INFORMATION_SCHEMA.PARTITIONS where TABLE_SCHEMA='zabbix' and TABLE_NAME='$1' and  PARTITION_DESCRIPTION &gt; UNIX_TIMESTAMP(DATE_FORMAT(NOW(), '%Y-%m-%d 00:00:00'));&quot; | cut -d' ' -f1</description>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <name>Partitions for history</name>
+                    <key>mysql.partitions[history]</key>
+                    <delay>30s</delay>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&lt;{$MIN_PARTITIONS}</expression>
+                            <name>Less than {$MIN_PARTITIONS} future partitions left for table history</name>
+                            <priority>AVERAGE</priority>
+                            <description>Check partitioning script</description>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Partitions for history_log</name>
+                    <key>mysql.partitions[history_log]</key>
+                    <delay>30s</delay>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&lt;{$MIN_PARTITIONS}</expression>
+                            <name>Less than {$MIN_PARTITIONS} future partitions left for table history_log</name>
+                            <priority>AVERAGE</priority>
+                            <description>Check partitioning script</description>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Partitions for history_str</name>
+                    <key>mysql.partitions[history_str]</key>
+                    <delay>30s</delay>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&lt;{$MIN_PARTITIONS}</expression>
+                            <name>Less than {$MIN_PARTITIONS} future partitions left for table history_str</name>
+                            <priority>AVERAGE</priority>
+                            <description>Check partitioning script</description>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Partitions for history_text</name>
+                    <key>mysql.partitions[history_text]</key>
+                    <delay>30s</delay>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&lt;{$MIN_PARTITIONS}</expression>
+                            <name>Less than {$MIN_PARTITIONS} future partitions left for table history_text</name>
+                            <priority>AVERAGE</priority>
+                            <description>Check partitioning script</description>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Partitions for history_uint</name>
+                    <key>mysql.partitions[history_uint]</key>
+                    <delay>30s</delay>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&lt;{$MIN_PARTITIONS}</expression>
+                            <name>Less than {$MIN_PARTITIONS} future partitions left for table history_uint</name>
+                            <priority>AVERAGE</priority>
+                            <description>Check partitioning script</description>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Partitions for trends</name>
+                    <key>mysql.partitions[trends]</key>
+                    <delay>30s</delay>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&lt;{$MIN_PARTITIONS}</expression>
+                            <name>Less than {$MIN_PARTITIONS} future partitions left for table trends</name>
+                            <priority>AVERAGE</priority>
+                            <description>Check partitioning script</description>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Partitions for trends_uint</name>
+                    <key>mysql.partitions[trends_uint]</key>
+                    <delay>30s</delay>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&lt;{$MIN_PARTITIONS}</expression>
+                            <name>Less than {$MIN_PARTITIONS} future partitions left for table trends_uint</name>
+                            <priority>AVERAGE</priority>
+                            <description>Check partitioning script</description>
+                        </trigger>
+                    </triggers>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$MIN_PARTITIONS}</macro>
+                    <value>4</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>

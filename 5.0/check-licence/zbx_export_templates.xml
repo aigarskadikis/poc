@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2021-11-24T22:19:00Z</date>
+    <groups>
+        <group>
+            <name>Templates/Linux</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>check licence MM DD YYYY</template>
+            <name>check licence MM DD YYYY</name>
+            <groups>
+                <group>
+                    <name>Templates/Linux</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>epoch</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>epoch of &quot;$1&quot;</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>licence.status[{$FILE2CHECK}]</key>
+                    <delay>30s</delay>
+                    <applications>
+                        <application>
+                            <name>epoch</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}-{now()}&lt;{$DAYS_CRITICAL}</expression>
+                            <name>Licence will expire in less than {$DAYS_CRITICAL}</name>
+                            <priority>HIGH</priority>
+                            <description>seconds left: {ITEM.LASTVALUE}</description>
+                        </trigger>
+                        <trigger>
+                            <expression>{last()}-{now()}&lt;{$DAYS_WARN}</expression>
+                            <name>Licence will expire in less than {$DAYS_WARN}</name>
+                            <priority>AVERAGE</priority>
+                            <description>seconds left: {ITEM.LASTVALUE}</description>
+                            <dependencies>
+                                <dependency>
+                                    <name>Licence will expire in less than {$DAYS_CRITICAL}</name>
+                                    <expression>{check licence MM DD YYYY:licence.status[{$FILE2CHECK}].last()}-{check licence MM DD YYYY:licence.status[{$FILE2CHECK}].now()}&lt;{$DAYS_CRITICAL}</expression>
+                                </dependency>
+                            </dependencies>
+                        </trigger>
+                    </triggers>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$DAYS_CRITICAL}</macro>
+                    <value>365d</value>
+                </macro>
+                <macro>
+                    <macro>{$DAYS_WARN}</macro>
+                    <value>383d</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
