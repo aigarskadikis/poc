@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2021-12-13T16:38:45Z</date>
+    <date>2021-12-13T18:04:40Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -30,19 +30,21 @@
                     <name>Docker memory swap</name>
                 </application>
                 <application>
-                    <name>Find Docker IDs</name>
+                    <name>Zabbix raw items</name>
                 </application>
             </applications>
             <items>
                 <item>
                     <name>Find Docker IDs</name>
+                    <type>ZABBIX_ACTIVE</type>
                     <key>system.run[&quot;{$FIND.IDS}&quot;]</key>
-                    <delay>1d</delay>
+                    <delay>5m</delay>
+                    <history>0</history>
                     <trends>0</trends>
                     <value_type>TEXT</value_type>
                     <applications>
                         <application>
-                            <name>Find Docker IDs</name>
+                            <name>Zabbix raw items</name>
                         </application>
                     </applications>
                 </item>
@@ -136,7 +138,7 @@
                             <value_type>TEXT</value_type>
                             <applications>
                                 <application>
-                                    <name>Docker memory.stat</name>
+                                    <name>Zabbix raw items</name>
                                 </application>
                             </applications>
                         </item_prototype>
