@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2022-01-20T07:31:46Z</date>
+    <groups>
+        <group>
+            <name>Templates/Databases</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>zabbix database maintain ODBC MySQL orphaned events my.cnf</template>
+            <name>zabbix database maintain ODBC MySQL orphaned events my.cnf</name>
+            <groups>
+                <group>
+                    <name>Templates/Databases</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>alerts</name>
+                </application>
+                <application>
+                    <name>biggest metric</name>
+                </application>
+                <application>
+                    <name>frequent metric</name>
+                </application>
+                <application>
+                    <name>low lld frequency</name>
+                </application>
+                <application>
+                    <name>odbc test</name>
+                </application>
+                <application>
+                    <name>orphaned</name>
+                </application>
+                <application>
+                    <name>orphaned events</name>
+                </application>
+                <application>
+                    <name>orphaned metrics</name>
+                </application>
+                <application>
+                    <name>orphaned metrics explained</name>
+                </application>
+                <application>
+                    <name>table size</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>internal event by unexisting triggerid</name>
+                    <type>ODBC</type>
+                    <key>db.odbc.select[internal.event.by.unexisting.triggerid,{HOST.HOST}]</key>
+                    <delay>0;h1</delay>
+                    <params>SELECT COUNT(*) FROM events WHERE source = 3 AND object = 0 AND objectid NOT IN (SELECT triggerid FROM triggers);</params>
+                    <username>{$ODBC_USER}</username>
+                    <password>{$ODBC_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>orphaned</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{min(#3)}&gt;0</expression>
+                            <name>triggerid do not exist anymore for INTERNAL event</name>
+                            <priority>WARNING</priority>
+                            <description>DELETE FROM events WHERE source = 3 AND object = 0 AND objectid NOT IN (SELECT triggerid FROM triggers);</description>
+                            <manual_close>YES</manual_close>
+                            <tags>
+                                <tag>
+                                    <tag>DB</tag>
+                                    <value>zabbix</value>
+                                </tag>
+                            </tags>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>itemid do not exist anymore</name>
+                    <type>ODBC</type>
+                    <key>db.odbc.select[itemid.do.not.exist.anymore,{HOST.HOST}]</key>
+                    <delay>0;h1</delay>
+                    <params>SELECT COUNT(*) FROM events WHERE events.source = 3 AND events.object = 4 AND events.objectid NOT IN (SELECT itemid FROM items);</params>
+                    <username>{$ODBC_USER}</username>
+                    <password>{$ODBC_PASS}</password>
+                    <description>SELECT COUNT(events.objectid) FROM events WHERE events.source = 3 AND events.object = 4 AND events.objectid NOT IN (SELECT itemid FROM items) AND LENGTH(events.name)&gt;0 GROUP BY events.objectid;&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+--observe what kind of records are we removing&#13;
+SELECT COUNT(events.objectid),events.objectid,events.name&#13;
+FROM events&#13;
+WHERE events.source = 3&#13;
+  AND events.object = 4&#13;
+  AND events.objectid NOT IN (SELECT itemid FROM items)&#13;
+AND LENGTH(events.name)&gt;0&#13;
+GROUP BY events.objectid,events.name\G</description>
+                    <applications>
+                        <application>
+                            <name>orphaned events</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{min(#1)}&gt;0</expression>
+                            <name>Internal event for itemid where the item does not exist anymore</name>
+                            <priority>HIGH</priority>
+                            <description>DELETE FROM events WHERE events.source=3 AND events.object=4 AND events.objectid NOT IN (SELECT itemid FROM items);</description>
+                            <manual_close>YES</manual_close>
+                            <tags>
+                                <tag>
+                                    <tag>DB</tag>
+                                    <value>zabbix</value>
+                                </tag>
+                            </tags>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>itemid do not exist anymore but INTERNAL event yes</name>
+                    <type>ODBC</type>
+                    <key>db.odbc.select[itemid.no.not.existint.anymore.but.internal.event.yes,{HOST.HOST}]</key>
+                    <delay>0;h1</delay>
+                    <params>SELECT count(*) FROM events WHERE source = 3 AND object = 4 AND objectid NOT IN (SELECT itemid FROM items);</params>
+                    <username>{$ODBC_USER}</username>
+                    <password>{$ODBC_PASS}</password>
+                    <applications>
+                        <application>
+                            <name>orphaned</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{min(#3)}&gt;0</expression>
+                            <name>Orphaned records: internal event generated by items and LLD rules</name>
+                            <priority>WARNING</priority>
+                            <description>SELECT * FROM events WHERE source = 3 AND object = 4 AND objectid NOT IN (SELECT itemid FROM items) limit 1\G;</description>
+                            <manual_close>YES</manual_close>
+                            <tags>
+                                <tag>
+                                    <tag>DB</tag>
+                                    <value>zabbix</value>
+                                </tag>
+                            </tags>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>triggerid do not existis anymore but event still in database</name>
+                    <type>ODBC</type>
+                    <key>db.odbc.select[triggerid.do.not.exist.anymore.but.event.still.in.database,{HOST.HOST}]</key>
+                    <delay>0;h1</delay>
+                    <params>SELECT count(*) FROM events WHERE source = 0 AND object = 0 AND objectid NOT IN (SELECT triggerid FROM triggers);</params>
+                    <username>{$ODBC_USER}</username>
+                    <password>{$ODBC_PASS}</password>
+                    <description>--observe what kind of records are we removing &#13;
+SELECT from_unixtime(clock) as clock,&#13;
+       name&#13;
+FROM events&#13;
+WHERE source = 0&#13;
+  AND object = 0&#13;
+  AND objectid NOT IN&#13;
+    (SELECT triggerid&#13;
+     FROM triggers)&#13;
+ORDER BY clock ASC&#13;
+LIMIT 10\G&#13;
+&#13;
+SELECT count(*),objectid,name FROM events WHERE source = 0 AND object = 0 AND objectid NOT IN (SELECT triggerid FROM triggers)&#13;
+GROUP BY objectid,name&#13;
+\G</description>
+                    <applications>
+                        <application>
+                            <name>orphaned</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{min(#3)}&gt;8</expression>
+                            <name>Trigger does not exist anymore in instance</name>
+                            <priority>HIGH</priority>
+                            <description>DELETE FROM events WHERE source=0 AND object=0 AND objectid NOT IN (SELECT triggerid FROM triggers);</description>
+                            <manual_close>YES</manual_close>
+                            <tags>
+                                <tag>
+                                    <tag>DB</tag>
+                                    <value>zabbix</value>
+                                </tag>
+                            </tags>
+                        </trigger>
+                    </triggers>
+                </item>
+            </items>
+            <tags>
+                <tag>
+                    <tag>DB</tag>
+                    <value>zabbix</value>
+                </tag>
+            </tags>
+            <macros>
+                <macro>
+                    <macro>{$ODBC_PASS}</macro>
+                    <value>zabbix</value>
+                </macro>
+                <macro>
+                    <macro>{$ODBC_USER}</macro>
+                    <value>root</value>
+                </macro>
+                <macro>
+                    <macro>{$ORPHANED}</macro>
+                    <value>200</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>

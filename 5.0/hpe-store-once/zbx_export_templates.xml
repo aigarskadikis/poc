@@ -1,0 +1,1523 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2022-01-19T14:07:45Z</date>
+    <groups>
+        <group>
+            <name>Templates/Network devices</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>HPE Store Once SNMP template</template>
+            <name>HPE Store Once SNMP template</name>
+            <groups>
+                <group>
+                    <name>Templates/Network devices</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Ambient temperature</name>
+                </application>
+                <application>
+                    <name>CPU</name>
+                </application>
+                <application>
+                    <name>CPU core temperature</name>
+                </application>
+                <application>
+                    <name>ioBoard temperature</name>
+                </application>
+                <application>
+                    <name>Memory</name>
+                </application>
+                <application>
+                    <name>Memory temperature</name>
+                </application>
+                <application>
+                    <name>Percent space used</name>
+                </application>
+                <application>
+                    <name>Power supply temperature</name>
+                </application>
+                <application>
+                    <name>Storage temperature</name>
+                </application>
+                <application>
+                    <name>System</name>
+                </application>
+                <application>
+                    <name>Used space</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Paging Memory free</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.11.2.13.4.0</snmp_oid>
+                    <key>cpq.paging.mem.free</key>
+                    <units>B</units>
+                    <description>Available paging memory (in megabytes). A -1 will be returned if this value could not be determined.</description>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <params>1048576</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Paging Memory size</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.11.2.13.3.0</snmp_oid>
+                    <key>cpq.paging.mem.total</key>
+                    <units>B</units>
+                    <description>Total virtual memory available from the OS (in megabytes). A -1 will be returned if this value could not be determined</description>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <params>1048576</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Paging Memory used</name>
+                    <type>CALCULATED</type>
+                    <key>cpq.paging.mem.used</key>
+                    <units>B</units>
+                    <params>last(&quot;cpq.paging.mem.total&quot;)-last(&quot;cpq.paging.mem.free&quot;)</params>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Paging memory utilization</name>
+                    <type>CALCULATED</type>
+                    <key>cpq.paging.mem.util</key>
+                    <value_type>FLOAT</value_type>
+                    <units>%</units>
+                    <params>last(&quot;cpq.paging.mem.used&quot;)/(last(&quot;cpq.paging.mem.free&quot;)+last(&quot;cpq.paging.mem.used&quot;))*100</params>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&gt;{$PAGING.MEMORY.HIGH}</expression>
+                            <name>Paging memory utilization is high on {HOST.HOST}</name>
+                            <priority>WARNING</priority>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Physical Memory free</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.11.2.13.2.0</snmp_oid>
+                    <key>cpq.phys.mem.free</key>
+                    <units>B</units>
+                    <description>The amount of free physical memory (in megabytes). A -1 will be returned if this value could not be determined.</description>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <params>1048576</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Physical Memory size</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.11.2.13.1.0</snmp_oid>
+                    <key>cpq.phys.mem.total</key>
+                    <units>B</units>
+                    <description>Total amount of physical memory as seen by the OS (in megabytes). A -1 will be returned if this value could not be determined.</description>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>MULTIPLIER</type>
+                            <params>1048576</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Physical Memory used</name>
+                    <type>CALCULATED</type>
+                    <key>cpq.phys.mem.used</key>
+                    <units>B</units>
+                    <params>last(&quot;cpq.phys.mem.total&quot;)-last(&quot;cpq.phys.mem.free&quot;)</params>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Physical memory utilization</name>
+                    <type>CALCULATED</type>
+                    <key>cpq.phys.mem.util</key>
+                    <value_type>FLOAT</value_type>
+                    <units>%</units>
+                    <params>last(&quot;cpq.phys.mem.used&quot;)/(last(&quot;cpq.phys.mem.free&quot;)+last(&quot;cpq.phys.mem.used&quot;))*100</params>
+                    <applications>
+                        <application>
+                            <name>Memory</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&gt;{$PHYS.MEMORY.HIGH}</expression>
+                            <name>Physical memory utilization is high on {HOST.HOST}</name>
+                            <priority>WARNING</priority>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Device overall status information</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.2.1.3.0</snmp_oid>
+                    <key>store.once.cond</key>
+                    <delay>15m</delay>
+                    <applications>
+                        <application>
+                            <name>System</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>CPQSINFO-MIB::status</name>
+                    </valuemap>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&lt;&gt;2</expression>
+                            <name>Device state has changed</name>
+                            <priority>HIGH</priority>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Device form factor</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.2.2.2.2.0</snmp_oid>
+                    <key>store.once.form.factor</key>
+                    <delay>1h</delay>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <description>The form factor of the system. Setting this variable to&#13;
+unknown will fail.</description>
+                    <applications>
+                        <application>
+                            <name>System</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>CPQSINFO-MIB::form-factor</name>
+                    </valuemap>
+                </item>
+                <item>
+                    <name>Device hood status</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.2.2.3.16.0</snmp_oid>
+                    <key>store.once.hood.status</key>
+                    <delay>24h</delay>
+                    <description>The status of the chassis intrusion alert hardware and the hood presence&#13;
+&#13;
+unknown(1) - unable to determine the system intrusion alert hardware presence&#13;
+not-installed(2) - system intrusion alert hardware not installed&#13;
+hood-ok(3) - system intrusion alert hardware is installed the hood cover is seated properly&#13;
+hood-removed(4) - system intrusion alert hardware is installed but the hood cover is removed</description>
+                    <applications>
+                        <application>
+                            <name>System</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>CPQSINFO-MIB::hoodStatus</name>
+                    </valuemap>
+                </item>
+                <item>
+                    <name>Device power management state</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.2.2.4.12.0</snmp_oid>
+                    <key>store.once.power.man</key>
+                    <delay>15m</delay>
+                    <description>&quot;The state of power management.&quot;</description>
+                    <applications>
+                        <application>
+                            <name>System</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>CPQSINFO-MIB::cpqSiPowerMgmtStatus</name>
+                    </valuemap>
+                </item>
+                <item>
+                    <name>Device product ID</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.2.2.2.6.0</snmp_oid>
+                    <key>store.once.prod.id</key>
+                    <delay>24h</delay>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <applications>
+                        <application>
+                            <name>System</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>CPQSINFO-MIB::status</name>
+                    </valuemap>
+                </item>
+                <item>
+                    <name>Device product name</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.2.2.4.2.0</snmp_oid>
+                    <key>store.once.prod.name</key>
+                    <delay>24h</delay>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <applications>
+                        <application>
+                            <name>System</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>CPQSINFO-MIB::status</name>
+                    </valuemap>
+                </item>
+                <item>
+                    <name>Device serial number</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.2.2.2.1.0</snmp_oid>
+                    <key>store.once.ser.num</key>
+                    <delay>24h</delay>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <applications>
+                        <application>
+                            <name>System</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>CPQSINFO-MIB::status</name>
+                    </valuemap>
+                </item>
+                <item>
+                    <name>Device TPM module status</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.232.2.2.4.24.0</snmp_oid>
+                    <key>store.once.tpm.cond</key>
+                    <delay>15m</delay>
+                    <description>This field will be populated if TPM module is present in the system board.&#13;
+other(1)&#13;
+No record of TPM exist.&#13;
+absent(2)&#13;
+TPM module is not present in the system.&#13;
+presentEnabled(3)&#13;
+TPM module is present in the system and currently enabled.&#13;
+presentDisabled(4)&#13;
+TPM module is present in the system and currently not enabled.</description>
+                    <applications>
+                        <application>
+                            <name>System</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>CPQSINFO-MIB::TPMmodule</name>
+                    </valuemap>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Ambient temperature discovery</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#CPQHETEMPERATURELOCALE},.1.3.6.1.4.1.232.6.2.6.8.1.3]</snmp_oid>
+                    <key>ambient.temp.discovery</key>
+                    <delay>1h</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#CPQHETEMPERATURELOCALE}</macro>
+                                <value>11</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Ambient temperature condition</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.6.{#SNMPINDEX}</snmp_oid>
+                            <key>ambient.temp.cond[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <applications>
+                                <application>
+                                    <name>Ambient temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}=3</expression>
+                                    <name>Temperature condition is degraded in Ambient {#SNMPINDEX}</name>
+                                    <priority>HIGH</priority>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>Temperature condition is failing in Ambient {#SNMPINDEX}</name>
+                                            <expression>{HPE Store Once SNMP template:ambient.temp.cond[{#SNMPINDEX}].last()}=4</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}=4</expression>
+                                    <name>Temperature condition is failing in Ambient {#SNMPINDEX}</name>
+                                    <priority>DISASTER</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Ambient temperature threshold</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.5.{#SNMPINDEX}</snmp_oid>
+                            <key>ambient.temp.threshold[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>Ambient temperature</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Ambient temperature</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.4.{#SNMPINDEX}</snmp_oid>
+                            <key>ambient.temp[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>Ambient temperature</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{HPE Store Once SNMP template:ambient.temp[{#SNMPINDEX}].last()}&gt;={HPE Store Once SNMP template:ambient.temp.threshold[{#SNMPINDEX}].last()}-5</expression>
+                            <name>Temperature is reaching the treshold in Ambient {#SNMPINDEX}</name>
+                            <priority>WARNING</priority>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>Ambient {#SNMPINDEX} temperature</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>HPE Store Once SNMP template</host>
+                                        <key>ambient.temp[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>CPU load discovery</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#CPUDESC},.1.3.6.1.2.1.25.3.2.1.3]</snmp_oid>
+                    <key>cpu.load.discovery</key>
+                    <delay>1h</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#CPUDESC}</macro>
+                                <value>CPU</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Processor Load</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.2.1.25.3.3.1.2.{#SNMPINDEX}</snmp_oid>
+                            <key>cpu.load[{#SNMPINDEX}]</key>
+                            <units>%</units>
+                            <applications>
+                                <application>
+                                    <name>CPU</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;=2</expression>
+                                    <name>Processor Load too high in {#SNMPINDEX}</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Processor Status</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.2.1.25.3.2.1.5.{#SNMPINDEX}</snmp_oid>
+                            <key>cpu.status[{#SNMPINDEX}]</key>
+                            <applications>
+                                <application>
+                                    <name>CPU</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>HOST-RESOURCES-MIB::hrDeviceStatus.</name>
+                            </valuemap>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}=3</expression>
+                                    <name>Processor {#SNMPINDEX} encountered an unusual error</name>
+                                    <priority>WARNING</priority>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>Processor {#SNMPINDEX} is not available for any use</name>
+                                            <expression>{HPE Store Once SNMP template:cpu.status[{#SNMPINDEX}].last()}=5</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}=5</expression>
+                                    <name>Processor {#SNMPINDEX} is not available for any use</name>
+                                    <priority>DISASTER</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>CPU load Average -  {#SNMPINDEX}</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>HPE Store Once SNMP template</host>
+                                        <key>cpu.load[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>CPU temperature discovery</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#CPQHETEMPERATURELOCALE},.1.3.6.1.4.1.232.6.2.6.8.1.3]</snmp_oid>
+                    <key>cpu.temp.discovery</key>
+                    <delay>1h</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#CPQHETEMPERATURELOCALE}</macro>
+                                <value>6</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - CPU core temperature condition</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.6.{#SNMPINDEX}</snmp_oid>
+                            <key>cpu.temp.cond[{#SNMPINDEX}]</key>
+                            <applications>
+                                <application>
+                                    <name>CPU core temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}=3</expression>
+                                    <name>Temperature condition is degraded in CPU {#SNMPINDEX}</name>
+                                    <priority>HIGH</priority>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>Temperature condition is failing in CPU {#SNMPINDEX}</name>
+                                            <expression>{HPE Store Once SNMP template:cpu.temp.cond[{#SNMPINDEX}].last()}=4</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}=4</expression>
+                                    <name>Temperature condition is failing in CPU {#SNMPINDEX}</name>
+                                    <priority>DISASTER</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - CPU core temperature threshold</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.5.{#SNMPINDEX}</snmp_oid>
+                            <key>cpu.temp.threshold[{#SNMPINDEX}]</key>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>CPU core temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - CPU core temperature</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.4.{#SNMPINDEX}</snmp_oid>
+                            <key>cpu.temp[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>CPU core temperature</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{HPE Store Once SNMP template:cpu.temp[{#SNMPINDEX}].last()}&gt;={HPE Store Once SNMP template:cpu.temp.threshold[{#SNMPINDEX}].last()}-5</expression>
+                            <name>Temperature is very high in CPU {#SNMPINDEX}</name>
+                            <priority>WARNING</priority>
+                            <description>Condition is closing to device threshold</description>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>Temperature in CPU {#SNMPINDEX}</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>HPE Store Once SNMP template</host>
+                                        <key>cpu.temp[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>ioBoard temperature discovery</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#CPQHETEMPERATURELOCALE},.1.3.6.1.4.1.232.6.2.6.8.1.3]</snmp_oid>
+                    <key>ioboard.temp.discovery</key>
+                    <delay>1h</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#CPQHETEMPERATURELOCALE}</macro>
+                                <value>5</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - ioBoard temperature condition</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.6.{#SNMPINDEX}</snmp_oid>
+                            <key>ioboard.temp.cond[{#SNMPINDEX}]</key>
+                            <applications>
+                                <application>
+                                    <name>ioBoard temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}=3</expression>
+                                    <name>Temperature condition is degraded in ioBoard {#SNMPINDEX}</name>
+                                    <priority>HIGH</priority>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>Temperature condition is failing in ioBoard {#SNMPINDEX}</name>
+                                            <expression>{HPE Store Once SNMP template:ioboard.temp.cond[{#SNMPINDEX}].last()}=4</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}=4</expression>
+                                    <name>Temperature condition is failing in ioBoard {#SNMPINDEX}</name>
+                                    <priority>DISASTER</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - ioBoard temperature threshold</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.5.{#SNMPINDEX}</snmp_oid>
+                            <key>ioboard.temp.threshold[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>C</units>
+                            <description>This is the shutdown threshold temperature sensor setting&#13;
+in degrees celsius. This is the temperature in which the&#13;
+sensor will be considered to be in a failed state thus&#13;
+causing the system to be shutdown.&#13;
+&#13;
+If this value cannot be determined by software, then a value&#13;
+of -1 will be returned.</description>
+                            <applications>
+                                <application>
+                                    <name>ioBoard temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - ioBoard temperature</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.4.{#SNMPINDEX}</snmp_oid>
+                            <key>ioboard.temp[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>ioBoard temperature</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{HPE Store Once SNMP template:ioboard.temp[{#SNMPINDEX}].last()}&gt;={HPE Store Once SNMP template:ioboard.temp.threshold[{#SNMPINDEX}].last()}-5</expression>
+                            <name>Temperature is very high in ioBoard {#SNMPINDEX}</name>
+                            <priority>WARNING</priority>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>Temperature in ioBoard {#SNMPINDEX}</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>HPE Store Once SNMP template</host>
+                                        <key>ioboard.temp[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Memory Module discovery</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#CPQHERESMEM2MODULEHWLOCATION},.1.3.6.1.4.1.232.6.2.14.13.1.13]</snmp_oid>
+                    <key>mem.mod.discovery</key>
+                    <delay>1h</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Memory module {#CPQHERESMEM2MODULEHWLOCATION} health</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.14.13.1.20.{#SNMPINDEX}</snmp_oid>
+                            <key>memmod.health[{#CPQHERESMEM2MODULEHWLOCATION}]</key>
+                            <applications>
+                                <application>
+                                    <name>Memory</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Memory module health</name>
+                            </valuemap>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&lt;&gt;2</expression>
+                                    <name>Memory module {#CPQHERESMEM2MODULEHWLOCATION} health degraded</name>
+                                    <priority>HIGH</priority>
+                                    <manual_close>YES</manual_close>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>Memory module {#CPQHERESMEM2MODULEHWLOCATION} is not present</name>
+                                            <expression>{HPE Store Once SNMP template:memmod.status[{#CPQHERESMEM2MODULEHWLOCATION}].last()}=2</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Memory module {#CPQHERESMEM2MODULEHWLOCATION} status</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.14.13.1.19.{#SNMPINDEX}</snmp_oid>
+                            <key>memmod.status[{#CPQHERESMEM2MODULEHWLOCATION}]</key>
+                            <applications>
+                                <application>
+                                    <name>Memory</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Memory Module Status</name>
+                            </valuemap>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}=2</expression>
+                                    <name>Memory module {#CPQHERESMEM2MODULEHWLOCATION} is not present</name>
+                                    <priority>INFO</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}=1 or {last()}=7 or {last()}=8 or {last()}=9 or {last()}=10 or {last()}=11</expression>
+                                    <name>Memory module {#CPQHERESMEM2MODULEHWLOCATION} with problem status {ITEM.LASTVALUE}</name>
+                                    <priority>HIGH</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Memory temperature discovery</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#CPQHETEMPERATURELOCALE},.1.3.6.1.4.1.232.6.2.6.8.1.3]</snmp_oid>
+                    <key>mem.temp.discovery</key>
+                    <delay>1h</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#CPQHETEMPERATURELOCALE}</macro>
+                                <value>7</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Memory temperature condition</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.6.{#SNMPINDEX}</snmp_oid>
+                            <key>mem.temp.cond[{#SNMPINDEX}]</key>
+                            <applications>
+                                <application>
+                                    <name>Memory temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}=3</expression>
+                                    <name>Temperature condition is degraded in memory {#SNMPINDEX}</name>
+                                    <priority>HIGH</priority>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>Temperature condition is failing in memory {#SNMPINDEX}</name>
+                                            <expression>{HPE Store Once SNMP template:mem.temp.cond[{#SNMPINDEX}].last()}=4</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}=4</expression>
+                                    <name>Temperature condition is failing in memory {#SNMPINDEX}</name>
+                                    <priority>DISASTER</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Memory temperature threshold</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.5.{#SNMPINDEX}</snmp_oid>
+                            <key>mem.temp.threshold[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>Memory temperature</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Memory temperature</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.4.{#SNMPINDEX}</snmp_oid>
+                            <key>mem.temp[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>Memory temperature</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{HPE Store Once SNMP template:mem.temp[{#SNMPINDEX}].last()}&gt;={HPE Store Once SNMP template:mem.temp.threshold[{#SNMPINDEX}].last()}-5</expression>
+                            <name>Memory temperature in memory {#SNMPINDEX} is very high</name>
+                            <priority>WARNING</priority>
+                            <description>Memory temperature approaching system threshold</description>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>Memory {#SNMPINDEX} temperature</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>HPE Store Once SNMP template</host>
+                                        <key>mem.temp[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Power Supply temperature discovery</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#CPQHETEMPERATURELOCALE},.1.3.6.1.4.1.232.6.2.6.8.1.3]</snmp_oid>
+                    <key>power.temp.discovery</key>
+                    <delay>1h</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#CPQHETEMPERATURELOCALE}</macro>
+                                <value>10</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Power supply temperature condition</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.6.{#SNMPINDEX}</snmp_oid>
+                            <key>power.temp.cond[{#SNMPINDEX}]</key>
+                            <applications>
+                                <application>
+                                    <name>Power supply temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Power supply temperature threshold</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.5.{#SNMPINDEX}</snmp_oid>
+                            <key>power.temp.threshold[{#SNMPINDEX}]</key>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>Power supply temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Power supply temperature</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.4.{#SNMPINDEX}</snmp_oid>
+                            <key>power.temp[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>Power supply temperature</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}=3</expression>
+                                    <name>Temperature condition is degraded in Power Supply {#SNMPINDEX}</name>
+                                    <priority>HIGH</priority>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>Temperature condition is failing in Power Supply {#SNMPINDEX}</name>
+                                            <expression>{HPE Store Once SNMP template:power.temp[{#SNMPINDEX}].last()}=4</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}=4</expression>
+                                    <name>Temperature condition is failing in Power Supply {#SNMPINDEX}</name>
+                                    <priority>DISASTER</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{HPE Store Once SNMP template:power.temp[{#SNMPINDEX}].last()}&gt;={HPE Store Once SNMP template:power.temp.threshold[{#SNMPINDEX}].last()}-5</expression>
+                            <name>Temperature is very high in Power Supply {#SNMPINDEX}</name>
+                            <priority>WARNING</priority>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>Temperature in Power Supply {#SNMPINDEX}</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>HPE Store Once SNMP template</host>
+                                        <key>power.temp[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Storage temperature discovery</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#CPQHETEMPERATURELOCALE},.1.3.6.1.4.1.232.6.2.6.8.1.3]</snmp_oid>
+                    <key>storage.temp.discovery</key>
+                    <delay>1h</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#CPQHETEMPERATURELOCALE}</macro>
+                                <value>8</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Storage temperature condition</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.6.{#SNMPINDEX}</snmp_oid>
+                            <key>st.temp.cond[{#SNMPINDEX}]</key>
+                            <applications>
+                                <application>
+                                    <name>Storage temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}=3</expression>
+                                    <name>Temperature condition is degraded in storage {#SNMPINDEX}</name>
+                                    <priority>HIGH</priority>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}=4</expression>
+                                    <name>Temperature condition is failing in storage {#SNMPINDEX}</name>
+                                    <priority>DISASTER</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Storage temperature threshold</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.5.{#SNMPINDEX}</snmp_oid>
+                            <key>st.temp.threshold[{#SNMPINDEX}]</key>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>Storage temperature</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Temperature sensor condition</name>
+                            </valuemap>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#SNMPINDEX} - Storage temperature</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.6.2.6.8.1.4.{#SNMPINDEX}</snmp_oid>
+                            <key>st.temp[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>C</units>
+                            <applications>
+                                <application>
+                                    <name>Storage temperature</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{HPE Store Once SNMP template:st.temp[{#SNMPINDEX}].last()}&gt;={HPE Store Once SNMP template:st.temp.threshold[{#SNMPINDEX}].last()}-5</expression>
+                            <name>Temperature is very high in storage {#SNMPINDEX}</name>
+                            <priority>WARNING</priority>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>Temperature in storage {#SNMPINDEX}</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>HPE Store Once SNMP template</host>
+                                        <key>st.temp[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Storage usage discovery</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>discovery[{#STDESC},.1.3.6.1.4.1.232.11.2.4.1.1.2]</snmp_oid>
+                    <key>storage.use.discovery</key>
+                    <delay>1h</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#STDESC} Used Space percentage</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.11.2.4.1.1.5.{#SNMPINDEX}</snmp_oid>
+                            <key>pused.space[{#SNMPINDEX}]</key>
+                            <value_type>FLOAT</value_type>
+                            <units>%</units>
+                            <applications>
+                                <application>
+                                    <name>Percent space used</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{min(5m)}&gt;={$STORAGE.DISASTER}</expression>
+                                    <name>Used space is above {$STORAGE.DISASTER}% in {#STDESC} ({#SNMPINDEX})</name>
+                                    <priority>DISASTER</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{min(5m)}&gt;={$STORAGE.HIGH}</expression>
+                                    <name>Used space is above {$STORAGE.HIGH}% in {#STDESC} ({#SNMPINDEX})</name>
+                                    <priority>HIGH</priority>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>Used space is above {$STORAGE.DISASTER}% in {#STDESC} ({#SNMPINDEX})</name>
+                                            <expression>{HPE Store Once SNMP template:pused.space[{#SNMPINDEX}].min(5m)}&gt;={$STORAGE.DISASTER}</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>{#STDESC} Used Space</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.232.11.2.4.1.1.4.{#SNMPINDEX}</snmp_oid>
+                            <key>used.space[{#SNMPINDEX}]</key>
+                            <units>B</units>
+                            <applications>
+                                <application>
+                                    <name>Used space</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1048576</params>
+                                </step>
+                            </preprocessing>
+                        </item_prototype>
+                    </item_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>Storage Used Space - {#SNMPINDEX}</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>HPE Store Once SNMP template</host>
+                                        <key>pused.space[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$PAGING.MEMORY.HIGH}</macro>
+                    <value>90</value>
+                </macro>
+                <macro>
+                    <macro>{$PHYS.MEMORY.HIGH}</macro>
+                    <value>90</value>
+                </macro>
+                <macro>
+                    <macro>{$STORAGE.DISASTER}</macro>
+                    <value>95</value>
+                </macro>
+                <macro>
+                    <macro>{$STORAGE.HIGH}</macro>
+                    <value>90</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <graphs>
+        <graph>
+            <name>Paging Memory usage</name>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>A54F10</color>
+                    <item>
+                        <host>HPE Store Once SNMP template</host>
+                        <key>cpq.paging.mem.free</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>FC6EA3</color>
+                    <item>
+                        <host>HPE Store Once SNMP template</host>
+                        <key>cpq.paging.mem.total</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>6C59DC</color>
+                    <item>
+                        <host>HPE Store Once SNMP template</host>
+                        <key>cpq.paging.mem.used</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>Paging memory utilization in %</name>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>F63100</color>
+                    <item>
+                        <host>HPE Store Once SNMP template</host>
+                        <key>cpq.paging.mem.util</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>Physical Memory usage</name>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>1A7C11</color>
+                    <item>
+                        <host>HPE Store Once SNMP template</host>
+                        <key>cpq.phys.mem.free</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>F63100</color>
+                    <item>
+                        <host>HPE Store Once SNMP template</host>
+                        <key>cpq.phys.mem.total</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>2774A4</color>
+                    <item>
+                        <host>HPE Store Once SNMP template</host>
+                        <key>cpq.phys.mem.used</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>Physical memory utilization in %</name>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>1A7C11</color>
+                    <item>
+                        <host>HPE Store Once SNMP template</host>
+                        <key>cpq.phys.mem.util</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+    </graphs>
+    <value_maps>
+        <value_map>
+            <name>CPQSINFO-MIB::cpqSiPowerMgmtStatus</name>
+            <mappings>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>other</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>disabled</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>enabled</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>CPQSINFO-MIB::form-factor</name>
+            <mappings>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>unknown</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>portable</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>laptop </newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>desktop</newvalue>
+                </mapping>
+                <mapping>
+                    <value>5</value>
+                    <newvalue>tower </newvalue>
+                </mapping>
+                <mapping>
+                    <value>6</value>
+                    <newvalue>mini-tower</newvalue>
+                </mapping>
+                <mapping>
+                    <value>7</value>
+                    <newvalue>rack-mount</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>CPQSINFO-MIB::hoodStatus</name>
+            <mappings>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>unknown</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>not-installed</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>hood-ok</newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>hood-removed</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>CPQSINFO-MIB::status</name>
+            <mappings>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>other</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>ok</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>degraded</newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>failed</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>CPQSINFO-MIB::TPMmodule</name>
+            <mappings>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>other</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>absent</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>presentEnabled</newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>presentDisabled</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>HOST-RESOURCES-MIB::hrDeviceStatus.</name>
+            <mappings>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>unknown</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>running</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>warning</newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>testing</newvalue>
+                </mapping>
+                <mapping>
+                    <value>5</value>
+                    <newvalue>down</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>Memory module health</name>
+            <mappings>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>other</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>ok</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>degraded</newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>degradedModuleIndexUnknown</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>Memory Module Status</name>
+            <mappings>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>other</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>notPresent</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>present</newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>good</newvalue>
+                </mapping>
+                <mapping>
+                    <value>5</value>
+                    <newvalue>add</newvalue>
+                </mapping>
+                <mapping>
+                    <value>6</value>
+                    <newvalue>upgraded</newvalue>
+                </mapping>
+                <mapping>
+                    <value>7</value>
+                    <newvalue>missing</newvalue>
+                </mapping>
+                <mapping>
+                    <value>8</value>
+                    <newvalue>doesNotMatch</newvalue>
+                </mapping>
+                <mapping>
+                    <value>9</value>
+                    <newvalue>notSupported</newvalue>
+                </mapping>
+                <mapping>
+                    <value>10</value>
+                    <newvalue>badConfig</newvalue>
+                </mapping>
+                <mapping>
+                    <value>11</value>
+                    <newvalue>degraded</newvalue>
+                </mapping>
+                <mapping>
+                    <value>12</value>
+                    <newvalue>spare</newvalue>
+                </mapping>
+                <mapping>
+                    <value>13</value>
+                    <newvalue>partial</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>Temperature sensor condition</name>
+            <mappings>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>other</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>ok</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>degraded</newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>failed</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>
