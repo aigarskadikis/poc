@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2022-02-02T14:26:26Z</date>
+    <groups>
+        <group>
+            <name>Templates</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Template Windows Event Logs eventlog Warning Critical Error</template>
+            <name>Template Windows Event Logs eventlog Warning Critical Error</name>
+            <groups>
+                <group>
+                    <name>Templates</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Windows Event Logs</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Windows Application Event Log</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>eventlog[Application,,&quot;Critical|Error|Warning&quot;,,,,]</key>
+                    <delay>1s</delay>
+                    <trends>0</trends>
+                    <value_type>LOG</value_type>
+                    <description>Windows Application Event Log</description>
+                    <applications>
+                        <application>
+                            <name>Windows Event Logs</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{logseverity()}=9</expression>
+                            <name>Critical Error detected per Application log</name>
+                            <priority>HIGH</priority>
+                            <description>{ITEM.VALUE}</description>
+                            <type>MULTIPLE</type>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                        <trigger>
+                            <expression>{logseverity()}=4</expression>
+                            <name>Error detect per Application log</name>
+                            <priority>AVERAGE</priority>
+                            <description>{ITEM.VALUE}</description>
+                            <type>MULTIPLE</type>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>Windows System Event Log</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>eventlog[System,,&quot;Critical|Error|Warning&quot;,,,,]</key>
+                    <delay>1s</delay>
+                    <trends>0</trends>
+                    <value_type>LOG</value_type>
+                    <description>Windows System Event Log</description>
+                    <applications>
+                        <application>
+                            <name>Windows Event Logs</name>
+                        </application>
+                    </applications>
+                    <triggers>
+                        <trigger>
+                            <expression>{logseverity()}=9</expression>
+                            <name>Critical Error detected per System log</name>
+                            <priority>HIGH</priority>
+                            <description>{ITEM.VALUE}</description>
+                            <type>MULTIPLE</type>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                        <trigger>
+                            <expression>{logseverity()}=4</expression>
+                            <name>Error detect per System log</name>
+                            <priority>AVERAGE</priority>
+                            <description>{ITEM.VALUE}</description>
+                            <type>MULTIPLE</type>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+            </items>
+        </template>
+    </templates>
+</zabbix_export>
