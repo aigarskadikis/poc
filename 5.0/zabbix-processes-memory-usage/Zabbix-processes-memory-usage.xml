@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2022-02-03T00:13:51Z</date>
+    <date>2022-02-03T12:44:55Z</date>
     <groups>
         <group>
             <name>Templates/Applications</name>
@@ -64,7 +64,7 @@ echo 'IyEvdXNyL2Jpbi9lbnYgcHl0aG9uCgojIFRyeSB0byBkZXRlcm1pbmUgaG93IG11Y2ggUkFNIG
                         <item_prototype>
                             <name>{#COMPONENT} {#PROCESS}</name>
                             <type>ZABBIX_ACTIVE</type>
-                            <key>system.run[&quot;{$PS.MEM.START}{#PROCESS}{$PS.MEM.END}&quot;]</key>
+                            <key>system.run[&quot;{$PS.MEM.START}{#COMPONENT}: {#PROCESS}{$PS.MEM.END}&quot;]</key>
                             <delay>5m</delay>
                             <units>B</units>
                             <applications>
@@ -89,7 +89,7 @@ echo 'IyEvdXNyL2Jpbi9lbnYgcHl0aG9uCgojIFRyeSB0byBkZXRlcm1pbmUgaG93IG11Y2ggUkFNIG
                                     <color>1A7C11</color>
                                     <item>
                                         <host>Zabbix processes memory usage</host>
-                                        <key>system.run[&quot;{$PS.MEM.START}{#PROCESS}{$PS.MEM.END}&quot;]</key>
+                                        <key>system.run[&quot;{$PS.MEM.START}{#COMPONENT}: {#PROCESS}{$PS.MEM.END}&quot;]</key>
                                     </item>
                                 </graph_item>
                             </graph_items>
@@ -124,7 +124,7 @@ return JSON.stringify(lld);</params>
                 </macro>
                 <macro>
                     <macro>{$PS.MEM.START}</macro>
-                    <value>ps_mem.py --total -p $(pgrep -d, -f &quot;[ ]</value>
+                    <value>sudo ps_mem.py --total -p $(pgrep -d, -f &quot;</value>
                     <description>so we do not need to escape special characters</description>
                 </macro>
                 <macro>
