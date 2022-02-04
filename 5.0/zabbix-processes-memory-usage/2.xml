@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2022-02-04T17:00:20Z</date>
+    <groups>
+        <group>
+            <name>Templates/Applications</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Template App Zabbix processes PSS and RSS memory usage</template>
+            <name>Template App Zabbix processes PSS and RSS memory usage</name>
+            <description>Template requires the following utilities to be available on the Agent host:&#13;
+&#13;
+- pgrep&#13;
+- egrep&#13;
+- sed/awk&#13;
+- ps_mem 3.+ with -t/--total option&#13;
+- sudo&#13;
+&#13;
+&#13;
+# Zabbix Agent setup, for discovery rule to work:&#13;
+AllowKey=system.run[*]&#13;
+&#13;
+# install software:&#13;
+dnf/yum/apt/apk/pip install ps_mem&#13;
+&#13;
+# allow sudo for the ps_mem:&#13;
+zabbix ALL = NOPASSWD: /usr/bin/ps_mem&#13;
+&#13;
+# SElinux:&#13;
+staff_u/staff_r required for sudo by zabbix or custom rule or disable (no! don't do it) SElinux</description>
+            <groups>
+                <group>
+                    <name>Templates/Applications</name>
+                </group>
+            </groups>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Zabbix processes by type</name>
+                    <key>system.run[&quot;pgrep -a '{$PGREP.REGEX}' | egrep -o --color=none '{$PGREP.REGEX}: .*' | sed 's/ [#\[].*//' | sort -u&quot;]</key>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Memory used by {#COMPONENT}: {#PROCESS}</name>
+                            <key>system.run[&quot;sudo ps_mem -t -p $(pgrep -d, -f '{#COMPONENT}:[ ]{#PROCESS}')&quot;]</key>
+                            <delay>1m;m0-59</delay>
+                            <units>B</units>
+                            <description>ps_mem calculates: Private  +   Shared  =  RAM used</description>
+                            <application_prototypes>
+                                <application_prototype>
+                                    <name>Memory used by {#COMPONENT}</name>
+                                </application_prototype>
+                            </application_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>Memory used by {#COMPONENT}: {#PROCESS}</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>FF0000</color>
+                                    <item>
+                                        <host>Template App Zabbix processes PSS and RSS memory usage</host>
+                                        <key>system.run[&quot;sudo ps_mem -t -p $(pgrep -d, -f '{#COMPONENT}:[ ]{#PROCESS}')&quot;]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var lld = [];
+var lines = value.split(&quot;\n&quot;);
+var lines_num = lines.length;
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+  row[&quot;{#COMPONENT}&quot;] = lines[i].replace(/: .*$/,'');
+  row[&quot;{#PROCESS}&quot;] = lines[i].replace(/^.*: /,'');;
+  lld.push(row);
+}
+return JSON.stringify(lld);</params>
+                        </step>
+                    </preprocessing>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Zabbix processes by components</name>
+                    <key>system.run[&quot;pgrep -l '{$PGREP.REGEX}' | awk '{print $2}' | sort -u&quot;]</key>
+                    <delay>5m</delay>
+                    <lifetime>1h</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Total memory used by {#COMPONENT}</name>
+                            <key>system.run[&quot;sudo ps_mem -t -p $(pgrep -d, -f '{#COMPONENT}[:, ]')&quot;]</key>
+                            <delay>1m;m0-59/1</delay>
+                            <units>B</units>
+                            <description>ps_mem calculates: Private  +   Shared  =  RAM used</description>
+                            <application_prototypes>
+                                <application_prototype>
+                                    <name>Memory used by {#COMPONENT}</name>
+                                </application_prototype>
+                            </application_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <preprocessing>
+                        <step>
+                            <type>DISCARD_UNCHANGED_HEARTBEAT</type>
+                            <params>1h</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var lld = [];
+var lines = value.split(&quot;\n&quot;);
+var lines_num = lines.length;
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+  row[&quot;{#COMPONENT}&quot;] = lines[i];
+  lld.push(row);
+}
+return JSON.stringify(lld);</params>
+                        </step>
+                    </preprocessing>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$PGREP.REGEX}</macro>
+                    <value>zabbix_(server|agentd|agent2|proxy)</value>
+                    <description>Pattern that will be used by pgrep utility to locate Zabbix processes.</description>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
