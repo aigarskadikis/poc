@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2022-05-19T06:41:56Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Time is off by Zabbix agent active</template>
+            <name>Time is off by Zabbix agent active</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Time</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Agent time offset</name>
+                    <type>DEPENDENT</type>
+                    <key>agent.time.offset</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <units>s</units>
+                    <applications>
+                        <application>
+                            <name>Time</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>([0-9]+)
+\1</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>system.localtime</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>Agent time shifted in</name>
+                    <type>DEPENDENT</type>
+                    <key>agent.time.shifted.in</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <applications>
+                        <application>
+                            <name>Time</name>
+                        </application>
+                    </applications>
+                    <valuemap>
+                        <name>Local time monitoring Zabbix agent</name>
+                    </valuemap>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.replace(/[0-9]+/gm,&quot;&quot;).length;</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>system.localtime</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>Agent time difference</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.localtime</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>CHAR</value_type>
+                    <applications>
+                        <application>
+                            <name>Time</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return Math.round((new Date()).getTime() / 1000 - value);</params>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$AGENT_TIME_DIFFERENCE}</macro>
+                    <value>2m</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <triggers>
+        <trigger>
+            <expression>{Time is off by Zabbix agent active:agent.time.offset.min(#3)}&gt;{$AGENT_TIME_DIFFERENCE} and {Time is off by Zabbix agent active:agent.time.shifted.in.last()}=1</expression>
+            <name>Agent time in future {$AGENT_TIME_DIFFERENCE}</name>
+            <priority>AVERAGE</priority>
+            <manual_close>YES</manual_close>
+        </trigger>
+        <trigger>
+            <expression>{Time is off by Zabbix agent active:agent.time.offset.min(#3)}&gt;{$AGENT_TIME_DIFFERENCE} and {Time is off by Zabbix agent active:agent.time.shifted.in.last()}=0</expression>
+            <name>Agent time in past {$AGENT_TIME_DIFFERENCE}</name>
+            <priority>AVERAGE</priority>
+            <manual_close>YES</manual_close>
+        </trigger>
+    </triggers>
+    <value_maps>
+        <value_map>
+            <name>Local time monitoring Zabbix agent</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>past</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>future</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>
