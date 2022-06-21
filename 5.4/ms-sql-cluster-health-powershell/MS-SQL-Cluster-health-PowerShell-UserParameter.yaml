@@ -1,6 +1,6 @@
 zabbix_export:
   version: '5.4'
-  date: '2022-06-08T13:50:31Z'
+  date: '2022-06-10T08:44:45Z'
   groups:
     -
       uuid: 748ad4d098d447d492bb935c907f652f
@@ -10,7 +10,10 @@ zabbix_export:
       uuid: 892017c25cb04d0d9322b80cbf959723
       template: 'MS SQL Cluster health PowerShell UserParameter'
       name: 'MS SQL Cluster health PowerShell UserParameter'
-      description: 'UserParameter=get.cluster.group.bulk,PowerShell.exe -nologo -command "(Get-ClusterGroup | select Name,OwnerNode,State| ConvertTo-JSON)"'
+      description: |
+        UserParameter=get.cluster.group.bulk,PowerShell.exe -nologo -command "(Get-ClusterGroup | select Name,OwnerNode,State| ConvertTo-JSON)"
+        
+        Value mapping may be incorrect.
       groups:
         -
           name: Templates/Databases
@@ -41,6 +44,8 @@ zabbix_export:
               type: DEPENDENT
               key: 'state[{#NAME},{#NODE}]'
               delay: '0'
+              valuemap:
+                name: ClusterGroupState
               preprocessing:
                 -
                   type: JSONPATH
@@ -80,33 +85,15 @@ zabbix_export:
           value: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -nologo -command "Get-ClusterGroup | select Name,OwnerNode,State| ConvertTo-JSON"'
       valuemaps:
         -
-          uuid: 558ac096ff3a415faed982ab6ce1e5b1
-          name: 'Windows service state'
+          uuid: 68a251bc8f654e54857fe9d91c40d13a
+          name: ClusterGroupState
           mappings:
             -
               value: '0'
-              newvalue: Running
+              newvalue: Online
             -
               value: '1'
-              newvalue: Paused
-            -
-              value: '2'
-              newvalue: 'Start pending'
-            -
-              value: '3'
-              newvalue: 'Pause pending'
+              newvalue: Offline
             -
               value: '4'
-              newvalue: 'Continue pending'
-            -
-              value: '5'
-              newvalue: 'Stop pending'
-            -
-              value: '6'
-              newvalue: Stopped
-            -
-              value: '7'
-              newvalue: Unknown
-            -
-              value: '255'
-              newvalue: 'No such service'
+              newvalue: PartiallyOnline
