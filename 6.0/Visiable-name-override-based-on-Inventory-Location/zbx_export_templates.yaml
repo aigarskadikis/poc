@@ -1,0 +1,95 @@
+zabbix_export:
+  version: '6.0'
+  date: '2022-08-11T09:20:46Z'
+  groups:
+    -
+      uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    -
+      uuid: 8560cf89c40b4165933c294ba39c724c
+      template: 'Update overwrite host visiable name if inventory Location field is not empty'
+      name: 'Update overwrite host visiable name if inventory Location field is not empty'
+      groups:
+        -
+          name: Templates/Modules
+      items:
+        -
+          uuid: 7ac0fabb33e4463c9e8be12eadcd9670
+          name: 'Visiable name override'
+          type: HTTP_AGENT
+          key: visiable.name.override
+          delay: 15s
+          description: 'If length of host inventory field "Location" is bigger than 0 (field is not empty) then use Zabbix API to extract value from "Location" field and install as host "Visiable name"'
+          valuemap:
+            name: 'Host visiable name override via API'
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - '$.result[0].hostid'
+            -
+              type: JAVASCRIPT
+              parameters:
+                - |
+                  var req = new CurlHttpRequest();
+                  
+                  // Zabbix API
+                  var json_rpc='{$ZABBIX.URL}/api_jsonrpc.php'
+                  
+                  // lib curl header
+                  req.AddHeader('Content-Type: application/json');
+                  
+                  // extract location from host object
+                  // query all host group names which belongs to hostid
+                  var resultArray = JSON.parse(req.Post(json_rpc,
+                  '{"jsonrpc":"2.0","method":"host.get","params":{"output":["inventory"],"selectInventory":["location"],"filter":{"hostid":["'+value+'"]}},"auth":"{$Z_API_SESSIONID}","id":1}'
+                  )).result;
+                  
+                  // length of Location field
+                  var lengthOfLocation = resultArray[0].inventory.location;
+                  
+                  // if length of field is not empty then forward the "Location" field to host "Visiable name"
+                  if (lengthOfLocation.length > 0) {
+                  // the variable 'resultArray.inventory.location' already is enclosed with double quotes.
+                  // we do not need double quotes in JSON call
+                  // it will use the first array element for the host visiable name
+                  var ValueInstalledONHost = JSON.parse(req.Post(json_rpc,
+                  '{"jsonrpc":"2.0","method":"host.update","params":{"hostid":"'+value+'","name":"'+resultArray[0].inventory.location+'"},"auth":"{$Z_API_SESSIONID}","id":1}'
+                  )).result;
+                   }
+                  
+                  return (lengthOfLocation.length > 0) ? 1 : 0;
+                  
+          url: '{$ZABBIX.URL}/api_jsonrpc.php'
+          posts: |
+            {
+                "jsonrpc": "2.0",
+                "method": "host.get",
+                "params": {
+                    "output":["hostid"],
+                    "filter": {
+                        "host": [
+                            "{HOST.HOST}"
+                        ]
+                    }
+                },
+                "auth": "{$Z_API_SESSIONID}",
+                "id": 1
+            }
+          post_type: JSON
+          tags:
+            -
+              tag: Application
+              value: 'Host groups assigned to host'
+      valuemaps:
+        -
+          uuid: f46c4ad0d4d24036b8c1ec5e191463b4
+          name: 'Host visiable name override via API'
+          mappings:
+            -
+              value: '0'
+              newvalue: 'off'
+            -
+              value: '1'
+              newvalue: 'on'
