@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2022-08-12T10:56:18Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Management host with Zabbix API disable hosts based on condition</template>
+            <name>Management host with Zabbix API disable hosts based on condition</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <name>Enable or disable hosts for {$HOST.GROUP:name}</name>
+                    <type>HTTP_AGENT</type>
+                    <key>enable.or.disable.hosts[{$HOST.GROUP:name}]</key>
+                    <delay>1h</delay>
+                    <units>!modifications</units>
+                    <description>Based or host name or host visible name</description>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var groupid = JSON.parse(value).result[0].groupid;
+
+// new http request
+var req = new CurlHttpRequest();
+
+// Zabbix API
+var json_rpc='{$Z_API_PHP}'
+
+// lib curl header
+req.AddHeader('Content-Type: application/json');
+
+var modifications=0;
+
+// get all host objects which belongs to group. put the hosts into array
+var allHostsArray = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;host.get&quot;,&quot;params&quot;:{&quot;groupids&quot;:[&quot;'+groupid+'&quot;],&quot;output&quot;:[&quot;host&quot;,&quot;hostid&quot;,&quot;name&quot;,&quot;status&quot;]},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;:1}'
+)).result;
+
+// start a for loop. go host by host
+for(var host = 0; host &lt; allHostsArray.length; host++){
+
+// observe the name and visiable name of host
+if ( (!allHostsArray[host].name.match(/{$HOST.GROUP:regex}/)) &amp;&amp; (!allHostsArray[host].host.match(/{$HOST.GROUP:regex}/)) ){
+
+// from existing array, chech if host needs to be disabled. maybe host is already in disabled state?
+if (allHostsArray[host].status==0) {
+// host was active. not it needs to be disabled
+var resultArray = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;host.update&quot;,&quot;params&quot;:{&quot;hostid&quot;:&quot;'+allHostsArray[host].hostid+'&quot;,&quot;status&quot;:&quot;1&quot;},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;:1}'
+));
+modifications++;
+}
+
+} else {
+
+// from existing array, chech if host needs to be enabled. maybe host is already in enabled state?
+if (allHostsArray[host].status==1) {
+// enable
+var resultArray = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;host.update&quot;,&quot;params&quot;:{&quot;hostid&quot;:&quot;'+allHostsArray[host].hostid+'&quot;,&quot;status&quot;:&quot;0&quot;},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;:1}'
+));
+modifications++;
+}
+
+// end of else
+}
+
+// end of for loop
+}
+
+
+return modifications;</params>
+                        </step>
+                    </preprocessing>
+                    <url>{$Z_API_PHP}</url>
+                    <posts>{&#13;
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,&#13;
+    &quot;method&quot;: &quot;hostgroup.get&quot;,&#13;
+    &quot;params&quot;: {&#13;
+        &quot;output&quot;:[&quot;groupid&quot;],&#13;
+        &quot;filter&quot;: {&#13;
+            &quot;name&quot;:&quot;{$HOST.GROUP:name}&quot;&#13;
+        }&#13;
+    },&#13;
+    &quot;auth&quot;: &quot;{$Z_API_SESSIONID}&quot;,&#13;
+    &quot;id&quot;: 1&#13;
+}</posts>
+                    <status_codes/>
+                    <post_type>JSON</post_type>
+                    <request_method>POST</request_method>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$HOST.GROUP:name}</macro>
+                    <value>MPLS</value>
+                    <description>Name of host group to analyze</description>
+                </macro>
+                <macro>
+                    <macro>{$HOST.GROUP:regex}</macro>
+                    <value>^[A-Z]{3,5}$|^[A-Z]{3,5}_PE[A-Z0-9_]*$</value>
+                    <description>Used in JavaScript preprocessing</description>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>

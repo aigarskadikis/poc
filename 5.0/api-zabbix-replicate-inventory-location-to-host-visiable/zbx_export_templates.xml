@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2022-08-12T11:30:01Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>use Zabbix APi to update overwrite host visiable name if inventory Location field is not empty</template>
+            <name>use Zabbix APi to update overwrite host visiable name if inventory Location field is not empty</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <name>Visiable name override</name>
+                    <type>HTTP_AGENT</type>
+                    <key>visiable.name.override</key>
+                    <delay>15m</delay>
+                    <valuemap>
+                        <name>InventoryLocationToVisiableName</name>
+                    </valuemap>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// extract only result from the first API call
+var result = JSON.parse(value).result[0];
+
+// check if host Location field is installed AND it does not match with the host visiable name
+if ( (result.inventory.location.length &gt; 0) &amp;&amp; (result.inventory.location != result.name) ) {
+// then
+
+// define new HTTP request
+var req = new CurlHttpRequest();
+
+// endpoint of Zabbix API
+var json_rpc='{$Z_API_PHP}'
+
+// lib curl header
+req.AddHeader('Content-Type: application/json');
+
+var installHostVisiableName = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;host.update&quot;,&quot;params&quot;:{&quot;hostid&quot;:&quot;'+result.hostid+'&quot;,&quot;name&quot;:&quot;'+result.inventory.location+'&quot;},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;:1}'
+)).result;
+
+return JSON.stringify(installHostVisiableName) ? 1 : 0;
+
+} else {
+return 0;
+}</params>
+                        </step>
+                    </preprocessing>
+                    <url>{$Z_API_PHP}</url>
+                    <posts>{&#13;
+	&quot;jsonrpc&quot;: &quot;2.0&quot;,&#13;
+	&quot;method&quot;: &quot;host.get&quot;,&#13;
+	&quot;params&quot;: {&#13;
+		&quot;output&quot;: [&#13;
+			&quot;hostid&quot;,&#13;
+			&quot;inventory&quot;,&#13;
+&quot;name&quot;&#13;
+		],&#13;
+		&quot;selectInventory&quot;: [&#13;
+			&quot;location&quot;&#13;
+		],&#13;
+		&quot;filter&quot;: {&#13;
+			&quot;host&quot;: [&#13;
+				&quot;{HOST.HOST}&quot;&#13;
+			]&#13;
+		}&#13;
+	},&#13;
+	&quot;auth&quot;: &quot;{$Z_API_SESSIONID}&quot;,&#13;
+	&quot;id&quot;: 1&#13;
+}</posts>
+                    <status_codes/>
+                    <post_type>JSON</post_type>
+                    <request_method>POST</request_method>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$HOST.GROUP:name}</macro>
+                    <value>MPLS</value>
+                    <description>Name of host group to analyze</description>
+                </macro>
+                <macro>
+                    <macro>{$HOST.GROUP:regex}</macro>
+                    <value>^[A-Z]{3,5}$|^[A-Z]{3,5}_PE[A-Z0-9_]*$</value>
+                    <description>Used in JavaScript preprocessing</description>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <value_maps>
+        <value_map>
+            <name>InventoryLocationToVisiableName</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>name is same as location</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>replicating location to name</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>
