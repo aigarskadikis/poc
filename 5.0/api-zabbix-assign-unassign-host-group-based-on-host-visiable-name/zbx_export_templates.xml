@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2022-08-19T15:17:33Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>use Zabbix API to assign host group based on Host name</template>
+            <name>use Zabbix API to assign host group based on Host name</name>
+            <description>1) Under &quot;Configuration&quot; =&gt; &quot;Host groups&quot; =&gt; create groups:&#13;
+PWR-360&#13;
+PWR-AC&#13;
+PWR-DC&#13;
+PWR-INV&#13;
+&#13;
+observe the groupid of each group&#13;
+&#13;
+2) Create a new user which will be responsible for this integration. Better to start with &quot;Zabbix Super Admin&quot; to avoid permission problems&#13;
+&#13;
+3) Under &quot;Administration&quot; =&gt; &quot;General&quot; =&gt; &quot;API tokens&quot; =&gt; create new session token and assign the user from step 2&#13;
+&#13;
+4) Go to &quot;Administration&quot; =&gt; &quot;General&quot; =&gt; &quot;Macros&quot; =&gt; install new macros:&#13;
+{$PWR:360} = 225&#13;
+{$PWR:AC} = 224&#13;
+{$PWR:DC} = 223&#13;
+{$PWR:INV} = 222&#13;
+All these host group IDs must exist!&#13;
+&#13;
+in same section install session token from step 3&#13;
+{$Z_API_SESSIONID} = 6826483944988406b0d4524358d9e83c6826483944988406b0d4524358d9e83c6826483944988406b0d4524358d9e83c&#13;
+&#13;
+Install API endpoint. For example, if Zabbix frontend URL is https://contoso.zabbix.com/zabbix.php?action=dashboard.list then install:&#13;
+{$Z_API_PHP} = https://contoso.zabbix.com/api_jsonrpc.php</description>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <name>Host group membership</name>
+                    <type>HTTP_AGENT</type>
+                    <key>check.host.group.membership</key>
+                    <delay>10s</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// extract only result from the first API call
+var result = JSON.parse(value).result[0];
+
+var HostGroups = result.groups;
+
+// zabbix API does not support a single group removal and adding a single group
+// it's only possible to replace the exisitng groups with a new set of groups
+// this means we need to extract and respect existing host groups and
+// decice which ones we need to keep or discard
+
+// observe the status of our importand groups
+var dc=JSON.stringify(HostGroups).match(/\&quot;{$PWR:DC}\&quot;/) ? 1 : 0;
+var ac=JSON.stringify(HostGroups).match(/\&quot;{$PWR:AC}\&quot;/) ? 1 : 0;
+var inv=JSON.stringify(HostGroups).match(/\&quot;{$PWR:INV}\&quot;/) ? 1 : 0;
+var three=JSON.stringify(HostGroups).match(/\&quot;{$PWR:360}\&quot;/) ? 1 : 0;
+
+// how many groups in total. will need to iterate through array
+var HowMany = HostGroups.length;
+
+// new set of host groups
+var new_host_groups = [];
+var skip=0;
+
+// the next loop is ONLY to discard groups which are not required
+for (gid = 0; gid &lt; HowMany ; gid++)
+{
+var row = {};
+
+skip=0;
+if (HostGroups[gid].groupid=={$PWR:INV} &amp;&amp; !result.name.match(/INV$/) ) skip=1;
+if (HostGroups[gid].groupid=={$PWR:DC} &amp;&amp; !result.name.match(/DC$/) ) skip=1;
+if (HostGroups[gid].groupid=={$PWR:AC} &amp;&amp; !result.name.match(/AC$/) ) skip=1;
+if (HostGroups[gid].groupid=={$PWR:360} &amp;&amp; !result.name.match(/360$/) ) skip=1;
+
+if (!skip) {
+row[&quot;groupid&quot;] = HostGroups[gid].groupid;
+new_host_groups.push(row);
+}
+
+
+}
+
+
+// if host name ends with &quot;INV&quot; and the &quot;PWR-INV&quot; group is not assigned then assign
+if ( result.name.match(/INV$/) &amp;&amp; !inv ) {
+var row = {};
+row[&quot;groupid&quot;] = JSON.parse('&quot;{$PWR:INV}&quot;');
+new_host_groups.push(row);
+}
+
+
+// if host name ends with &quot;DC&quot; and the &quot;PWR-DC&quot; group is not assigned then assign
+if ( result.name.match(/DC$/) &amp;&amp; !dc ) {
+var row = {};
+row[&quot;groupid&quot;] = JSON.parse('&quot;{$PWR:DC}&quot;');
+new_host_groups.push(row);
+}
+
+// if host name ends with &quot;AC&quot; and the &quot;PWR-AC&quot; group is not assigned then assign
+if ( result.name.match(/AC$/) &amp;&amp; !ac) {
+var row = {};
+row[&quot;groupid&quot;] = JSON.parse('&quot;{$PWR:AC}&quot;');
+new_host_groups.push(row);
+}
+
+// if host name ends with &quot;360&quot; and the &quot;PWR-360&quot; group is not assigned then assign
+if ( result.name.match(/360$/) &amp;&amp; !three) {
+var row = {};
+row[&quot;groupid&quot;] = JSON.parse('&quot;{$PWR:360}&quot;');
+new_host_groups.push(row);
+}
+
+
+if (JSON.stringify(new_host_groups)==JSON.stringify(HostGroups)) {
+Zabbix.Log(3,'not need to change anything. the host group array is the same: ' + result.name);
+} else {
+Zabbix.Log(3,'need to do host group modifications: ' + result.name);
+
+
+// define new HTTP request
+var req = new CurlHttpRequest();
+
+// endpoint of Zabbix API
+var json_rpc='{$Z_API_PHP}'
+
+// lib curl header
+req.AddHeader('Content-Type: application/json');
+
+var apiCall = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;host.update&quot;,&quot;params&quot;:{&quot;hostid&quot;:&quot;'+result.hostid+'&quot;,&quot;groups&quot;:'+JSON.stringify(new_host_groups)+'},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;:1}'
+)).result;
+
+return JSON.stringify(apiCall) ? 1 : 0;
+
+
+
+
+
+
+
+}
+
+return JSON.stringify(new_host_groups);
+
+// return 'dc=' + dc + ' ac=' + ac + ' inv=' + inv + ' 360=' + three;
+
+</params>
+                        </step>
+                    </preprocessing>
+                    <url>{$Z_API_PHP}</url>
+                    <posts>{&#13;
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,&#13;
+    &quot;method&quot;: &quot;host.get&quot;,&#13;
+    &quot;params&quot;: {&#13;
+        &quot;output&quot;: [&quot;status&quot;,&quot;hostid&quot;,&quot;host&quot;,&quot;name&quot;,&quot;groups&quot;],&#13;
+        &quot;selectGroups&quot;:&quot;query&quot;,&#13;
+        &quot;filter&quot;:{&quot;host&quot;:&quot;{HOST.HOST}&quot;,&quot;status&quot;:&quot;0&quot;}&#13;
+    },&#13;
+    &quot;auth&quot;: &quot;{$Z_API_SESSIONID}&quot;,&#13;
+    &quot;id&quot;: 1&#13;
+}</posts>
+                    <status_codes/>
+                    <post_type>JSON</post_type>
+                    <request_method>POST</request_method>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$HOST.GROUP:name}</macro>
+                    <value>MPLS</value>
+                    <description>Name of host group to analyze</description>
+                </macro>
+                <macro>
+                    <macro>{$HOST.GROUP:regex}</macro>
+                    <value>^[A-Z]{3,5}$|^[A-Z]{3,5}_PE[A-Z0-9_]*$</value>
+                    <description>Used in JavaScript preprocessing</description>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
