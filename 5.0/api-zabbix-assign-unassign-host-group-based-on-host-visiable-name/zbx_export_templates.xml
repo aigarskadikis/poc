@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2022-08-19T15:20:19Z</date>
+    <date>2022-08-19T15:27:02Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -34,7 +34,11 @@ in same section install session token from step 3&#13;
 {$Z_API_SESSIONID} = 6826483944988406b0d4524358d9e83c6826483944988406b0d4524358d9e83c6826483944988406b0d4524358d9e83c&#13;
 &#13;
 Install API endpoint. For example, if Zabbix frontend URL is https://contoso.zabbix.com/zabbix.php?action=dashboard.list then install:&#13;
-{$Z_API_PHP} = https://contoso.zabbix.com/api_jsonrpc.php</description>
+{$Z_API_PHP} = https://contoso.zabbix.com/api_jsonrpc.php&#13;
+&#13;
+This is tested and works out from box with Zabbix 5.0 and Zabbix 6.0.&#13;
+Though Zabbix 5.0 does not have section &quot;API tokens&quot;. need to maintain session key in another way like:&#13;
+https://blog.zabbix.com/maintaining-zabbix-api-token-via-javascript/15561/</description>
             <groups>
                 <group>
                     <name>Templates/Modules</name>
