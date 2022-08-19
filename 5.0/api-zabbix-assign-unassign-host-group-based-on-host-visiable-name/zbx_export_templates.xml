@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2022-08-19T15:17:33Z</date>
+    <date>2022-08-19T15:20:19Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -177,18 +177,6 @@ return JSON.stringify(new_host_groups);
                     <request_method>POST</request_method>
                 </item>
             </items>
-            <macros>
-                <macro>
-                    <macro>{$HOST.GROUP:name}</macro>
-                    <value>MPLS</value>
-                    <description>Name of host group to analyze</description>
-                </macro>
-                <macro>
-                    <macro>{$HOST.GROUP:regex}</macro>
-                    <value>^[A-Z]{3,5}$|^[A-Z]{3,5}_PE[A-Z0-9_]*$</value>
-                    <description>Used in JavaScript preprocessing</description>
-                </macro>
-            </macros>
         </template>
     </templates>
 </zabbix_export>
