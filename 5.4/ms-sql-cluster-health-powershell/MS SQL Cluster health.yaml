@@ -1,0 +1,111 @@
+zabbix_export:
+  version: '5.4'
+  date: '2022-02-10T18:11:04Z'
+  groups:
+    -
+      uuid: 748ad4d098d447d492bb935c907f652f
+      name: Templates/Databases
+  templates:
+    -
+      uuid: 82251ea4c19d49598e262aea37dfcbfd
+      template: 'MS SQL Cluster health'
+      name: 'MS SQL Cluster health'
+      groups:
+        -
+          name: Templates/Databases
+      items:
+        -
+          uuid: 3860a1f8b2b046ac8cb4a21e227d438a
+          name: 'List cluster groups'
+          key: 'system.run["{$GET.CLUSTERGROUP}"]'
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          tags:
+            -
+              tag: Cluster
+              value: 'Yes'
+      discovery_rules:
+        -
+          uuid: 6aa4cfba6aa249818d3566efe1a2c3a6
+          name: cluster.groups.lld
+          type: DEPENDENT
+          key: cluster.groups.lld
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: fe44877628f84cf08543dc4538e1360d
+              name: '{#NAME} state of {#NODE}'
+              type: DEPENDENT
+              key: 'state[{#NAME},{#NODE}]'
+              delay: '0'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$..[?(@.Name== ''{#NAME}'')].State.first()'
+              master_item:
+                key: 'system.run["{$GET.CLUSTERGROUP}"]'
+              tags:
+                -
+                  tag: Cluster
+                  value: node
+              trigger_prototypes:
+                -
+                  uuid: 26bab1474f3745dda31e4f3e83dd63da
+                  expression: 'count(/MS SQL Cluster health/state[{#NAME},{#NODE}],#3,"eq","1")>=3'
+                  name: '"{#NAME}" for {#NODE} is offline'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+          master_item:
+            key: 'system.run["{$GET.CLUSTERGROUP}"]'
+          lld_macro_paths:
+            -
+              lld_macro: '{#NAME}'
+              path: '$.[''Name'']'
+            -
+              lld_macro: '{#NODE}'
+              path: '$.OwnerNode.[''Name'']'
+            -
+              lld_macro: '{#STATE}'
+              path: '$.[''State'']'
+      tags:
+        -
+          tag: send
+          value: ServiceNow
+      macros:
+        -
+          macro: '{$GET.CLUSTERGROUP}'
+          value: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -nologo -command "Get-ClusterGroup | select Name,OwnerNode,State| ConvertTo-JSON"'
+      valuemaps:
+        -
+          uuid: 2eb5a112aa4c435a9df84fa3be0c7f58
+          name: 'Windows service state'
+          mappings:
+            -
+              value: '0'
+              newvalue: Running
+            -
+              value: '1'
+              newvalue: Paused
+            -
+              value: '2'
+              newvalue: 'Start pending'
+            -
+              value: '3'
+              newvalue: 'Pause pending'
+            -
+              value: '4'
+              newvalue: 'Continue pending'
+            -
+              value: '5'
+              newvalue: 'Stop pending'
+            -
+              value: '6'
+              newvalue: Stopped
+            -
+              value: '7'
+              newvalue: Unknown
+            -
+              value: '255'
+              newvalue: 'No such service'

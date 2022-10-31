@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.4</version>
+    <date>2022-06-09T06:58:37Z</date>
+    <groups>
+        <group>
+            <uuid>748ad4d098d447d492bb935c907f652f</uuid>
+            <name>Templates/Databases</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <uuid>892017c25cb04d0d9322b80cbf959723</uuid>
+            <template>MS SQL Cluster health PowerShell UserParameter</template>
+            <name>MS SQL Cluster health PowerShell UserParameter</name>
+            <description>UserParameter=get.cluster.group.bulk,PowerShell.exe -nologo -command &quot;(Get-ClusterGroup | select Name,OwnerNode,State| ConvertTo-JSON)&quot;</description>
+            <groups>
+                <group>
+                    <name>Templates/Databases</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <uuid>c6746bd1a6554ea3ba14a2c71416a6bb</uuid>
+                    <name>List cluster groups</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>get.cluster.group.bulk</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <tags>
+                        <tag>
+                            <tag>Cluster</tag>
+                            <value>Yes</value>
+                        </tag>
+                    </tags>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <uuid>7831865436914cfb9377c1860db83a0f</uuid>
+                    <name>cluster.groups.lld</name>
+                    <type>DEPENDENT</type>
+                    <key>cluster.groups.lld</key>
+                    <delay>0</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <uuid>2aefd7501d8a4fc0ae0c7eecbde417af</uuid>
+                            <name>{#NAME} state of {#NODE}</name>
+                            <type>DEPENDENT</type>
+                            <key>state[{#NAME},{#NODE}]</key>
+                            <delay>0</delay>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <parameters>
+                                        <parameter>$..[?(@.Name== '{#NAME}')].State.first()</parameter>
+                                    </parameters>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>get.cluster.group.bulk</key>
+                            </master_item>
+                            <tags>
+                                <tag>
+                                    <tag>Cluster</tag>
+                                    <value>node</value>
+                                </tag>
+                            </tags>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <uuid>05a5632d3cf54242bb777933b83a851f</uuid>
+                                    <expression>count(/MS SQL Cluster health PowerShell UserParameter/state[{#NAME},{#NODE}],#3,&quot;eq&quot;,&quot;1&quot;)&gt;=3</expression>
+                                    <name>&quot;{#NAME}&quot; for {#NODE} is offline</name>
+                                    <priority>AVERAGE</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>get.cluster.group.bulk</key>
+                    </master_item>
+                    <lld_macro_paths>
+                        <lld_macro_path>
+                            <lld_macro>{#NAME}</lld_macro>
+                            <path>$.['Name']</path>
+                        </lld_macro_path>
+                        <lld_macro_path>
+                            <lld_macro>{#NODE}</lld_macro>
+                            <path>$.OwnerNode.['Name']</path>
+                        </lld_macro_path>
+                        <lld_macro_path>
+                            <lld_macro>{#STATE}</lld_macro>
+                            <path>$.['State']</path>
+                        </lld_macro_path>
+                    </lld_macro_paths>
+                </discovery_rule>
+            </discovery_rules>
+            <tags>
+                <tag>
+                    <tag>send</tag>
+                    <value>ServiceNow</value>
+                </tag>
+            </tags>
+            <macros>
+                <macro>
+                    <macro>{$GET.CLUSTERGROUP}</macro>
+                    <value>C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -nologo -command &quot;Get-ClusterGroup | select Name,OwnerNode,State| ConvertTo-JSON&quot;</value>
+                </macro>
+            </macros>
+            <valuemaps>
+                <valuemap>
+                    <uuid>558ac096ff3a415faed982ab6ce1e5b1</uuid>
+                    <name>Windows service state</name>
+                    <mappings>
+                        <mapping>
+                            <value>0</value>
+                            <newvalue>Running</newvalue>
+                        </mapping>
+                        <mapping>
+                            <value>1</value>
+                            <newvalue>Paused</newvalue>
+                        </mapping>
+                        <mapping>
+                            <value>2</value>
+                            <newvalue>Start pending</newvalue>
+                        </mapping>
+                        <mapping>
+                            <value>3</value>
+                            <newvalue>Pause pending</newvalue>
+                        </mapping>
+                        <mapping>
+                            <value>4</value>
+                            <newvalue>Continue pending</newvalue>
+                        </mapping>
+                        <mapping>
+                            <value>5</value>
+                            <newvalue>Stop pending</newvalue>
+                        </mapping>
+                        <mapping>
+                            <value>6</value>
+                            <newvalue>Stopped</newvalue>
+                        </mapping>
+                        <mapping>
+                            <value>7</value>
+                            <newvalue>Unknown</newvalue>
+                        </mapping>
+                        <mapping>
+                            <value>255</value>
+                            <newvalue>No such service</newvalue>
+                        </mapping>
+                    </mappings>
+                </valuemap>
+            </valuemaps>
+        </template>
+    </templates>
+</zabbix_export>

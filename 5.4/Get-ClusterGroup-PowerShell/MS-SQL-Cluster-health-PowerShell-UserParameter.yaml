@@ -1,0 +1,99 @@
+zabbix_export:
+  version: '5.4'
+  date: '2022-06-10T08:44:45Z'
+  groups:
+    -
+      uuid: 748ad4d098d447d492bb935c907f652f
+      name: Templates/Databases
+  templates:
+    -
+      uuid: 892017c25cb04d0d9322b80cbf959723
+      template: 'MS SQL Cluster health PowerShell UserParameter'
+      name: 'MS SQL Cluster health PowerShell UserParameter'
+      description: |
+        UserParameter=get.cluster.group.bulk,PowerShell.exe -nologo -command "(Get-ClusterGroup | select Name,OwnerNode,State| ConvertTo-JSON)"
+        
+        Value mapping may be incorrect.
+      groups:
+        -
+          name: Templates/Databases
+      items:
+        -
+          uuid: c6746bd1a6554ea3ba14a2c71416a6bb
+          name: 'List cluster groups'
+          type: ZABBIX_ACTIVE
+          key: get.cluster.group.bulk
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          tags:
+            -
+              tag: Cluster
+              value: 'Yes'
+      discovery_rules:
+        -
+          uuid: 7831865436914cfb9377c1860db83a0f
+          name: cluster.groups.lld
+          type: DEPENDENT
+          key: cluster.groups.lld
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 2aefd7501d8a4fc0ae0c7eecbde417af
+              name: '{#NAME} state of {#NODE}'
+              type: DEPENDENT
+              key: 'state[{#NAME},{#NODE}]'
+              delay: '0'
+              valuemap:
+                name: ClusterGroupState
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$..[?(@.Name== ''{#NAME}'')].State.first()'
+              master_item:
+                key: get.cluster.group.bulk
+              tags:
+                -
+                  tag: Cluster
+                  value: node
+              trigger_prototypes:
+                -
+                  uuid: 05a5632d3cf54242bb777933b83a851f
+                  expression: 'count(/MS SQL Cluster health PowerShell UserParameter/state[{#NAME},{#NODE}],#3,"eq","1")>=3'
+                  name: '"{#NAME}" for {#NODE} is offline'
+                  priority: AVERAGE
+          master_item:
+            key: get.cluster.group.bulk
+          lld_macro_paths:
+            -
+              lld_macro: '{#NAME}'
+              path: '$.[''Name'']'
+            -
+              lld_macro: '{#NODE}'
+              path: '$.OwnerNode.[''Name'']'
+            -
+              lld_macro: '{#STATE}'
+              path: '$.[''State'']'
+      tags:
+        -
+          tag: send
+          value: ServiceNow
+      macros:
+        -
+          macro: '{$GET.CLUSTERGROUP}'
+          value: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -nologo -command "Get-ClusterGroup | select Name,OwnerNode,State| ConvertTo-JSON"'
+      valuemaps:
+        -
+          uuid: 68a251bc8f654e54857fe9d91c40d13a
+          name: ClusterGroupState
+          mappings:
+            -
+              value: '0'
+              newvalue: Online
+            -
+              value: '1'
+              newvalue: Offline
+            -
+              value: '4'
+              newvalue: PartiallyOnline
