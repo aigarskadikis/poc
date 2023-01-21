@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2023-01-21T12:46:45Z</date>
+    <groups>
+        <group>
+            <name>Templates/Backup base64 xz</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>backup etc directory</template>
+            <name>backup etc directory</name>
+            <description>Install global macros or configure at template level:&#13;
+&#13;
+{$CMD:tar}&#13;
+tar --create --verbose --use-compress-program='xz -9'&#13;
+&#13;
+{$CMD:base64}&#13;
+base64 -w0 | sed 's|^|cd / \&amp;\&amp; echo \&quot;|' | sed 's%$%\&quot; | base64 --decode | unxz | tar -xv%' &amp;&amp; echo</description>
+            <groups>
+                <group>
+                    <name>Templates/Backup base64 xz</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <name>list all directories and size in bytes</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.run[&quot;du -b /etc&quot;]</key>
+                    <delay>1d</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var lld = [];
+var lines = value.split(&quot;\n&quot;);
+var lines_num = lines.length;
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+
+  var size = /(^\d+)/g;
+  row[&quot;{#SIZE}&quot;] = size.exec(lines[i])[1];
+
+  var dir = /^\d+[^/]+(.*)/g;
+  row[&quot;{#DIR}&quot;] = dir.exec(lines[i])[1];
+
+  lld.push(row);
+}
+
+return JSON.stringify(lld);
+</params>
+                        </step>
+                    </preprocessing>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>list.all.directories</name>
+                    <type>DEPENDENT</type>
+                    <key>list.all.directories</key>
+                    <delay>0</delay>
+                    <filter>
+                        <evaltype>FORMULA</evaltype>
+                        <formula>(A or B or C) and D</formula>
+                        <conditions>
+                            <condition>
+                                <macro>{#DIR}</macro>
+                                <value>{$DIR:exact}</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                            <condition>
+                                <macro>{#DIR}</macro>
+                                <value>{$DIR:d}</value>
+                                <formulaid>B</formulaid>
+                            </condition>
+                            <condition>
+                                <macro>{#DIR}</macro>
+                                <value>{$DIR:service}</value>
+                                <formulaid>C</formulaid>
+                            </condition>
+                            <condition>
+                                <macro>{#SIZE}</macro>
+                                <value>{$SIZE:dir}</value>
+                                <formulaid>D</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>file.list[{#DIR}]</name>
+                            <type>DEPENDENT</type>
+                            <key>file.list[{#DIR}]</key>
+                            <delay>0</delay>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <application_prototypes>
+                                <application_prototype>
+                                    <name>{#DIR}</name>
+                                </application_prototype>
+                            </application_prototypes>
+                            <preprocessing>
+                                <step>
+                                    <type>JAVASCRIPT</type>
+                                    <params>return value.match(/^\/.*/gm).join(&quot;\n&quot;);</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>system.run[&quot;{$CMD:tar} {#DIR} | {$CMD:base64}&quot;]</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>length[{#DIR}]</name>
+                            <type>DEPENDENT</type>
+                            <key>length[{#DIR}]</key>
+                            <delay>0</delay>
+                            <units>B</units>
+                            <preprocessing>
+                                <step>
+                                    <type>JAVASCRIPT</type>
+                                    <params>return value.length;</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>system.run[&quot;{$CMD:tar} {#DIR} | {$CMD:base64}&quot;]</key>
+                            </master_item>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;65535</expression>
+                                    <name>Backup is corrupted. Lower down content of directory {#DIR}</name>
+                                    <priority>HIGH</priority>
+                                    <description>Backup is corrupted because DB field cannot store over 64 kilobytes</description>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{diff()}=1</expression>
+                                    <name>Content of {#DIR} has been changed</name>
+                                    <priority>AVERAGE</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}&gt;60000</expression>
+                                    <name>Size of backup for {#DIR} is close to 64k</name>
+                                    <priority>AVERAGE</priority>
+                                    <manual_close>YES</manual_close>
+                                    <dependencies>
+                                        <dependency>
+                                            <name>Backup is corrupted. Lower down content of directory {#DIR}</name>
+                                            <expression>{backup etc directory:length[{#DIR}].last()}&gt;65535</expression>
+                                        </dependency>
+                                    </dependencies>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>restore.command[{#DIR}]</name>
+                            <type>DEPENDENT</type>
+                            <key>restore.command[{#DIR}]</key>
+                            <delay>0</delay>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <application_prototypes>
+                                <application_prototype>
+                                    <name>{#DIR}</name>
+                                </application_prototype>
+                            </application_prototypes>
+                            <preprocessing>
+                                <step>
+                                    <type>JAVASCRIPT</type>
+                                    <params>return value.match(/^cd.*/gm).join(&quot;\n&quot;);</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>system.run[&quot;{$CMD:tar} {#DIR} | {$CMD:base64}&quot;]</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Backup {#DIR}</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>system.run[&quot;{$CMD:tar} {#DIR} | {$CMD:base64}&quot;]</key>
+                            <delay>1d</delay>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <application_prototypes>
+                                <application_prototype>
+                                    <name>{#DIR}</name>
+                                </application_prototype>
+                            </application_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>size of {#DIR}</name>
+                            <type>ZABBIX_ACTIVE</type>
+                            <key>vfs.dir.size[{#DIR}]</key>
+                            <delay>1d</delay>
+                            <units>B</units>
+                            <application_prototypes>
+                                <application_prototype>
+                                    <name>{#DIR}</name>
+                                </application_prototype>
+                            </application_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>system.run[&quot;du -b /etc&quot;]</key>
+                    </master_item>
+                </discovery_rule>
+            </discovery_rules>
+            <tags>
+                <tag>
+                    <tag>sendto</tag>
+                    <value>telegram</value>
+                </tag>
+            </tags>
+            <macros>
+                <macro>
+                    <macro>{$DIR:d}</macro>
+                    <value>^.*\/(sudoers|cron|php-fpm|conf|yum.repos|my.cnf|sysctl|profile|grub|ld.so.conf|modprobe|ssh_config)\.d$</value>
+                    <description>ends with .d</description>
+                </macro>
+                <macro>
+                    <macro>{$DIR:exact}</macro>
+                    <value>^.*\/(zabbix|dhcp|network|hostapd|snmp|nginx|corosync|selinux|samba|openldap)$</value>
+                    <description>all others</description>
+                </macro>
+                <macro>
+                    <macro>{$DIR:service}</macro>
+                    <value>^.*\/(zabbix-proxy|zabbix-agent|zabbix-agent2|zabbix-server|mysqld|hostapd)\.service\.d$</value>
+                    <description>ends with .service.d</description>
+                </macro>
+                <macro>
+                    <macro>{$SIZE:dir}</macro>
+                    <value>^([1-9]|[1-9][0-9]{1,4}|[1-6][0-9]{5})$</value>
+                    <description>source dir can be with size from 1 to 699999 bytes</description>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
