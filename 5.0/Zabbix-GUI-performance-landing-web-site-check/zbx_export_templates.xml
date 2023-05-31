@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2023-05-31T20:30:44Z</date>
+    <groups>
+        <group>
+            <name>Templates/Web Monitoring</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Zabbix GUI performance landing web site check</template>
+            <name>Zabbix GUI performance landing web site check</name>
+            <description>List all sessions:&#13;
+&#13;
+SELECT sessions.userid,users.alias,count(*)&#13;
+FROM sessions&#13;
+INNER JOIN users ON sessions.userid = users.userid&#13;
+GROUP BY sessions.userid;</description>
+            <groups>
+                <group>
+                    <name>Templates/Web Monitoring</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>web</name>
+                </application>
+                <application>
+                    <name>Zabbix web site</name>
+                </application>
+            </applications>
+            <httptests>
+                <httptest>
+                    <name>sample</name>
+                    <application>
+                        <name>Zabbix web site</name>
+                    </application>
+                    <delay>15m</delay>
+                    <steps>
+                        <step>
+                            <name>open landing page</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/index.php</url>
+                            <required>Zabbix SIA</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>authorize and search for string</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/index.php</url>
+                            <posts>
+                                <post_field>
+                                    <name>name</name>
+                                    <value>{$ZNAME}</value>
+                                </post_field>
+                                <post_field>
+                                    <name>password</name>
+                                    <value>{$ZPASSWORD}</value>
+                                </post_field>
+                                <post_field>
+                                    <name>enter</name>
+                                    <value>Sign in</value>
+                                </post_field>
+                            </posts>
+                            <variables>
+                                <variable>
+                                    <name>{sid}</name>
+                                    <value>regex:name=&quot;csrf-token&quot; content=&quot;([0-9a-z]{16})&quot;</value>
+                                </variable>
+                            </variables>
+                            <required>Dashboard</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>open all hosts and reset filter</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/hosts.php?filter_rst=1</url>
+                            <required>Monitored by</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>Monitoring Hosts reset filter</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/zabbix.php?action=host.view&amp;filter_rst=1</url>
+                            <follow_redirects>NO</follow_redirects>
+                            <required>Show hosts in maintenance</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>navigate to problem.view</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/zabbix.php?action=problem.view&amp;ddreset=1</url>
+                            <required>Show unacknowledged only</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>hosts page 1</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/hosts.php?groupid=0&amp;page=1</url>
+                            <follow_redirects>NO</follow_redirects>
+                            <required>Create host</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>hosts page 2</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/hosts.php?groupid=0&amp;page=2</url>
+                            <follow_redirects>NO</follow_redirects>
+                            <required>Create host</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>open host group zabbix servers</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/hosts.php?groupid=4</url>
+                            <follow_redirects>NO</follow_redirects>
+                            <required>Create host</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>open proxy list</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/zabbix.php?action=proxy.list&amp;ddreset=1</url>
+                            <required>Create proxy</required>
+                            <status_codes>200</status_codes>
+                        </step>
+                        <step>
+                            <name>log out</name>
+                            <url>{$TRANSPORT}://{HOST.CONN}/index.php</url>
+                            <posts>
+                                <post_field>
+                                    <name>sid</name>
+                                    <value>{sid}</value>
+                                </post_field>
+                                <post_field>
+                                    <name>reconnect</name>
+                                    <value>1</value>
+                                </post_field>
+                            </posts>
+                            <status_codes>200</status_codes>
+                        </step>
+                    </steps>
+                </httptest>
+            </httptests>
+            <macros>
+                <macro>
+                    <macro>{$TRANSPORT}</macro>
+                    <value>https</value>
+                </macro>
+                <macro>
+                    <macro>{$ZNAME}</macro>
+                    <value>Admin</value>
+                </macro>
+                <macro>
+                    <macro>{$ZPASSWORD}</macro>
+                    <value>zabbix</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <triggers>
+        <trigger>
+            <expression>{Zabbix GUI performance landing web site check:web.test.fail[sample].last()}&gt;0</expression>
+            <name>Some failed web scenario steps</name>
+            <priority>AVERAGE</priority>
+        </trigger>
+    </triggers>
+</zabbix_export>
