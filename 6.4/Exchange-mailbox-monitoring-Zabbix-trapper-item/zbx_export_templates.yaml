@@ -1,0 +1,82 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
+      name: Templates/Applications
+  templates:
+    - uuid: 4c1e7d609306492d853eefdae690db4a
+      template: 'Excange mailbox monitoring based on Zabbix trapper item'
+      name: 'Excange mailbox monitoring based on Zabbix trapper item'
+      description: 'Must use Windows PowerShell and zabbix_sender command to feed data into "input" item'
+      groups:
+        - name: Templates/Applications
+      items:
+        - uuid: de010b1f3e6d4322a533405e1463bd8d
+          name: input
+          type: TRAP
+          key: input
+          delay: '0'
+          trends: '0'
+          value_type: TEXT
+      discovery_rules:
+        - uuid: b85a09c75bbb4fa4849fd6eb3c95b9d6
+          name: LLD
+          type: DEPENDENT
+          key: LLD
+          delay: '0'
+          item_prototypes:
+            - uuid: eb8743bbdcff41ffb3a70fa0d8cef12b
+              name: 'Archive-Size[{#MAILBOXNAME}]'
+              type: DEPENDENT
+              key: 'ArchiveSize[{#MAILBOXNAME}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''Name''] == ''{#MAILBOXNAME}'')][''Archive Size''].Value.first()'
+                - type: REGEX
+                  parameters:
+                    - '([0-9,]+) bytes'
+                    - \1
+                - type: STR_REPLACE
+                  parameters:
+                    - ','
+                    - ''
+              master_item:
+                key: input
+            - uuid: 5e438477d10147bb8f5fd3b811ba77dd
+              name: 'Primary-Size[{#MAILBOXNAME}]'
+              type: DEPENDENT
+              key: 'PrimarySize[{#MAILBOXNAME}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''Name''] == ''{#MAILBOXNAME}'')][''Primary Size''].Value.first()'
+                - type: REGEX
+                  parameters:
+                    - '([0-9,]+) bytes'
+                    - \1
+                - type: STR_REPLACE
+                  parameters:
+                    - ','
+                    - ''
+              master_item:
+                key: input
+              trigger_prototypes:
+                - uuid: 10392e8ce3ea466681f3b19799b31230
+                  expression: 'last(/Excange mailbox monitoring based on Zabbix trapper item/PrimarySize[{#MAILBOXNAME}])>{$DEFAULT.SIZE:"{#MAILBOXNAME}"}'
+                  name: '{#MAILBOXNAME} is bigger than {$DEFAULT.SIZE:"{#MAILBOXNAME}"}'
+                  priority: AVERAGE
+          master_item:
+            key: input
+          lld_macro_paths:
+            - lld_macro: '{#MAILBOXNAME}'
+              path: '$.[''Name'']'
+      macros:
+        - macro: '{$DEFAULT.SIZE}'
+          value: 46G
+        - macro: '{$DEFAULT.SIZE:"Name Surname"}'
+          value: 10G
