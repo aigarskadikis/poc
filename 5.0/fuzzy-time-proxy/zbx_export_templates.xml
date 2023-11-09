@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2023-11-09T12:08:24Z</date>
+    <groups>
+        <group>
+            <name>Templates/Applications</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Auto fuzzytime trigger for Zabbix Proxy</template>
+            <name>Auto fuzzytime trigger for Zabbix Proxy</name>
+            <groups>
+                <group>
+                    <name>Templates/Applications</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>Proxy Last Access</name>
+                </application>
+            </applications>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Discover all proxies</name>
+                    <type>HTTP_AGENT</type>
+                    <key>get.proxy.list</key>
+                    <delay>1h</delay>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Last access for {#PROXYNAME}</name>
+                            <type>INTERNAL</type>
+                            <key>zabbix[proxy,{#PROXYNAME},lastaccess]</key>
+                            <applications>
+                                <application>
+                                    <name>Proxy Last Access</name>
+                                </application>
+                            </applications>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{fuzzytime({$PROXYFUZZYTIME})}=0</expression>
+                                    <name>{#PROXYNAME} is not reachable for {$PROXYFUZZYTIME}</name>
+                                    <priority>HIGH</priority>
+                                    <tags>
+                                        <tag>
+                                            <tag>{#PROXYNAME}</tag>
+                                            <value>Down</value>
+                                        </tag>
+                                    </tags>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <timeout>8s</timeout>
+                    <url>{$Z_API_PHP}</url>
+                    <posts>{&#13;
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,&#13;
+    &quot;method&quot;: &quot;proxy.get&quot;,&#13;
+    &quot;params&quot;: {&#13;
+        &quot;output&quot;: &quot;extend&quot;,&#13;
+        &quot;selectInterface&quot;: &quot;extend&quot;&#13;
+    },&#13;
+    &quot;auth&quot;: &quot;{$Z_API_SESSIONID}&quot;,&#13;
+    &quot;id&quot;: 1&#13;
+}</posts>
+                    <follow_redirects>NO</follow_redirects>
+                    <post_type>JSON</post_type>
+                    <request_method>POST</request_method>
+                    <lld_macro_paths>
+                        <lld_macro_path>
+                            <lld_macro>{#PROXYNAME}</lld_macro>
+                            <path>$.host</path>
+                        </lld_macro_path>
+                    </lld_macro_paths>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.result[*]</params>
+                        </step>
+                    </preprocessing>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$PROXYFUZZYTIME}</macro>
+                    <value>45m</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
