@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2023-12-28T21:50:58Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>vmstat</template>
+            <name>vmstat</name>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <name>vmstat</name>
+                    <type>TRAP</type>
+                    <key>vmstat</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// delete first line
+return value.replace(/.*/, &quot;&quot;).substr(1);</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// delete leading and trailing spaces
+return value.replace(/^\s+|\s+$/gm,'');</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// replace space with coma
+return value.replace(/ +/gm,&quot;,&quot;);</params>
+                        </step>
+                        <step>
+                            <type>CSV_TO_JSON</type>
+                            <params>,
+&quot;
+1</params>
+                        </step>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.[-1]</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>vmstat.buff</name>
+                    <type>DEPENDENT</type>
+                    <key>vmstat.buff</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.buff</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>vmstat</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>vmstat.free</name>
+                    <type>DEPENDENT</type>
+                    <key>vmstat.free</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.free</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>vmstat</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>vmstat.r</name>
+                    <type>DEPENDENT</type>
+                    <key>vmstat.r</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.r</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>vmstat</key>
+                    </master_item>
+                </item>
+            </items>
+        </template>
+    </templates>
+</zabbix_export>
