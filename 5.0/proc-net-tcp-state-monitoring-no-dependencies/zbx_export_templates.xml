@@ -1,0 +1,1574 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2024-03-05T11:44:35Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>proc net tcp state</template>
+            <name>proc net tcp state</name>
+            <description>In the output:&#13;
+cat /proc/net/tcp&#13;
+the 4th column means the connection state&#13;
+&#13;
+Value mapping is as follows:&#13;
+00=UNKNOWN&#13;
+01=ESTABLISHED&#13;
+02=SYN_SENT&#13;
+03=SYN_RECV&#13;
+04=FIN_WAIT1&#13;
+05=FIN_WAIT2&#13;
+06=TIME_WAIT&#13;
+07=CLOSED&#13;
+08=CLOSE_WAIT&#13;
+09=LAST_ACK&#13;
+0A=LISTEN&#13;
+0B=CLOSING&#13;
+&#13;
+This template collects data every 1m and feeds all 12 indications.&#13;
+Zabbix agent 5.0 is limited for the data pick up of 64 kb&#13;
+Zabbix agent 6.0 can pick up 16 MB in one go</description>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>TCP IPv4 state raw</name>
+                </application>
+                <application>
+                    <name>TCP state</name>
+                </application>
+                <application>
+                    <name>TCP state based on proc</name>
+                </application>
+                <application>
+                    <name>TCP state CLOSED</name>
+                </application>
+                <application>
+                    <name>TCP state CLOSE_WAIT</name>
+                </application>
+                <application>
+                    <name>TCP state CLOSING</name>
+                </application>
+                <application>
+                    <name>TCP state ESTABLISHED</name>
+                </application>
+                <application>
+                    <name>TCP state FIN_WAIT1</name>
+                </application>
+                <application>
+                    <name>TCP state FIN_WAIT2</name>
+                </application>
+                <application>
+                    <name>TCP state LAST_ACK</name>
+                </application>
+                <application>
+                    <name>TCP state LISTEN</name>
+                </application>
+                <application>
+                    <name>TCP state SYN_RECV</name>
+                </application>
+                <application>
+                    <name>TCP state SYN_SENT</name>
+                </application>
+                <application>
+                    <name>TCP state TIME_WAIT</name>
+                </application>
+                <application>
+                    <name>TCP state UNKNOWN</name>
+                </application>
+                <application>
+                    <name>Zabbix raw items</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>detect.down</name>
+                    <type>DEPENDENT</type>
+                    <key>detect.down</key>
+                    <delay>0</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var lld = [];
+var lines = value.match(/^\s+\S+:\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+/gm);
+var lines_num = lines.length;
+var local_address=[];
+var rem_address='';
+var st='';
+
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+
+  array = lines[i].match(/[A-F0-9]{8}/)[0].match(/(\w{2})/gi);
+  var answer='';
+  for (var j = 0; j &lt; array.length-1; j++) {answer='.'+parseInt(array[j],16)+answer;} answer=parseInt(array[array.length-1],16)+answer;
+  row[&quot;local&quot;] = answer;
+
+
+
+  row[&quot;port&quot;] = parseInt(lines[i].match(/[A-F0-9]{8}:([A-F0-9]{4})/)[1],16);
+
+//Zabbix.Log(4,lines[i]);
+//Zabbix.Log(4,row[&quot;port&quot;]);
+  row[&quot;state&quot;] = lines[i].match(/[A-F0-9]{8}:[A-F0-9]{4}\s+[A-F0-9]{8}:[A-F0-9]{4}\s+([A-F0-9]{2})/)[1];
+  row[&quot;uid&quot;] = lines[i].match(/(\S+)$/)[1];
+//Zabbix.Log(4,row[&quot;uid&quot;]);
+
+lld.push(row);
+}
+return JSON.stringify(lld);</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>vfs.file.contents[/proc/net/tcp]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 close wait</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.close.wait</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.08</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 closed</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.closed</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.07</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 closing</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.closing</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.0B</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 established</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.established</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.01</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 fin wait1</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.fin.wait1</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.04</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 fin wait2</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.fin.wait2</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.05</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 last ack</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.last.ack</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.09</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 listen</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.listen</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.0A</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 syn recv</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.syn.recv</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.03</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 syn sent</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.syn.sent</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.02</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 time wait</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.time.wait</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.06</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv4 unknown</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv4.unknown</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.00</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 close wait</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.close.wait</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.08</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 closed</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.closed</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.07</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 closing</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.closing</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.0B</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 established</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.established</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.01</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 fin wait1</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.fin.wait1</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.04</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 fin wait2</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.fin.wait2</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.05</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 last ack</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.last.ack</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.09</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 listen</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.listen</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.0A</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 syn recv</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.syn.recv</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.03</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 syn sent</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.syn.sent</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.02</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 time wait</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.time.wait</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.06</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>IPv6 unknown</name>
+                    <type>DEPENDENT</type>
+                    <key>ipv6.unknown</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>TCP state</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.00</params>
+                            <error_handler>CUSTOM_VALUE</error_handler>
+                            <error_handler_params>0</error_handler_params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>proc.net.tcp6</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>tcp</name>
+                    <type>DEPENDENT</type>
+                    <key>proc.net.tcp</key>
+                    <delay>0</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var lines = value.match(/:.........:.............:.....(\S+).........:...........:/gm);
+var lines_num = lines.length;
+var lld = [];
+
+for (i = 0; i &lt; lines_num; i++)
+{
+var row = {};
+row = lines[i].toString()
+.replace(/:.........:.............:...../,'')
+.replace(/.........:...........:/,'');
+lld.push(row);
+}
+
+
+var count = lld.reduce(function (value, value2) {
+    return (
+        value[value2] ? ++value[value2] :(value[value2] = 1),
+        value
+    );
+}, {});
+
+
+return JSON.stringify(count);</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>vfs.file.contents[/proc/net/tcp]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>tcp6</name>
+                    <type>DEPENDENT</type>
+                    <key>proc.net.tcp6</key>
+                    <delay>0</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var lines = value.match(/:.................................:.....................................:.....(\S+).........:...........:/gm);
+var lines_num = lines.length;
+var lld = [];
+
+for (i = 0; i &lt; lines_num; i++)
+{
+var row = {};
+row = lines[i].toString()
+.replace(/:.................................:.....................................:...../,'')
+.replace(/.........:...........:/,'');
+lld.push(row);
+}
+
+
+var count = lld.reduce(function (value, value2) {
+    return (
+        value[value2] ? ++value[value2] :(value[value2] = 1),
+        value
+    );
+}, {});
+
+
+return JSON.stringify(count);</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>vfs.file.contents[/proc/net/tcp6]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>tcp size</name>
+                    <type>DEPENDENT</type>
+                    <key>tcp.size</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.length;</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>vfs.file.contents[/proc/net/tcp]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>tcp6 size</name>
+                    <type>DEPENDENT</type>
+                    <key>tcp6.size</key>
+                    <delay>0</delay>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.length;</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>vfs.file.contents[/proc/net/tcp6]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>/proc/net/tcp original lld</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>vfs.file.contents[&quot;/proc/net/tcp&quot;]</key>
+                    <delay>5m</delay>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>var lld = [];
+var lines = value.match(/^\s+\S+:\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+/gm);
+var lines_num = lines.length;
+var local_address=[];
+var rem_address='';
+var st='';
+
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+
+  array = lines[i].match(/[A-F0-9]{8}/)[0].match(/(\w{2})/gi);
+  var answer='';
+  for (var j = 0; j &lt; array.length-1; j++) {answer='.'+parseInt(array[j],16)+answer;} answer=parseInt(array[array.length-1],16)+answer;
+  row[&quot;local&quot;] = answer;
+
+
+
+  row[&quot;port&quot;] = parseInt(lines[i].match(/[A-F0-9]{8}:([A-F0-9]{4})/)[1],16);
+
+//Zabbix.Log(4,lines[i]);
+//Zabbix.Log(4,row[&quot;port&quot;]);
+  row[&quot;state&quot;] = lines[i].match(/[A-F0-9]{8}:[A-F0-9]{4}\s+[A-F0-9]{8}:[A-F0-9]{4}\s+([A-F0-9]{2})/)[1];
+  row[&quot;uid&quot;] = lines[i].match(/(\S+)$/)[1];
+//Zabbix.Log(4,row[&quot;uid&quot;]);
+
+lld.push(row);
+}
+return JSON.stringify(lld);</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>raw tcp6</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>vfs.file.contents[/proc/net/tcp6]</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>raw tcp</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>vfs.file.contents[/proc/net/tcp]</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>Zabbix raw items</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>tcp.state.lld</name>
+                    <type>DEPENDENT</type>
+                    <key>tcp.state.lld</key>
+                    <delay>0</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#STATE}</macro>
+                                <value>^0A$</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                            <condition>
+                                <macro>{#UID}</macro>
+                                <value>^1000$</value>
+                                <operator>NOT_MATCHES_REGEX</operator>
+                                <formulaid>B</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <lifetime>1h</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>ip.port[{#LOCAL},{#PORT}]</name>
+                            <type>DEPENDENT</type>
+                            <key>ip.port[{#LOCAL},{#PORT}]</key>
+                            <delay>0</delay>
+                            <applications>
+                                <application>
+                                    <name>TCP state based on proc</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$.[?(@.port == &quot;{#PORT}&quot; &amp;&amp; @.local == &quot;{#LOCAL}&quot;) ].state.first()</params>
+                                    <error_handler>CUSTOM_VALUE</error_handler>
+                                    <error_handler_params>0</error_handler_params>
+                                </step>
+                                <step>
+                                    <type>JAVASCRIPT</type>
+                                    <params>return parseInt(value,16);</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>detect.down</key>
+                            </master_item>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{count(#10,10,ne)}&gt;7</expression>
+                                    <name>{#LOCAL}:{#PORT} stopped listening</name>
+                                    <priority>AVERAGE</priority>
+                                    <manual_close>YES</manual_close>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>vfs.file.contents[&quot;/proc/net/tcp&quot;]</key>
+                    </master_item>
+                    <lld_macro_paths>
+                        <lld_macro_path>
+                            <lld_macro>{#LOCAL}</lld_macro>
+                            <path>$.['local']</path>
+                        </lld_macro_path>
+                        <lld_macro_path>
+                            <lld_macro>{#PORT}</lld_macro>
+                            <path>$.['port']</path>
+                        </lld_macro_path>
+                        <lld_macro_path>
+                            <lld_macro>{#STATE}</lld_macro>
+                            <path>$.['state']</path>
+                        </lld_macro_path>
+                        <lld_macro_path>
+                            <lld_macro>{#UID}</lld_macro>
+                            <path>$.['uid']</path>
+                        </lld_macro_path>
+                    </lld_macro_paths>
+                </discovery_rule>
+            </discovery_rules>
+            <tags>
+                <tag>
+                    <tag>offset</tag>
+                    <value>s5</value>
+                </tag>
+            </tags>
+            <macros>
+                <macro>
+                    <macro>{$PROC.NET.TCP}</macro>
+                    <value>awk '{print $4}' /proc/net/tcp /proc/net/tcp6 | grep -v st | sort | uniq -c</value>
+                    <description>observe situation</description>
+                </macro>
+            </macros>
+            <screens>
+                <screen>
+                    <name>tcp</name>
+                    <hsize>1</hsize>
+                    <vsize>2</vsize>
+                    <screen_items>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>TCP IPv4 connection states</name>
+                                <host>proc net tcp state</host>
+                            </resource>
+                            <width>1200</width>
+                            <height>220</height>
+                            <x>0</x>
+                            <y>0</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>0</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                        <screen_item>
+                            <resourcetype>0</resourcetype>
+                            <style>0</style>
+                            <resource>
+                                <name>TCP IPv6 connection states</name>
+                                <host>proc net tcp state</host>
+                            </resource>
+                            <width>1200</width>
+                            <height>200</height>
+                            <x>0</x>
+                            <y>1</y>
+                            <colspan>1</colspan>
+                            <rowspan>1</rowspan>
+                            <elements>0</elements>
+                            <valign>0</valign>
+                            <halign>0</halign>
+                            <dynamic>0</dynamic>
+                            <sort_triggers>0</sort_triggers>
+                            <url/>
+                            <application/>
+                            <max_columns>3</max_columns>
+                        </screen_item>
+                    </screen_items>
+                </screen>
+            </screens>
+        </template>
+    </templates>
+    <graphs>
+        <graph>
+            <name>TCP avg state monitoring</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>1A7C11</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.closed</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>F63100</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.close.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>2774A4</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.closing</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>4</sortorder>
+                    <color>A54F10</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.established</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>5</sortorder>
+                    <color>FC6EA3</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.fin.wait1</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>6</sortorder>
+                    <color>6C59DC</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.fin.wait2</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>7</sortorder>
+                    <color>AC8C14</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.last.ack</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>8</sortorder>
+                    <color>611F27</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.listen</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>9</sortorder>
+                    <color>F230E0</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.syn.recv</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>10</sortorder>
+                    <color>5CCD18</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.syn.sent</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>11</sortorder>
+                    <color>BB2A02</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.time.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>12</sortorder>
+                    <color>5A2B57</color>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.unknown</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>TCP IPv4 connection states</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>1A7C11</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.closed</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>F63100</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.close.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>2774A4</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.closing</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>4</sortorder>
+                    <color>A54F10</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.established</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>5</sortorder>
+                    <color>FC6EA3</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.fin.wait1</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>6</sortorder>
+                    <color>6C59DC</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.fin.wait2</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>7</sortorder>
+                    <color>AC8C14</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.last.ack</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>8</sortorder>
+                    <color>611F27</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.listen</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>9</sortorder>
+                    <color>F230E0</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.syn.recv</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>10</sortorder>
+                    <color>5CCD18</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.syn.sent</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>11</sortorder>
+                    <color>BB2A02</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.time.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>12</sortorder>
+                    <color>5A2B57</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.unknown</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>TCP IPv6 connection states</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>1A7C11</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.closed</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>F63100</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.close.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>2774A4</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.closing</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>4</sortorder>
+                    <color>A54F10</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.established</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>5</sortorder>
+                    <color>FC6EA3</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.fin.wait1</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>6</sortorder>
+                    <color>6C59DC</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.fin.wait2</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>7</sortorder>
+                    <color>AC8C14</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.last.ack</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>8</sortorder>
+                    <color>611F27</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.listen</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>9</sortorder>
+                    <color>F230E0</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.syn.recv</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>10</sortorder>
+                    <color>5CCD18</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.syn.sent</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>11</sortorder>
+                    <color>BB2A02</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.time.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>12</sortorder>
+                    <color>5A2B57</color>
+                    <calc_fnc>ALL</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv6.unknown</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>TCP max state monitoring</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>1A7C11</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.closed</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>F63100</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.close.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>2774A4</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.closing</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>4</sortorder>
+                    <color>A54F10</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.established</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>5</sortorder>
+                    <color>FC6EA3</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.fin.wait1</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>6</sortorder>
+                    <color>6C59DC</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.fin.wait2</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>7</sortorder>
+                    <color>AC8C14</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.last.ack</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>8</sortorder>
+                    <color>611F27</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.listen</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>9</sortorder>
+                    <color>F230E0</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.syn.recv</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>10</sortorder>
+                    <color>5CCD18</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.syn.sent</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>11</sortorder>
+                    <color>BB2A02</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.time.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>12</sortorder>
+                    <color>5A2B57</color>
+                    <calc_fnc>MAX</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.unknown</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+        <graph>
+            <name>TCP min state monitoring</name>
+            <ymin_type_1>FIXED</ymin_type_1>
+            <graph_items>
+                <graph_item>
+                    <sortorder>1</sortorder>
+                    <color>1A7C11</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.closed</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>2</sortorder>
+                    <color>F63100</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.close.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>3</sortorder>
+                    <color>2774A4</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.closing</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>4</sortorder>
+                    <color>A54F10</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.established</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>5</sortorder>
+                    <color>FC6EA3</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.fin.wait1</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>6</sortorder>
+                    <color>6C59DC</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.fin.wait2</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>7</sortorder>
+                    <color>AC8C14</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.last.ack</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>8</sortorder>
+                    <color>611F27</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.listen</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>9</sortorder>
+                    <color>F230E0</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.syn.recv</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>10</sortorder>
+                    <color>5CCD18</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.syn.sent</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>11</sortorder>
+                    <color>BB2A02</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.time.wait</key>
+                    </item>
+                </graph_item>
+                <graph_item>
+                    <sortorder>12</sortorder>
+                    <color>5A2B57</color>
+                    <calc_fnc>MIN</calc_fnc>
+                    <item>
+                        <host>proc net tcp state</host>
+                        <key>ipv4.unknown</key>
+                    </item>
+                </graph_item>
+            </graph_items>
+        </graph>
+    </graphs>
+</zabbix_export>
