@@ -1,0 +1,61 @@
+zabbix_export:
+  version: '6.0'
+  date: '2024-03-05T15:42:25Z'
+  groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: abbb10caaeef46ad862568ad525bdd24
+      template: 'bulk data collection bare minimal minimum setup JSONpath json condition'
+      name: 'bulk data collection bare minimal minimum setup JSONpath json condition'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 22e5dfe54d05437c9a8f14760dfd00b8
+          name: 'json input'
+          type: SCRIPT
+          key: json.input
+          trends: '0'
+          value_type: TEXT
+          params: 'return ''[{"name":"peter","city":"los angeles","age":"15"},{"name":"anna","city":"new york","age":"21"},{"name":"eddy","city":"dallas","age":"31"}]'';'
+      discovery_rules:
+        - uuid: ea95764f38f34f5888a9a6765de6908a
+          name: lld
+          type: DEPENDENT
+          key: lld
+          delay: '0'
+          item_prototypes:
+            - uuid: 082d2325be004e1aa35712949122ad38
+              name: 'age for {#NAME}'
+              type: DEPENDENT
+              key: 'age["{#NAME}"]'
+              delay: '0'
+              units: '!years old'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.name== ''{#NAME}'')].age.first()'
+              master_item:
+                key: json.input
+            - uuid: 29f94f62d6bb41f58598a34c056c17bb
+              name: '{#NAME} lives in'
+              type: DEPENDENT
+              key: 'city["{#NAME}"]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.name== ''{#NAME}'')].city.first()'
+              master_item:
+                key: json.input
+          master_item:
+            key: json.input
+          lld_macro_paths:
+            - lld_macro: '{#AGE}'
+              path: '$.[''age'']'
+            - lld_macro: '{#CITY}'
+              path: '$.[''city'']'
+            - lld_macro: '{#NAME}'
+              path: '$.[''name'']'
