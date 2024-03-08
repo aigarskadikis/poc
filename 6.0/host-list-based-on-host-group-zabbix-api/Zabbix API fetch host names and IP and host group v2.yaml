@@ -1,0 +1,216 @@
+zabbix_export:
+  version: '6.0'
+  date: '2024-03-06T14:05:13Z'
+  groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 720c5a49b3034339a4b56122e2fd0c1f
+      template: 'Zabbix API fetch host names and IP and host group'
+      name: 'Zabbix API fetch host names and IP and host group'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 74201bb5ae7540fd901a623f0506744f
+          name: 'Host list in HTML format'
+          type: DEPENDENT
+          key: hosts.html
+          delay: '0'
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th>' + (getValues(header).join('</th><th>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td>' + (rows[i].join('</td><td>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: hosts.json
+        - uuid: 3ad8e117299c49298345f27549d9f633
+          name: 'List of hosts JSON'
+          type: SCRIPT
+          key: hosts.json
+          delay: 1d
+          trends: '0'
+          value_type: TEXT
+          params: |
+            // define new HTTP request
+            var params = JSON.parse(value);
+            
+            var req = new CurlHttpRequest();
+            
+            // where Zabbix API endpoint is located
+            var json_rpc = params.url + '/api_jsonrpc.php';
+            
+            // this will be JSON call
+            req.AddHeader('Content-Type: application/json');
+            
+            // interface list
+            var interfaceList = JSON.parse(req.Post(json_rpc,
+                '{"jsonrpc":"2.0","method":"hostinterface.get","params":{"output":["hostid","type","useip","ip","dns","port"],"filter":{"main":"1"}},"auth":"' + params.sessionid + '","id":1}'
+            )).result;
+            
+            // hostgroup id
+            var hostGroupID = JSON.parse(req.Post(json_rpc,'{"jsonrpc":"2.0","method":"hostgroup.get","params":{"filter":{"name":["' + params.hostgroup + '"]}},"auth":"' + params.sessionid + '","id":1}')).result;
+            
+            // host list
+            var hostList = JSON.parse(req.Post(json_rpc,
+                '{"jsonrpc":"2.0","method":"host.get","params":{"groupids":["' + hostGroupID[0].groupid + '"],"output":["hostid","name"],"selectGroups": "extend"},"auth":"' + params.sessionid + '","id":1}'
+            )).result;
+            
+            
+            // merge interface list with host list by using 'hostid' as a mapping field
+            var allTogether = [];
+            var groups = '';
+            
+            // iterate through inerface list
+            for (i = 0; i < interfaceList.length; i++) {
+                // iterate through host list
+                for (h = 0; h < hostList.length; h++) {
+            
+                    // look for mapping field
+                    if (interfaceList[i].hostid === hostList[h].hostid) {
+                        row = {};
+            
+                        // transfer all existing fields from interface element
+                        row = interfaceList[i];
+            
+                        // install new field
+                        row["name"] = hostList[h].name;
+            
+                        // reported groups portion is an array. let's put all group names in one line divided by semicolon
+                        groups = '';
+                        for (g = 0; g < hostList[h].groups.length; g++) {
+                            groups += hostList[h].groups[g].name;
+                            // check if is last element, then not add semicolon
+                            if (g + 1 < hostList[h].groups.length) { groups += ';' }
+                        }
+            
+                        // install groups
+                        row["groups"] = groups;
+                        allTogether.push(row);
+            
+                    }
+            
+                }
+            }
+            
+            return JSON.stringify(allTogether);
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // delete fields
+                  var array = JSON.parse(value);
+                  
+                  for (i=0; i<array.length; i++) {
+                      delete array[i].interfaceid;
+                      delete array[i].hostid;
+                      delete array[i].type;
+                      delete array[i].useip;
+                      delete array[i].dns;
+                      delete array[i].port;
+                  }
+                  
+                  return JSON.stringify(array);
+          timeout: 1m
+          parameters:
+            - name: hostgroup
+              value: '{$SEARCH.GROUP}'
+            - name: sessionid
+              value: '{$Z_API_SESSIONID}'
+            - name: url
+              value: '{$ZABBIX.URL}'
+      dashboards:
+        - uuid: 7515c5a410144759b5549afccb821589
+          name: html
+          pages:
+            - widgets:
+                - type: PLAIN_TEXT
+                  width: '24'
+                  height: '32'
+                  fields:
+                    - type: ITEM
+                      name: itemids
+                      value:
+                        host: 'Zabbix API fetch host names and IP and host group'
+                        key: hosts.html
+                    - type: INTEGER
+                      name: show_as_html
+                      value: '1'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
