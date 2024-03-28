@@ -1,0 +1,643 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2024-03-28T18:39:21Z</date>
+    <groups>
+        <group>
+            <name>Templates/Modules</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>use Zabbix API to generate graph at host level</template>
+            <name>use Zabbix API to generate graph at host level</name>
+            <description>color palette:&#13;
+['cc0000','ffeabf','66cc8f','000c59','330014','660000','cca300','004d47','0000ff','ff408c','f27979','594c16','86b3b0','5a5673','b3597d','592d2d','f2ff40','40f2ff','5800a6','ff0044','997d73','a0a653','00b8e6','8959b3','ffbfd0','7f3300','70cc33','004d73','f2bfff','332628','f26100','5e7356','0088ff','b300a7','331b00','005900','003380','590053','cc8533','006600','acbbe6','ff80e5']</description>
+            <groups>
+                <group>
+                    <name>Templates/Modules</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>api</name>
+                </application>
+                <application>
+                    <name>array</name>
+                </application>
+                <application>
+                    <name>input</name>
+                </application>
+                <application>
+                    <name>size</name>
+                </application>
+                <application>
+                    <name>troubleshoot</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>allTogether</name>
+                    <type>DEPENDENT</type>
+                    <key>allTogether</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>input</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.allTogether</params>
+                        </step>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$..[?(@.['hostStatus'] == &quot;0&quot; &amp;&amp; @.['status'] == &quot;0&quot;)]</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>graphable.items</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>chars[allTogether]</name>
+                    <type>DEPENDENT</type>
+                    <key>chars[allTogether]</key>
+                    <delay>0</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>size</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.length;</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>allTogether</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>chars[hostList]</name>
+                    <type>DEPENDENT</type>
+                    <key>chars[hostList]</key>
+                    <delay>0</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>size</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.length;</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>hostList</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>chars[itemList]</name>
+                    <type>DEPENDENT</type>
+                    <key>chars[itemList]</key>
+                    <delay>0</delay>
+                    <units>B</units>
+                    <applications>
+                        <application>
+                            <name>size</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return value.length;</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>itemList</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>detect.units</name>
+                    <type>DEPENDENT</type>
+                    <key>detect.units</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>input</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.allTogether</params>
+                        </step>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$..[?((@.['value_type'] == &quot;3&quot; || @.['value_type'] == &quot;0&quot;) &amp;&amp; @.['hostStatus'] == &quot;0&quot;)]</params>
+                        </step>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$..units</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// get unique units
+function uniq(a) {
+    return a.sort().filter(function(item, pos, ary) {
+        return !pos || item != ary[pos - 1];
+    });
+}
+return JSON.stringify(uniq(JSON.parse(value)));</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>// create LLD JSON
+var lld = [];
+var lines = JSON.parse(value);
+var lines_num = lines.length;
+for (i = 0; i &lt; lines_num; i++)
+{
+  var row = {};
+  row[&quot;{#UNITS}&quot;] = lines[i];
+  lld.push(row);
+}
+return JSON.stringify(lld);</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>graphable.items</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>graphable.items</name>
+                    <type>HTTP_AGENT</type>
+                    <key>graphable.items</key>
+                    <delay>0;md1h9</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <description>an API call which gets all items</description>
+                    <applications>
+                        <application>
+                            <name>api</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.result</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>//get host list.output hostList,itemList
+
+var req = new CurlHttpRequest();
+
+// where Zabbix API endpoint is located
+var json_rpc='{$ZABBIX.URL}/api_jsonrpc.php';
+
+// this will be JSON call
+req.AddHeader('Content-Type: application/json');
+
+// get host list
+var hostList = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;host.get&quot;,&quot;params&quot;:{&quot;output&quot;:[&quot;host&quot;,&quot;hostid&quot;,&quot;status&quot;]},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;: 1}'
+)).result;
+
+// get graph list
+var graphList = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;graph.get&quot;,&quot;params&quot;:{&quot;output&quot;:[&quot;graphid&quot;,&quot;name&quot;,&quot;flags&quot;],&quot;filter&quot;:{&quot;flags&quot;:&quot;0&quot;},&quot;search&quot;:{&quot;name&quot;:&quot;auto graph&quot;}},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;: 1}'
+)).result;
+
+// get graph pie
+var graphPie = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;graph.get&quot;,&quot;params&quot;:{&quot;output&quot;:[&quot;graphid&quot;,&quot;name&quot;,&quot;flags&quot;],&quot;filter&quot;:{&quot;flags&quot;:&quot;0&quot;},&quot;search&quot;:{&quot;name&quot;:&quot;auto pie&quot;}},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;: 1}'
+)).result;
+
+
+
+return JSON.stringify({
+    'colorMap': ['cc0000','ffeabf','66cc8f','000c59','330014','660000','cca300','004d47','0000ff','ff408c','f27979','594c16','86b3b0','5a5673','b3597d','592d2d','f2ff40','40f2ff','5800a6','ff0044','997d73','a0a653','00b8e6','8959b3','ffbfd0','7f3300','70cc33','004d73','f2bfff','332628','f26100','5e7356','0088ff','b300a7','331b00','005900','003380','590053','cc8533','006600','acbbe6','ff80e5'],
+    'graphList': graphList,
+    'graphPie': graphPie,
+    'hostList': hostList,
+    'itemList': JSON.parse(value)
+});</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>//delete &quot;auto graph&quot;
+
+var data = JSON.parse(value);
+
+var itemList = data.itemList,
+    graphList = data.graphList,
+    graphPie = data.graphPie,
+    colorMap = data.colorMap,
+    hostList = data.hostList;
+
+var req = new CurlHttpRequest();
+
+// where Zabbix API endpoint is located
+var json_rpc = '{$ZABBIX.URL}/api_jsonrpc.php';
+
+// this will be JSON call
+req.AddHeader('Content-Type: application/json');
+
+var listToDelete=[];
+
+// aggregate noraml grapgs
+for (var i = 0; i &lt; graphList.length; i++) {
+    listToDelete.push(graphList[i].graphid)
+}
+
+// agregate IDs for Pie grapg
+for (var i = 0; i &lt; graphPie.length; i++) {
+    listToDelete.push(graphPie[i].graphid)
+}
+
+
+Zabbix.Log(3,'Zabbix API: Deleting host level graphs with IDs: '+ JSON.stringify(listToDelete));
+
+var graphList = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;graph.delete&quot;,&quot;params&quot;:'+JSON.stringify(listToDelete)+',&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;: 1}'
+)).result;
+
+Zabbix.Log(3,'Zabbix API result: '+ JSON.stringify(graphList));
+
+
+return JSON.stringify({
+    'listToDelete' : listToDelete,
+    'itemList': itemList,
+    'graphList': graphList,
+    'colorMap': colorMap,
+    'hostList': hostList
+});
+
+
+</params>
+                        </step>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>//merge itemList and hostList together
+
+var data = JSON.parse(value);
+
+var itemList = data.itemList,
+    graphList = data.graphList,
+    colorMap = data.colorMap,
+    listToDelete = data.listToDelete,
+    hostList = data.hostList;
+
+// output will be an array
+var allTogether = [];
+
+// go through item list. every item will have hostid, but we do not know what is host name
+// finding the host name is the whole point of this loop
+
+// take one full itemid containing all characteristics like key_, units, name
+for (i in itemList) {
+
+    // the mapping has not been found so far
+    // exists = 0;
+
+    // iterate through host array to find the matching host title
+    for (h in hostList) {
+
+        // check if there is a match between the hostid which belongs at item level and the host array
+        if (itemList[i].hostid === hostList[h].hostid) {
+
+            var row = {};
+
+            row = itemList[i];
+
+            row[&quot;hostStatus&quot;] = hostList[h].status;
+            allTogether.push(row);
+
+            break;
+        }
+    }
+
+
+}
+
+return JSON.stringify({
+    'listToDelete': listToDelete,
+    'hostList': hostList,
+    'itemList': itemList,
+    'graphList': graphList,
+    'colorMap': colorMap,
+    'allTogether': allTogether
+});
+
+</params>
+                        </step>
+                    </preprocessing>
+                    <timeout>9s</timeout>
+                    <url>{$ZABBIX.URL}/api_jsonrpc.php</url>
+                    <posts>{&#13;
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,&#13;
+    &quot;method&quot;: &quot;item.get&quot;,&#13;
+    &quot;params&quot;: {&#13;
+        &quot;output&quot;: [&quot;key_&quot;,&quot;value_type&quot;,&quot;flags&quot;,&quot;units&quot;,&quot;hostid&quot;,&quot;status&quot;]&#13;
+},&#13;
+    &quot;auth&quot;: &quot;{$Z_API_SESSIONID}&quot;,&#13;
+    &quot;id&quot;: 1&#13;
+}</posts>
+                    <status_codes/>
+                    <post_type>JSON</post_type>
+                    <request_method>POST</request_method>
+                </item>
+                <item>
+                    <name>hostList</name>
+                    <type>DEPENDENT</type>
+                    <key>hostList</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>troubleshoot</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.hostList</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>graphable.items</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>itemList</name>
+                    <type>DEPENDENT</type>
+                    <key>itemList</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>troubleshoot</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.itemList</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>graphable.items</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>length[allTogether]</name>
+                    <type>DEPENDENT</type>
+                    <key>length[allTogether]</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>array</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.length()</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>allTogether</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>length[hostList]</name>
+                    <type>DEPENDENT</type>
+                    <key>length[hostList]</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>array</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.length()</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>hostList</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>length[itemList]</name>
+                    <type>DEPENDENT</type>
+                    <key>length[itemList]</key>
+                    <delay>0</delay>
+                    <applications>
+                        <application>
+                            <name>array</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JSONPATH</type>
+                            <params>$.length()</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>itemList</key>
+                    </master_item>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>numbers</name>
+                    <type>DEPENDENT</type>
+                    <key>numbers</key>
+                    <delay>0</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#UNITS}</macro>
+                                <value>^$</value>
+                                <operator>NOT_MATCHES_REGEX</operator>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>graph.create[&quot;{#UNITS}&quot;]</name>
+                            <type>DEPENDENT</type>
+                            <key>graph.create[&quot;{#UNITS}&quot;]</key>
+                            <delay>0</delay>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <applications>
+                                <application>
+                                    <name>api</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JAVASCRIPT</type>
+                                    <params>var input = JSON.parse(value);
+
+var colorPalete = ['cc0000','ffeabf','66cc8f','000c59','330014','660000','cca300','004d47','0000ff','ff408c','f27979','594c16','86b3b0','5a5673','b3597d','592d2d','f2ff40','40f2ff','5800a6','ff0044','997d73','a0a653','00b8e6','8959b3','ffbfd0','7f3300','70cc33','004d73','f2bfff','332628','f26100','5e7356','0088ff','b300a7','331b00','005900','003380','590053','cc8533','006600','acbbe6','ff80e5'];
+
+var req = new CurlHttpRequest();
+
+var counter=0;
+
+// where Zabbix API endpoint is located
+var json_rpc='{$ZABBIX.URL}/api_jsonrpc.php';
+
+// this will be JSON call
+req.AddHeader('Content-Type: application/json');
+
+var graphTitle = '';
+var gitems=[];
+
+for (var i = 0; i &lt; input.length; i++) {
+
+    graphTitle = 'auto graph integer ' + input[i].key_;
+
+    gitems.length = 0;
+
+    for (var j = 0; j &lt; input[i].members.length; j++) {
+
+        var row = {};
+        row[&quot;itemid&quot;] = input[i].members[j].itemid;
+
+        // create a &quot;random&quot; color base on hostid
+        row[&quot;color&quot;] = colorPalete[ input[i].members[j].hostid % colorPalete.length ];
+
+        gitems.push(row);
+
+    }
+
+// create graphs
+var graphCreate = JSON.parse(req.Post(json_rpc,
+'{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;graph.create&quot;,&quot;params&quot;:{&quot;name&quot;:&quot;'+graphTitle+'&quot;,&quot;width&quot;:900,&quot;height&quot;:200,&quot;gitems&quot;:'+JSON.stringify(gitems)+'},&quot;auth&quot;:&quot;{$Z_API_SESSIONID}&quot;,&quot;id&quot;: 1}'
+)).result;
+
+counter++;
+
+}
+
+return counter;</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>units.unit[&quot;{#UNITS}&quot;]</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>units.unit[&quot;{#UNITS}&quot;]</name>
+                            <type>DEPENDENT</type>
+                            <key>units.unit[&quot;{#UNITS}&quot;]</key>
+                            <delay>0</delay>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <applications>
+                                <application>
+                                    <name>troubleshoot</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$..[?((@.['value_type'] == &quot;3&quot; || @.['value_type'] == &quot;0&quot;) &amp;&amp; @.['units'] == &quot;{#UNITS}&quot;)]</params>
+                                </step>
+                                <step>
+                                    <type>JAVASCRIPT</type>
+                                    <params>// delete fields
+var array = JSON.parse(value);
+
+for (i=0; i&lt;array.length; i++) {
+    delete array[i].value_type;
+    delete array[i].units;
+    delete array[i].flags;
+}
+
+return JSON.stringify(array);</params>
+                                </step>
+                                <step>
+                                    <type>JAVASCRIPT</type>
+                                    <params>// aggregate similar item keys
+
+function convertData(input) {
+    var result = [];
+    var map = {};
+
+    for (var i = 0; i &lt; input.length; i++) {
+        var item = input[i];
+        var key_ = item[&quot;key_&quot;];
+        var itemid = parseInt(item[&quot;itemid&quot;]);
+        var hostid = parseInt(item[&quot;hostid&quot;]);
+
+        // Check if the key_ is already in map
+        if (!map[key_]) {
+            map[key_] = { key_: key_, count: 0, members: [] };
+            result.push(map[key_]);
+        }
+
+        // Update count and itemids for the key_
+        var row={};
+        row[&quot;itemid&quot;]=itemid;
+        row[&quot;hostid&quot;]=hostid;
+        map[key_].count++;
+        map[key_].members.push(row);
+    }
+
+    return result;
+}
+
+var output = convertData(JSON.parse(value));
+return JSON.stringify(output);</params>
+                                </step>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$..[?(@.['count'] &gt; {$MORE:&quot;{#UNITS}&quot;} &amp;&amp; @.['count'] &lt; {$LESS:&quot;{#UNITS}&quot;})]</params>
+                                    <error_handler>CUSTOM_VALUE</error_handler>
+                                    <error_handler_params>[]</error_handler_params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>allTogether</key>
+                            </master_item>
+                        </item_prototype>
+                    </item_prototypes>
+                    <master_item>
+                        <key>detect.units</key>
+                    </master_item>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$LESS}</macro>
+                    <value>17</value>
+                </macro>
+                <macro>
+                    <macro>{$MORE}</macro>
+                    <value>1</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
