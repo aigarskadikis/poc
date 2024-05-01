@@ -1,0 +1,2106 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  host_groups:
+    - uuid: 9d3ab8094e884fecb69c6a079ef52e81
+      name: APs
+  templates:
+    - uuid: 63d783deedd44958bbd690f5d889e02a
+      template: 'Ruckus AP by HTTP agent'
+      name: 'Ruckus AP by HTTP agent'
+      templates:
+        - name: 'amount of not supported items'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 799e6cf4a5514da9a668dc80d7f7a228
+          name: airtime5G
+          type: DEPENDENT
+          key: airtime5G
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].airtime5G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: airtime
+              value: 5G
+        - uuid: 41221d2adb0c4d7397a2d89d0068d1cd
+          name: airtime6G
+          type: DEPENDENT
+          key: airtime6G
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].airtime6G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: airtime
+              value: 6G
+        - uuid: 15c7c3d6d7f24c94a67dcff4d2e6eca4
+          name: airtime24G
+          type: DEPENDENT
+          key: airtime24G
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].airtime24G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: airtime
+              value: 24G
+        - uuid: 7701a6be0ef14d11b065d2e32cc7fad6
+          name: alerts
+          type: DEPENDENT
+          key: alerts
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].alerts'
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: alerts
+        - uuid: 2f9766ffe6b2420d8080f9e0e70615e2
+          name: ap
+          type: HTTP_AGENT
+          key: ap
+          delay: '{$TROUBLESHOOTING}'
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.list
+          timeout: 9s
+          url: '{$SCHEME}://{$IP}:{$PORT}/wsg/api/public/{$VER}/query/ap'
+          query_fields:
+            - name: serviceTicket
+              value: '{$SERVICETICKET}'
+          posts: '{"filters":[{"type":"AP","value":"{$MAC}"}]}'
+          status_codes: ''
+          post_type: JSON
+          request_method: POST
+          tags:
+            - tag: raw
+              value: troubleshooting
+        - uuid: d1196d8addcf4d6da5ba7dbab4ad536b
+          name: connectionFailure
+          type: DEPENDENT
+          key: connectionFailure
+          delay: '0'
+          value_type: FLOAT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].connectionFailure'
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: ap
+          tags:
+            - tag: connection
+              value: failure
+        - uuid: a51725bca32d44f69d68282ce39e7d93
+          name: description
+          type: DEPENDENT
+          key: description
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].description'
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: description
+        - uuid: 02daa6c174d247a3985ee9970b84a81f
+          name: firmwareVersion
+          type: DEPENDENT
+          key: firmwareVersion
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].firmwareVersion'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: firmware
+        - uuid: e48dda654dda4493a51ca777cbea7b01
+          name: isOverallHealthStatusFlagged
+          type: DEPENDENT
+          key: isOverallHealthStatusFlagged
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].isOverallHealthStatusFlagged'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: isOverallHealthStatusFlagged
+          triggers:
+            - uuid: 80f180f5f8234e5d8de72652cde8259e
+              expression: 'count(/Ruckus AP by HTTP agent/isOverallHealthStatusFlagged,#3,"eq","true")>2'
+              name: 'isOverallHealthStatusFlagged true'
+              priority: AVERAGE
+              manual_close: 'YES'
+        - uuid: 3933fde15e514890bd94276093fc566f
+          name: latency6G
+          type: DEPENDENT
+          key: latency6G
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].latency6G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: latency
+              value: 6G
+        - uuid: 995d722af4db4d8793323789940cf909
+          name: latency24G
+          type: DEPENDENT
+          key: latency24G
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].latency24G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: latency
+              value: 24G
+        - uuid: 7ed990455c9546b9b90b77452b1278fb
+          name: latency50G
+          type: DEPENDENT
+          key: latency50G
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].latency50G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: latency
+              value: 50G
+        - uuid: 49c3fd4a988446afbf9d89b494378484
+          name: location
+          type: DEPENDENT
+          key: location
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].location'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: location
+        - uuid: 48f0f75c9dc44c46948acb5439b22d39
+          name: model
+          type: DEPENDENT
+          key: model
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].model'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: model
+        - uuid: 6cdb4442ba50409c8b0d19df622cff52
+          name: noise5G
+          type: DEPENDENT
+          key: noise5G
+          delay: '0'
+          value_type: FLOAT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].noise5G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: noise
+              value: 5G
+        - uuid: c3c406dc7534404bb6ac328f09c2067e
+          name: noise6G
+          type: DEPENDENT
+          key: noise6G
+          delay: '0'
+          value_type: FLOAT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].noise6G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: noise
+              value: 6G
+        - uuid: c006257be07046ff9d192b3e9cca4eec
+          name: noise24G
+          type: DEPENDENT
+          key: noise24G
+          delay: '0'
+          value_type: FLOAT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].noise24G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: noise
+              value: 24G
+        - uuid: e009dc13aece4ffe9b6a3fa20bbce5da
+          name: numClients
+          type: DEPENDENT
+          key: numClients
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].numClients'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: clients
+              value: total
+        - uuid: b43f3bcd74a44e5d879d21476d12f30d
+          name: numClients5G
+          type: DEPENDENT
+          key: numClients5G
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].numClients5G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: clients
+              value: 5G
+        - uuid: 00dd37b52227412ca7f375770686cb2b
+          name: numClients6G
+          type: DEPENDENT
+          key: numClients6G
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].numClients6G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: clients
+              value: 6G
+        - uuid: b48f3a7682244044bec0f8a5aa97d8f5
+          name: numClients24G
+          type: DEPENDENT
+          key: numClients24G
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].numClients24G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: clients
+              value: 24G
+        - uuid: 4637fa95c28b40289abf4713ae33c3a8
+          name: poePortStatus
+          type: DEPENDENT
+          key: poePortStatus
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].poePortStatus'
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: poePortStatus
+        - uuid: c79e5403b67d4d0698746d5ed70ff6f2
+          name: rx
+          type: DEPENDENT
+          key: rx
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].rx'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - (\d+)
+                - \1
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: ap
+          tags:
+            - tag: rx
+              value: total
+        - uuid: a8ec873242a1473d9d0375bbf12c03ea
+          name: rx6G
+          type: DEPENDENT
+          key: rx6G
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].rx6G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - (\d+)
+                - \1
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: ap
+          tags:
+            - tag: rx
+              value: 6G
+        - uuid: dacdeea89f364ad793e936503bc8499b
+          name: rx24G
+          type: DEPENDENT
+          key: rx24G
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].rx24G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - (\d+)
+                - \1
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: ap
+          tags:
+            - tag: rx
+              value: 24G
+        - uuid: 0e363c95a1d3403abc090a59e8ed2034
+          name: rx50G
+          type: DEPENDENT
+          key: rx50G
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].rx50G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - (\d+)
+                - \1
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: ap
+          tags:
+            - tag: rx
+              value: 50G
+        - uuid: 055c53d01999465d82f88bf02a5255ff
+          name: serial
+          type: DEPENDENT
+          key: serial
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].serial'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: serial
+        - uuid: a13d242a3d0044649797cd60054f099e
+          name: status
+          type: DEPENDENT
+          key: status
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].status'
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: status
+        - uuid: e3e9cdb6e1ee4fcfa3c68b25614d59c5
+          name: tx
+          type: DEPENDENT
+          key: tx
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].tx'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - (\d+)
+                - \1
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: ap
+          tags:
+            - tag: tx
+              value: total
+        - uuid: 8d19c2265d74483e805e087d3aa8c809
+          name: tx6G
+          type: DEPENDENT
+          key: tx6G
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].tx6G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - (\d+)
+                - \1
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: ap
+          tags:
+            - tag: tx
+              value: 6G
+        - uuid: fd2901a7ca4b471184092ee1a6c46c5d
+          name: tx24G
+          type: DEPENDENT
+          key: tx24G
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].tx24G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - (\d+)
+                - \1
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: ap
+          tags:
+            - tag: tx
+              value: 24G
+        - uuid: 6a8af5faf2704486af47f2891689d446
+          name: tx50G
+          type: DEPENDENT
+          key: tx50G
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].tx50G'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - (\d+)
+                - \1
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: ap
+          tags:
+            - tag: tx
+              value: 50G
+        - uuid: 40976f3a914446aba191954a0a2396a2
+          name: uptime
+          type: DEPENDENT
+          key: uptime
+          delay: '0'
+          units: uptime
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].uptime'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: STR_REPLACE
+              parameters:
+                - 'null'
+                - '0'
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: uptime
+        - uuid: cf2c7f37c8604cf6beda009e89cfd637
+          name: zoneName
+          type: DEPENDENT
+          key: zoneName
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[0].zoneName'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ap
+          tags:
+            - tag: device
+              value: zone
+      macros:
+        - macro: '{$TROUBLESHOOTING}'
+          value: '0'
+      dashboards:
+        - uuid: 81d78b5b50ec40a59e417b8aefe36806
+          name: 'AP stats'
+          pages:
+            - widgets:
+                - type: graph
+                  width: '24'
+                  height: '6'
+                  fields:
+                    - type: GRAPH
+                      name: graphid
+                      value:
+                        host: 'Ruckus AP by HTTP agent'
+                        name: Airtime
+                - type: graph
+                  'y': '6'
+                  width: '24'
+                  height: '6'
+                  fields:
+                    - type: GRAPH
+                      name: graphid
+                      value:
+                        host: 'Ruckus AP by HTTP agent'
+                        name: Clients
+                - type: graph
+                  'y': '12'
+                  width: '24'
+                  height: '6'
+                  fields:
+                    - type: GRAPH
+                      name: graphid
+                      value:
+                        host: 'Ruckus AP by HTTP agent'
+                        name: 'Connection failure'
+                - type: graph
+                  'y': '18'
+                  width: '24'
+                  height: '6'
+                  fields:
+                    - type: GRAPH
+                      name: graphid
+                      value:
+                        host: 'Ruckus AP by HTTP agent'
+                        name: Latency
+                - type: graph
+                  'y': '24'
+                  width: '24'
+                  height: '6'
+                  fields:
+                    - type: GRAPH
+                      name: graphid
+                      value:
+                        host: 'Ruckus AP by HTTP agent'
+                        name: Noise
+                - type: graph
+                  'y': '30'
+                  width: '24'
+                  height: '6'
+                  fields:
+                    - type: GRAPH
+                      name: graphid
+                      value:
+                        host: 'Ruckus AP by HTTP agent'
+                        name: Receive
+                - type: graph
+                  'y': '36'
+                  width: '24'
+                  height: '6'
+                  fields:
+                    - type: GRAPH
+                      name: graphid
+                      value:
+                        host: 'Ruckus AP by HTTP agent'
+                        name: Transmit
+    - uuid: 5db0cd11826f472ca695ef4cbc0837df
+      template: 'Ruckus by HTTP agent'
+      name: 'Ruckus by HTTP agent'
+      description: |
+        Controller and licence monitoring. zone discovery
+        
+        Frequency of obtaining the token is higly related with:
+        licence monitoring
+      templates:
+        - name: 'amount of not supported items'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 3239fadfeb914428939bb11f61d0e360
+          name: apCapacity
+          type: DEPENDENT
+          key: apCapacity
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.apCapacity
+          master_item:
+            key: devices
+          tags:
+            - tag: ap
+              value: capacity
+        - uuid: 640c19483c794383b42d2067a3e88659
+          name: aps
+          type: DEPENDENT
+          key: aps
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.aps
+          master_item:
+            key: devices
+          tags:
+            - tag: device
+              value: aps
+        - uuid: c4339895bc9542f68529321503d6095b
+          name: APs
+          type: DEPENDENT
+          key: APs
+          delay: '0'
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.aps
+          master_item:
+            key: token
+        - uuid: 7be2379241fe4331ab994e0d3de8b084
+          name: Controllers
+          type: DEPENDENT
+          key: controllers
+          delay: '0'
+          history: '{$TROUBLESHOOTING}'
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.serviceTicket
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // install variables
+                  return '{"ip":"{$RUCKUS.IP}","listSize":"1000","port":"{$RUCKUS.PORT}","scheme":"{$RUCKUS.SCHEME}","serviceTicket":"'+value+'","ver":"{$RUCKUS.API.VERSION}"}';
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var params = JSON.parse(value);
+                  
+                  
+                  
+                  var req = new HttpRequest();
+                  
+                  var index = 0;
+                  var scheme = params.scheme;
+                  var listSize = parseInt(params.listSize);
+                  var ip = params.ip;
+                  var port = params.port;
+                  var serviceTicket = params.serviceTicket;
+                  
+                  var url = scheme+'://'+ip+':'+port+'/wsg/api/public/{$RUCKUS.API.VERSION}/controller?index='+index+'&listSize='+listSize+'&serviceTicket='+serviceTicket;
+                  
+                  var list = [];
+                  
+                  var data = JSON.parse(req.get(url,''));
+                  
+                  var totalCount = data.totalCount;
+                  var hasMore= data.hasMore;
+                  
+                  list = data.list;
+                  
+                  while(hasMore === true) {
+                  
+                  index=index+listSize;
+                  url = scheme+'://'+ip+':'+port+'/wsg/api/public/{$RUCKUS.API.VERSION}/controller?index='+index+'&listSize='+listSize+'&serviceTicket='+serviceTicket;
+                  
+                  Zabbix.Log(3,'ruckus batch controller, index: '+index);
+                  
+                  data = JSON.parse(req.get(url,''));
+                  hasMore= data.hasMore;
+                  
+                  var newData = data.list;
+                  hasMore= data.hasMore;
+                  for (n in newData) { list.push(newData[n]); }
+                  
+                  }
+                  
+                  
+                  var output = [];
+                  var row = {};
+                  for (l in list) {
+                    row = list[l];
+                    row['serviceTicket'] = serviceTicket;
+                    output.push(row);
+                  }
+                  return JSON.stringify(output);
+          master_item:
+            key: token
+          tags:
+            - tag: raw
+              value: troubleshooting
+        - uuid: 037348556cd24e8684174625681506d2
+          name: Devices
+          type: DEPENDENT
+          key: devices
+          delay: '0'
+          history: '{$TROUBLESHOOTING}'
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.serviceTicket
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // install variables
+                  return '{"ip":"{$RUCKUS.IP}","listSize":"1000","port":"{$RUCKUS.PORT}","scheme":"{$RUCKUS.SCHEME}","serviceTicket":"'+value+'","ver":"{$RUCKUS.API.VERSION}"}';
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var params = JSON.parse(value);
+                  
+                  var req = new HttpRequest();
+                  
+                  var index = 0;
+                  var scheme = params.scheme;
+                  var listSize = parseInt(params.listSize);
+                  var ip = params.ip;
+                  var ver = params.ver;
+                  var port = params.port;
+                  var serviceTicket = params.serviceTicket;
+                  
+                  var url = scheme+'://'+ip+':'+port+'/wsg/api/public/'+ver+'/system/devicesSummary?&serviceTicket='+serviceTicket;
+                  
+                  var list = [];
+                  
+                  var data = JSON.parse(req.get(url,''));
+                  
+                  return JSON.stringify(data);
+          master_item:
+            key: token
+          tags:
+            - tag: raw
+              value: troubleshooting
+        - uuid: 1cd20149a5404618bc216151c66ba52b
+          name: dualRadioAps
+          type: DEPENDENT
+          key: dualRadioAps
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.dualRadioAps
+          master_item:
+            key: devices
+          tags:
+            - tag: ap
+              value: dualRadio
+        - uuid: f6e718ccb37d4f9197349d933aff3575
+          name: Licenses
+          type: DEPENDENT
+          key: licenses
+          delay: '0'
+          history: '{$TROUBLESHOOTING}'
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.serviceTicket
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // install variables
+                  return '{"ip":"{$RUCKUS.IP}","listSize":"1000","port":"{$RUCKUS.PORT}","scheme":"{$RUCKUS.SCHEME}","serviceTicket":"'+value+'","ver":"{$RUCKUS.API.VERSION}"}';
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var params = JSON.parse(value);
+                  
+                  var req = new HttpRequest();
+                  
+                  var index = 0;
+                  var scheme = params.scheme;
+                  var listSize = parseInt(params.listSize);
+                  var ip = params.ip;
+                  var port = params.port;
+                  var serviceTicket = params.serviceTicket;
+                  var ver = params.ver;
+                  
+                  
+                  var url = scheme+'://'+ip+':'+port+'/wsg/api/public/'+ver+'/licensesSummary?serviceTicket='+serviceTicket;
+                  
+                  var list = [];
+                  
+                  var data = JSON.parse(req.get(url,''));
+                  
+                  var totalCount = data.totalCount;
+                  var hasMore= data.hasMore;
+                  
+                  list = data.list;
+                  
+                  return JSON.stringify(list);
+          master_item:
+            key: token
+          tags:
+            - tag: raw
+              value: troubleshooting
+        - uuid: 3d4766363e2045f090e2c1298a58184f
+          name: maxApOfCluster
+          type: DEPENDENT
+          key: maxApOfCluster
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.maxApOfCluster
+          master_item:
+            key: devices
+          tags:
+            - tag: ap
+              value: maxOfCluster
+        - uuid: 781f82f6c600453cb56b4d20b3b89dc0
+          name: maxSwitchOfCluster
+          type: DEPENDENT
+          key: maxSwitchOfCluster
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.maxSwitchOfCluster
+          master_item:
+            key: devices
+          tags:
+            - tag: device
+              value: maxSwitchOfCluster
+        - uuid: cb83a691f9e04b6cb6e38252fac85006
+          name: switchCapacity
+          type: DEPENDENT
+          key: switchCapacity
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.switchCapacity
+          master_item:
+            key: devices
+          tags:
+            - tag: switch
+              value: capacity
+        - uuid: 933ff6bf283a411dbf32957be3640383
+          name: switches
+          type: DEPENDENT
+          key: switches
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.switches
+          master_item:
+            key: devices
+          tags:
+            - tag: device
+              value: switches
+        - uuid: e536ca9d793b4071a51b769d364c805e
+          name: Token
+          type: SCRIPT
+          key: token
+          delay: '{$TOKEN:renew}'
+          trends: '0'
+          value_type: TEXT
+          params: |
+            var params = JSON.parse(
+                '{"ip":"{$RUCKUS.IP}","listSize":"1000","port":"{$RUCKUS.PORT}","scheme":"{$RUCKUS.SCHEME}","username":"{$RUCKUS.USERNAME}","password":"{$RUCKUS.PASSWORD}","ver":"{$RUCKUS.API.VERSION}","cluster":"{$RUCKUS.CLUSTER.NAME}"}'
+            );
+            
+            var ip = params.ip;
+            var port = params.port;
+            var scheme = params.scheme;
+            var username = params.username;
+            var password = params.password;
+            var ver = params.ver;
+            var cluster = params.cluster;
+            
+            var req = new HttpRequest();
+            req.addHeader('Content-Type: application/json');
+            
+            // ===== GET TOKEN ======
+            
+            var url = scheme + '://' + ip + ':' + port + '/wsg/api/public/' + ver + '/serviceTicket';
+            
+            var serviceTicket = JSON.parse(req.post(url,
+                '{"username":"' + username + '","password": "' + password + '"}'
+            )).serviceTicket;
+            
+            
+            
+            // ====== GET APs ======
+            var index = 0;
+            var listSize = parseInt(params.listSize);
+            
+            var apsUrl = scheme + '://' + ip + ':' + port + '/wsg/api/public/' + ver + '/aps?index=' + index + '&listSize=' + listSize + '&serviceTicket=' + serviceTicket;
+            
+            var apsList = [];
+            // get first batch of 1000 records
+            Zabbix.Log(3, 'ruckus: starting first batch of 1000 aps');
+            var data = JSON.parse(req.get(apsUrl, ''));
+            var hasMore = data.hasMore;
+            apsList = data.list;
+            
+            // if more than 1000 APs
+            var moreAPs = [];
+            while (hasMore === true) {
+            
+                index = index + listSize;
+                apsUrl = scheme + '://' + ip + ':' + port + '/wsg/api/public/' + ver + '/aps?index=' + index + '&listSize=' + listSize + '&serviceTicket=' + serviceTicket;
+            
+                Zabbix.Log(3, 'ruckus: getting more data starting from index: ' + index);
+            
+                moreAPs = JSON.parse(req.get(apsUrl, ''));
+                hasMore = moreAPs.hasMore;
+                var newData = moreAPs.list;
+                for (n in newData) { apsList.push(newData[n]); }
+            
+            }
+            
+            
+            
+            // ====== GET ZONES ======
+            // this is not ideal, because it's not obtaining more than 1000 records. but during project there was less than 500 zones
+            var index = 0;
+            var zoneUrl = scheme + '://' + ip + ':' + port + '/wsg/api/public/' + ver + '/system/inventory?index=' + index + '&listSize=' + listSize + '&serviceTicket=' + serviceTicket;
+            var zoneList = JSON.parse(req.get(zoneUrl, '')).list;
+            
+            
+            
+            // start the mapping to find a zone Name for every access point
+            var allTogether = [];
+            
+            // go through every AP
+            var zoneName = '';
+            for (a in apsList) {
+            
+                var row = {};
+                row = apsList[a];
+            
+                // find a zone name
+                zoneName = '';
+                for (z in zoneList) {
+            
+                    // check match
+                    if (apsList[a].zoneId === zoneList[z].zoneId) {
+            
+                        zoneName = zoneList[z].zoneName;
+                        break;
+                    }
+            
+                }
+                
+                row["zoneName"] = zoneName;
+                row["ip"] = ip;
+                row["ver"] = ver;
+                row["plainmac"] = apsList[a].mac.replace(/:/gm,'');
+                row["port"] = port;
+                row["scheme"] = scheme;
+                row["cluster"] = cluster;
+                row["serviceTicket"] = serviceTicket;
+                allTogether.push(row);
+            
+            }
+            
+            
+            return JSON.stringify({
+                'serviceTicket': serviceTicket,
+                'aps': allTogether
+            });
+          timeout: 60s
+          tags:
+            - tag: raw
+              value: troubleshooting
+        - uuid: 43180ccf3baf4e618ec836c0ec5fd4e9
+          name: totalApCapacity
+          type: DEPENDENT
+          key: totalApCapacity
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.totalApCapacity
+          master_item:
+            key: devices
+          tags:
+            - tag: ap
+              value: totalCapacity
+        - uuid: 1510cce11ef4457a80d94b13c082af20
+          name: totalAps
+          type: DEPENDENT
+          key: totalAps
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.totalAps
+          master_item:
+            key: devices
+          tags:
+            - tag: ap
+              value: total
+        - uuid: 5a83bb1f47614dc882709e5b9b9f3472
+          name: totalConnectedDps
+          type: DEPENDENT
+          key: totalConnectedDps
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.totalConnectedDps
+          master_item:
+            key: devices
+          tags:
+            - tag: device
+              value: totalConnectedDps
+        - uuid: 9ac4ccfe302c4e88b7ca8f90194a11d3
+          name: totalDpCapacity
+          type: DEPENDENT
+          key: totalDpCapacity
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.totalDpCapacity
+          master_item:
+            key: devices
+          tags:
+            - tag: dp
+              value: capacity
+        - uuid: e0fd4f261018458189de5737c48065a2
+          name: totalRemainingApCapacity
+          type: DEPENDENT
+          key: totalRemainingApCapacity
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.totalRemainingApCapacity
+          master_item:
+            key: devices
+          tags:
+            - tag: ap
+              value: remainingCapacity
+        - uuid: 33f61d17d833480b9d680a820a83c6eb
+          name: totalRemainingDps
+          type: DEPENDENT
+          key: totalRemainingDps
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.totalRemainingDps
+          master_item:
+            key: devices
+          tags:
+            - tag: device
+              value: totalRemainingDps
+        - uuid: e3f0cef68d3946d9b31916f6b8c2ff7f
+          name: totalRemainingSwitchCapacity
+          type: DEPENDENT
+          key: totalRemainingSwitchCapacity
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.totalRemainingSwitchCapacity
+          master_item:
+            key: devices
+          tags:
+            - tag: switch
+              value: remainingCapacity
+        - uuid: 30080f3c37d74b229c91a8fd58161a15
+          name: totalSwitchCapacity
+          type: DEPENDENT
+          key: totalSwitchCapacity
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.totalSwitchCapacity
+          master_item:
+            key: devices
+          tags:
+            - tag: switch
+              value: capacity
+        - uuid: c708c05cc6ce4bc6b9e2678f5441f518
+          name: totalSwitches
+          type: DEPENDENT
+          key: totalSwitches
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.totalSwitches
+          master_item:
+            key: devices
+          tags:
+            - tag: device
+              value: totalSwitches
+        - uuid: f6d6d6f487ca4419a0a294d9889b7b47
+          name: triRadioAps
+          type: DEPENDENT
+          key: triRadioAps
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.triRadioAps
+          master_item:
+            key: devices
+          tags:
+            - tag: device
+              value: triRadioAps
+      discovery_rules:
+        - uuid: da235663990c40f6a3d1cb38b33ce6a4
+          name: AP
+          type: DEPENDENT
+          key: ap
+          delay: '0'
+          filter:
+            evaltype: AND
+            conditions:
+              - macro: '{#ZONENAME}'
+                value: '{$ZONENAME.MATCHES}'
+                formulaid: A
+              - macro: '{#ZONENAME}'
+                value: '{$ZONENAME.NOT_MATCHES}'
+                operator: NOT_MATCHES_REGEX
+                formulaid: B
+          lifetime: '0'
+          host_prototypes:
+            - uuid: bed25e23e74043d7ac6b41fbe4c2f780
+              host: '{#ZONEID} {#PLAINMAC}'
+              name: '{#NAME} ({#PLAINMAC})'
+              group_links:
+                - group:
+                    name: APs
+              group_prototypes:
+                - name: 'Ruckus/{#CLUSTER}/{#ZONENAME}'
+              templates:
+                - name: 'Ruckus AP by HTTP agent'
+              macros:
+                - macro: '{$CLUSTER}'
+                  value: '{#CLUSTER}'
+                - macro: '{$IP}'
+                  value: '{#IP}'
+                - macro: '{$MAC}'
+                  value: '{#MAC}'
+                - macro: '{$NAME}'
+                  value: '{#NAME}'
+                - macro: '{$PLAINMAC}'
+                  value: '{#PLAINMAC}'
+                - macro: '{$PORT}'
+                  value: '{#PORT}'
+                - macro: '{$SCHEME}'
+                  value: '{#SCHEME}'
+                - macro: '{$SERVICETICKET}'
+                  value: '{#SERVICETICKET}'
+                - macro: '{$VER}'
+                  value: '{#VER}'
+                - macro: '{$ZONEID}'
+                  value: '{#ZONEID}'
+                - macro: '{$ZONENAME}'
+                  value: '{#ZONENAME}'
+              tags:
+                - tag: zone
+                  value: '{#ZONENAME}'
+              inventory_mode: AUTOMATIC
+          master_item:
+            key: APs
+          lld_macro_paths:
+            - lld_macro: '{#CLUSTER}'
+              path: '$.[''cluster'']'
+            - lld_macro: '{#IP}'
+              path: '$.[''ip'']'
+            - lld_macro: '{#MAC}'
+              path: '$.[''mac'']'
+            - lld_macro: '{#NAME}'
+              path: '$.[''name'']'
+            - lld_macro: '{#PLAINMAC}'
+              path: '$.[''plainmac'']'
+            - lld_macro: '{#PORT}'
+              path: '$.[''port'']'
+            - lld_macro: '{#SCHEME}'
+              path: '$.[''scheme'']'
+            - lld_macro: '{#SERVICETICKET}'
+              path: '$.[''serviceTicket'']'
+            - lld_macro: '{#VER}'
+              path: '$.[''ver'']'
+            - lld_macro: '{#ZONEID}'
+              path: '$.[''zoneId'']'
+            - lld_macro: '{#ZONENAME}'
+              path: '$.[''zoneName'']'
+        - uuid: 0586b2994b5646de80d78cce043f332f
+          name: Controller
+          type: DEPENDENT
+          key: controller
+          delay: '0'
+          lifetime: '0'
+          item_prototypes:
+            - uuid: f5d2a387492344fdb10739d1e4528c1c
+              name: '{#DESCRIPTION} CPU'
+              type: DEPENDENT
+              key: 'cpu["{#DESCRIPTION}"]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].cpu.percent'
+              master_item:
+                key: 'statistics[{#ID}]'
+              tags:
+                - tag: component
+                  value: cpu
+                - tag: controller
+                  value: '{#DESCRIPTION}'
+            - uuid: f3a4fde2a42746679af9d19f37d5817e
+              name: '{#DESCRIPTION} disk free'
+              type: DEPENDENT
+              key: 'disk.free["{#DESCRIPTION}"]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].disk.free'
+              master_item:
+                key: 'statistics[{#ID}]'
+              tags:
+                - tag: component
+                  value: disk
+                - tag: controller
+                  value: '{#DESCRIPTION}'
+                - tag: widget
+                  value: disk
+            - uuid: be186d631b374c1f8027007a4a3ec87e
+              name: '{#DESCRIPTION} disk total'
+              type: DEPENDENT
+              key: 'disk.total["{#DESCRIPTION}"]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].disk.total'
+              master_item:
+                key: 'statistics[{#ID}]'
+              tags:
+                - tag: component
+                  value: disk
+                - tag: controller
+                  value: '{#DESCRIPTION}'
+            - uuid: 75dc04c8b0fe410580133a5e653b0ac2
+              name: '{#DESCRIPTION} memory'
+              type: DEPENDENT
+              key: 'memory["{#DESCRIPTION}"]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].memory.percent'
+              master_item:
+                key: 'statistics[{#ID}]'
+              tags:
+                - tag: component
+                  value: memory
+                - tag: controller
+                  value: '{#DESCRIPTION}'
+                - tag: widget
+                  value: memory
+            - uuid: 26a722b3ddc549688c6ee4dff9c6d71a
+              name: '{#DESCRIPTION} statistics'
+              type: HTTP_AGENT
+              key: 'statistics[{#ID}]'
+              delay: '{$UPD:cntr}'
+              history: '{$TROUBLESHOOTING}'
+              trends: '0'
+              value_type: TEXT
+              timeout: 9s
+              url: '{$RUCKUS.SCHEME}://{$RUCKUS.IP}:{$RUCKUS.PORT}/wsg/api/public/{$RUCKUS.API.VERSION}/controller/{#ID}/statistics'
+              query_fields:
+                - name: serviceTicket
+                  value: '{#SERVICETICKET}'
+              status_codes: ''
+              tags:
+                - tag: raw
+          master_item:
+            key: controllers
+          lld_macro_paths:
+            - lld_macro: '{#CONTROLNATIP}'
+              path: '$.[''controlNatIp'']'
+            - lld_macro: '{#DESCRIPTION}'
+              path: '$.[''description'']'
+            - lld_macro: '{#ID}'
+              path: '$.[''id'']'
+            - lld_macro: '{#MAC}'
+              path: '$.[''mac'']'
+            - lld_macro: '{#SERVICETICKET}'
+              path: '$.[''serviceTicket'']'
+        - uuid: 8371488330074ccf8e718474daa421b7
+          name: 'Controller data'
+          type: DEPENDENT
+          key: controllerData
+          delay: '0'
+          lifetime: '0'
+          item_prototypes:
+            - uuid: 7f734e6fd2d14de1a1a3c820998375a4
+              name: '{#DESCRIPTION} apVersion'
+              type: DEPENDENT
+              key: 'apVersion[{#ID}]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].apVersion'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+            - uuid: bc3b90cd0db2445ab65008da3e138d64
+              name: '{#DESCRIPTION} clusterIp'
+              type: DEPENDENT
+              key: 'clusterIp[{#ID}]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].clusterIp'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+            - uuid: 11b79f05ff8348e5a381b7dd72d3bafe
+              name: '{#DESCRIPTION} clusterRole'
+              type: DEPENDENT
+              key: 'clusterRole[{#ID}]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].clusterRole'
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: role
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+                - tag: widget
+                  value: role
+            - uuid: d07d4765b41e4e2b85036e13bf49f5c0
+              name: '{#DESCRIPTION} controlIp'
+              type: DEPENDENT
+              key: 'controlIp[{#ID}]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].controlIp'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+            - uuid: 7078b30de5b14f7e8e1897e95dbefcb1
+              name: '{#DESCRIPTION} controlNatIp'
+              type: DEPENDENT
+              key: 'controlNatIp[{#ID}]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].controlNatIp'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+            - uuid: ad0f1b91960847298948ab37d35ccca2
+              name: '{#DESCRIPTION} data'
+              type: HTTP_AGENT
+              key: 'data[{#ID}]'
+              delay: '{$UPD:cntr}'
+              history: '{$TROUBLESHOOTING}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$.list..[?(@.[''id''] == "{#ID}")]'
+                  error_handler: DISCARD_VALUE
+              timeout: 9s
+              url: '{$RUCKUS.SCHEME}://{$RUCKUS.IP}:{$RUCKUS.PORT}/wsg/api/public/{$RUCKUS.API.VERSION}/controller'
+              query_fields:
+                - name: serviceTicket
+                  value: '{#SERVICETICKET}'
+              status_codes: ''
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+                - tag: raw
+                  value: troubleshooting
+            - uuid: d462af7b02bd4334ab6fd22df030be8b
+              name: '{#DESCRIPTION} managementIp'
+              type: DEPENDENT
+              key: 'managementIp[{#ID}]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].managementIp'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+            - uuid: 2fa9f1d94ab34bf3b5da188e7b9bd7d0
+              name: '{#DESCRIPTION} model'
+              type: DEPENDENT
+              key: 'model[{#ID}]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].model'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+            - uuid: daf47340d68849e1a6522532b731744d
+              name: '{#DESCRIPTION} serialNumber'
+              type: DEPENDENT
+              key: 'serialNumber[{#ID}]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].serialNumber'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+            - uuid: 6b159021227b4a65afde7604c5823549
+              name: '{#DESCRIPTION} uptimeInSec'
+              type: DEPENDENT
+              key: 'uptimeInSec[{#ID}]'
+              delay: '0'
+              units: uptime
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].uptimeInSec'
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+                - tag: widget
+                  value: uptime
+            - uuid: 28554584e262472d9ec37f4cee53de2d
+              name: '{#DESCRIPTION} version'
+              type: DEPENDENT
+              key: 'version[{#ID}]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].version'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'data[{#ID}]'
+              tags:
+                - tag: cluster
+                  value: '{#DESCRIPTION}'
+          master_item:
+            key: controllers
+          lld_macro_paths:
+            - lld_macro: '{#CONTROLNATIP}'
+              path: '$.[''controlNatIp'']'
+            - lld_macro: '{#DESCRIPTION}'
+              path: '$.[''description'']'
+            - lld_macro: '{#ID}'
+              path: '$.[''id'']'
+            - lld_macro: '{#MAC}'
+              path: '$.[''mac'']'
+            - lld_macro: '{#SERVICETICKET}'
+              path: '$.[''serviceTicket'']'
+        - uuid: c3c39538facb4515a0eb5015e576fd33
+          name: Licence
+          type: DEPENDENT
+          key: licence
+          delay: '0'
+          item_prototypes:
+            - uuid: 1a64557d4ae04ea59c44c636baff94cc
+              name: '{#LICENSETYPEDESCRIPTION} raw'
+              type: DEPENDENT
+              key: 'capacityControlLicenseCount["{#LICENSETYPEDESCRIPTION}"]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''licenseTypeDescription''] == "{#LICENSETYPEDESCRIPTION}")].capacityControlLicenseCount'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: licenses
+            - uuid: 52431d78365d49a0b2e1899cc2c24072
+              name: '{#LICENSETYPEDESCRIPTION} ratio'
+              type: DEPENDENT
+              key: 'ratio["{#LICENSETYPEDESCRIPTION}"]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''usedCount''] > 0 && @.[''totalCount''] > 0)]'
+                  error_handler: DISCARD_VALUE
+                - type: JAVASCRIPT
+                  parameters:
+                    - 'var data = JSON.parse(value); return (data[0].usedCount / data[0].totalCount) * 100;'
+              master_item:
+                key: 'capacityControlLicenseCount["{#LICENSETYPEDESCRIPTION}"]'
+              tags:
+                - tag: cat
+                  value: licence
+                - tag: licence
+                  value: '{#LICENSETYPEDESCRIPTION}'
+            - uuid: e67435c31230496789edfa9368e0a004
+              name: '{#LICENSETYPEDESCRIPTION} total'
+              type: DEPENDENT
+              key: 'totalCount["{#LICENSETYPEDESCRIPTION}"]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].totalCount'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'capacityControlLicenseCount["{#LICENSETYPEDESCRIPTION}"]'
+              tags:
+                - tag: cat
+                  value: licence
+                - tag: licence
+                  value: '{#LICENSETYPEDESCRIPTION}'
+            - uuid: ec6a25f175e64de88e4f769d9bdea1c9
+              name: '{#LICENSETYPEDESCRIPTION} used'
+              type: DEPENDENT
+              key: 'usedCount["{#LICENSETYPEDESCRIPTION}"]'
+              delay: '0'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[0].usedCount'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'capacityControlLicenseCount["{#LICENSETYPEDESCRIPTION}"]'
+              tags:
+                - tag: cat
+                  value: licence
+                - tag: licence
+                  value: '{#LICENSETYPEDESCRIPTION}'
+          master_item:
+            key: licenses
+          lld_macro_paths:
+            - lld_macro: '{#LICENSETYPEDESCRIPTION}'
+              path: '$.[''licenseTypeDescription'']'
+      macros:
+        - macro: '{$RUCKUS.API.VERSION}'
+          value: v11_0
+        - macro: '{$RUCKUS.CLUSTER.NAME}'
+          value: 'Cluster 0'
+        - macro: '{$RUCKUS.IP}'
+          value: '<ip>'
+        - macro: '{$RUCKUS.PASSWORD}'
+          value: '<password>'
+        - macro: '{$RUCKUS.PORT}'
+          value: '8443'
+        - macro: '{$RUCKUS.SCHEME}'
+          value: https
+        - macro: '{$RUCKUS.USERNAME}'
+          value: zabbixapi
+        - macro: '{$TOKEN:renew}'
+          value: 23h
+          description: 'by default it should be 23h'
+        - macro: '{$TROUBLESHOOTING}'
+          value: '0'
+          description: 'by default this should be 0'
+        - macro: '{$UPD:cntr}'
+          value: 1m
+          description: 'default update frequency of controller statistics'
+        - macro: '{$ZONENAME.MATCHES}'
+          value: '.*'
+        - macro: '{$ZONENAME.NOT_MATCHES}'
+          value: '^(Staging Zone|Another zone name)$'
+  graphs:
+    - uuid: 0667d478388940068b3a7c4e2c924774
+      name: Airtime
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: airtime5G
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: airtime6G
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: airtime24G
+    - uuid: 9300481274854134b6b6214f38f9702b
+      name: Clients
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: numClients
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: numClients5G
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: numClients6G
+        - sortorder: '3'
+          color: 2774A4
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: numClients24G
+    - uuid: cf2be9699e4d456791188d11463ddb9a
+      name: 'Connection failure'
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: alerts
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: connectionFailure
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: numClients
+    - uuid: 9286b1fb2ac74aa880993b01b5e18984
+      name: Latency
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: latency6G
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: latency24G
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: latency50G
+    - uuid: 2f1ab0c5e5a741439fef8f4f8990bc66
+      name: Noise
+      yaxismin: '-120'
+      yaxismax: '0'
+      ymin_type_1: FIXED
+      ymax_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: noise5G
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: noise6G
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: noise24G
+    - uuid: 1e59e146745b44ed9051e456e5d5103b
+      name: Receive
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: rx
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: rx6G
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: rx24G
+        - sortorder: '3'
+          color: 2774A4
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: rx50G
+    - uuid: 166cfd2d0d8948bca7d5516bc86de62e
+      name: Transmit
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: tx
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: tx6G
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: tx24G
+        - sortorder: '3'
+          color: 2774A4
+          calc_fnc: ALL
+          item:
+            host: 'Ruckus AP by HTTP agent'
+            key: tx50G

@@ -1,0 +1,51 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: 9d7d96dbd42d48dd9c920d75393dce2e
+      name: Templates
+  templates:
+    - uuid: 4fbfc991699942fc9ef0464489289d57
+      template: 'Aigars Kadikis Zabbix hardware info via Zabbix agent'
+      name: 'Aigars Kadikis Zabbix hardware info via Zabbix agent'
+      groups:
+        - name: Templates
+      items:
+        - uuid: a78686f313524562b555b19747b3c819
+          name: os-release
+          key: 'vfs.file.contents["/etc/os-release", ]'
+          delay: 0;md1h3
+          trends: '0'
+          value_type: TEXT
+          tags:
+            - tag: audit
+        - uuid: 209e49938b124010b133f9228e4dcaef
+          name: cpuinfo
+          key: 'vfs.file.contents["/proc/cpuinfo", ]'
+          delay: 0;md1h3
+          trends: '0'
+          value_type: TEXT
+          tags:
+            - tag: audit
+        - uuid: 02fd012d56f044b8afafd6389b881776
+          name: meminfo
+          key: 'vfs.file.contents["/proc/meminfo", ]'
+          delay: 0;md1h3
+          trends: '0'
+          value_type: TEXT
+          tags:
+            - tag: audit
+        - uuid: 9242a1da4cbd43d2a6ce8f22e82722c6
+          name: fib_trie
+          key: 'vfs.file.contents["/proc/net/fib_trie", ]'
+          delay: 0;md1h3
+          trends: '0'
+          value_type: TEXT
+          tags:
+            - tag: audit
+        - uuid: d7e5f1bcc1e74fc6b64b6447da2c61b2
+          name: 'total /'
+          key: 'vfs.fs.size["/", "total"]'
+          delay: 0;md1h3
+          units: B
+          tags:
+            - tag: audit
