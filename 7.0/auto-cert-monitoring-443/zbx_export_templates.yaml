@@ -1,0 +1,70 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 3b5507d4016f4061b8eff0a2e6437a84
+      template: 'detect listening 443 on remote host and start SSL cert monitoring'
+      name: 'detect listening 443 on remote host and start SSL cert monitoring'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: cfd7d42b1fdb49abb3ea0b098527a681
+          name: 'check if 443 in listening state'
+          type: SIMPLE
+          key: 'net.tcp.service[tcp,{HOST.HOST},443]'
+          delay: 1d
+          value_type: TEXT
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.match(/^1$/) ? ''[{"{#PORT}":"443"}]'' : ''[]'';'
+          timeout: 10s
+      discovery_rules:
+        - uuid: 81e90fe79720474bbf42a568ae6fccb1
+          name: query.cert
+          type: DEPENDENT
+          key: query.cert
+          item_prototypes:
+            - uuid: 60f9a55a0b6e4ab7b3df52540cc86d9c
+              name: 'issuer[{#PORT}]'
+              type: DEPENDENT
+              key: 'issuer[{#PORT}]'
+              value_type: CHAR
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.x509.issuer
+              master_item:
+                key: 'web.certificate.get[{HOST.HOST},{#PORT}]'
+            - uuid: c3e22a101cb84b28969c8e05fd1d7f32
+              name: 'not_after[{#PORT}]'
+              type: DEPENDENT
+              key: 'not_after[{#PORT}]'
+              units: unixtime
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.x509.not_after.timestamp
+              master_item:
+                key: 'web.certificate.get[{HOST.HOST},{#PORT}]'
+              tags:
+                - tag: expires
+              trigger_prototypes:
+                - uuid: 10188a934aad43178043dea473a500fc
+                  expression: '(last(/detect listening 443 on remote host and start SSL cert monitoring/not_after[{#PORT}]) - now()) / 86400 < {$CERT.EXPIRY.WARN}'
+                  name: 'SSL certificate expires soon'
+                  event_name: 'SSL certificate expires soon (less than {$CERT.EXPIRY.WARN} days)'
+                  priority: HIGH
+                  manual_close: 'YES'
+            - uuid: f5cb194b85ed4256b7d0dd5a86d75ecb
+              name: 'Get data'
+              key: 'web.certificate.get[{HOST.HOST},{#PORT}]'
+              delay: 1d
+              value_type: TEXT
+          master_item:
+            key: 'net.tcp.service[tcp,{HOST.HOST},443]'
+      macros:
+        - macro: '{$CERT.EXPIRY.WARN}'
+          value: '365'
