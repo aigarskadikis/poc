@@ -1,0 +1,631 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  host_groups:
+    - uuid: 5e0ae1f9ad7a4aa2a95f9cb8e9d17a89
+      name: ss.com
+  templates:
+    - uuid: d89cc12f3784498787e65aed0e3cd4a8
+      template: 'ss.com appartment'
+      name: 'ss.com appartment'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 4b2fde89e45f49ec8679b6b6f718c37c
+          name: archive
+          type: DEPENDENT
+          key: archive
+          history: 90d
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''price''] < ''70000'')].url'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: DISCARD_UNCHANGED
+          master_item:
+            key: fetch
+        - uuid: e92da4399b8f4e5e904120fc49ea7702
+          name: budget.and.needs
+          type: DEPENDENT
+          key: budget.and.needs
+          history: 90d
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''Rooms''] > ''{$ROOMS}'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''RawSize''] > ''{$RAW.SIZE}'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''price''] < ''90000'' && @.[''price''] > ''{$PRICE.MIN}'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!((@.[''Rooms'']==1)&&(@.[''Series'']==''602-th'')))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+          master_item:
+            key: fetch
+        - uuid: c01b8ee5059140d1a64e119a9886fc67
+          name: fetch
+          type: SCRIPT
+          key: fetch
+          delay: 1h
+          history: 90d
+          value_type: LOG
+          params: |
+            // new curl request
+            //var req = new CurlHttpRequest();
+            var req = new  HttpRequest();
+            
+            // open a new array. this will be JSON array
+            var lld = [];
+            
+            // clear up URL
+            var url = "";
+            
+            // an array to deal with duplicates
+            var lookup = {};
+            
+            var step = 1;
+            var next = 0;
+            var cont = 1;
+            // fetch only the first 2 pages
+            while (cont){
+            // start from page1
+            url = "https://www.ss.com/en/real-estate/flats/riga/{$REGION}/sell/page"+step+".html"
+            // the loop will end when the "Next" button goes to first page
+            
+            // print URL on screen
+            // Zabbix.Log(3,url);
+            
+            // clear variable
+            var resp = "";
+            
+            // download page
+            resp = req.get(url);
+            
+            // print URL on screen only on debug level 4
+            // Zabbix.Log(4,resp);
+            
+            // if there is some content on page the examine links
+            // extract all child elements and remove dublicates
+            var msgs = resp.match(/(\/msg[a-zA-Z0-9_\-\.\/:]+\.html)/gm)
+            .reduce(function(a,b){if(a.indexOf(b)< 0)a.push(b);return a;},[]);
+            
+            // how many elements are on page. an element is an anchor which contains href="/msg/someting/..."
+            elements = msgs.length;
+            
+            // print count of elements to log
+            // Zabbix.Log(3,elements);
+            
+            // go tgrough loop to feed JSON array
+            for (i = 0; i < elements; i++) {
+            
+            
+            var msg = 'https://www.ss.com'+msgs[i];
+            
+            if (!(msg in lookup)) {
+            lookup[msg] = 1;
+            
+            // define an empty row. this is required for JSON
+            var row = {};
+            
+            // extract Nth element and put it on URL
+            row["url"] = msg;
+            
+            if (msg.match(/([^\/]+html)$/)) {
+                    row["html"] = msg.match(/([^\/]+html)$/)[1];
+            } else {
+                    row["html"] = "";
+            }
+            
+            
+            var single = req.get(row["url"]);
+            row["price"] = single.match(/MSG_PRICE = ([0-9\.]+)/)[1];
+            //Zabbix.Log(3,row["{#PRICE}"]);
+            
+            // District
+            if (single.match(/tdo_856..nowrap....([^<]+)/)) {
+                    row["District"] = single.match(/tdo_856..nowrap....([^<]+)/)[1];
+            } else {
+                    row["District"] = "";
+            }
+            
+            // City
+            if (single.match(/tdo_20..nowrap....([^<]+)/)) {
+                    row["City"] = single.match(/tdo_20..nowrap....([^<]+)/)[1];
+            } else {
+                    row["City"] = "";
+            }
+            
+            // Street
+            if (single.match(/tdo_11..nowrap....([^<]+)/)) {
+                    row["Street"] = single.match(/tdo_11..nowrap....([^<]+)/)[1];
+            } else {
+                    row["Street"] = "";
+            }
+            
+            
+            // Rooms
+            if (single.match(/tdo_1..nowrap>([^<]+)/)) {
+                    row["Rooms"] = single.match(/tdo_1..nowrap>([^<]+)/)[1];
+            } else {
+                    row["Rooms"] = "";
+            }
+            
+            // Area
+            if (single.match(/tdo_3..nowrap>([0-9]+)/)) {
+                    row["Area"] = single.match(/tdo_3..nowrap>([0-9]+)/)[1];
+            } else {
+                    row["Area"] = "";
+            }
+            
+            
+            // Floor
+            if (single.match(/tdo_4..nowrap>([^<]+)/)) {
+                    row["Floors"] = single.match(/tdo_4..nowrap>([^<]+)/)[1];
+            } else {
+                    row["Floors"] = "";
+            }
+            if (single.match(/tdo_4..nowrap>([^<]+)/)) {
+                    row["Floor"] = single.match(/tdo_4..nowrap>([^<]+)/)[1].match(/^([0-9]+)/)[1];
+            } else {
+                    row["Floor"] = "";
+            }
+            
+            // Series
+            if (single.match(/tdo_6..nowrap>([^<]+)/)) {
+                    row["Series"] = single.match(/tdo_6..nowrap>([^<]+)/)[1];
+            } else {
+                    row["Series"] = "";
+            }
+            
+            // House type
+            if (single.match(/tdo_2..nowrap>([^<]+)/)) {
+                    row["Type"] = single.match(/tdo_2..nowrap>([^<]+)/)[1];
+            } else {
+                    row["Type"] = "";
+            }
+            
+            // size
+            if (single.match(/tdo_3..nowrap>([^<]+)/)) {
+                    row["Size"] = single.match(/tdo_3..nowrap>([^<]+)/)[1];
+            } else {
+                    row["Size"] = "";
+            }
+            
+            if (single.match(/tdo_3..nowrap>([^<]+)/)) {
+                    row["RawSize"] = single.match(/tdo_3..nowrap>([0-9]+)/)[1];
+            } else {
+                    row["RawSize"] = "";
+            }
+            
+            
+            if (single.match(/html.mode=1.c=([0-9.]+)/)) {
+                    row["latitude"] = single.match(/html.mode=1.c=([0-9.]+)/)[1];
+            } else {
+                    row["latitude"] = "";
+            }
+            
+            
+            if (single.match(/html.mode=1.c=[0-9.]+,([^,]+)/)) {
+                    row["longitude"] = single.match(/html.mode=1.c=[0-9.]+,([^,]+)/)[1].match(/([0-9.]+)/)[1];
+            } else {
+                    row["longitude"] = "";
+            }
+            
+            
+            // Facilities
+            if (single.match(/tdo_1734..nowrap>([^<]+)/)) {
+                    row["Facilities"] = single.match(/tdo_1734..nowrap>([^<]+)/)[1];
+            } else {
+                    row["Facilities"] = "";
+            }
+            
+            
+            
+            
+            
+            //Zabbix.Log(3,row["{#TYPE}"]);
+            
+            // add this to array
+            lld.push(row);
+            
+            
+            }
+            
+            // end of individual analyze
+            }
+            
+            // check it there is next page
+            next=step+1;
+            var patterna = 'page'+next+'.html';
+            
+            if (resp.search(patterna) > 0) {
+            //Zabbix.Log(3,'paterna found: '+patterna);
+            step++;
+            } else {
+            cont = 0;
+            }
+            
+            }
+            
+            return JSON.stringify(lld);
+            //return lld.length;
+          timeout: 180s
+        - uuid: 27f22ef1ac444ffcb45a2c20c1dcd248
+          name: one.room
+          type: DEPENDENT
+          key: one.room
+          history: 90d
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''Rooms''] == ''1'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''RawSize''] > ''{$RAW.SIZE}'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''price''] < ''{$PRICE.MAX}'' && @.[''price''] > ''{$PRICE.MIN}'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!((@.[''Rooms'']==1)&&(@.[''Series'']==''602-th'')))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: DISCARD_UNCHANGED
+          master_item:
+            key: fetch
+        - uuid: 2b4ad91c13b445258619a475573104c0
+          name: two.rooms
+          type: DEPENDENT
+          key: two.rooms
+          history: 90d
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''Rooms''] == ''2'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''RawSize''] > ''{$RAW.SIZE}'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''price''] < ''{$PRICE.MAX}'' && @.[''price''] > ''{$PRICE.MIN}'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!((@.[''Rooms'']==1)&&(@.[''Series'']==''602-th'')))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: DISCARD_UNCHANGED
+          master_item:
+            key: fetch
+      discovery_rules:
+        - uuid: 8a3f6c903b1644ee935f093716ce9c47
+          name: flat
+          type: DEPENDENT
+          key: flat
+          filter:
+            evaltype: FORMULA
+            formula: 'A and B'
+            conditions:
+              - macro: '{#TYPE}'
+                value: '{$FLAT.TYPE.MATCHES}'
+                formulaid: A
+              - macro: '{#TYPE}'
+                value: '{$FLAT.TYPE.NOT.MATCH}'
+                operator: NOT_MATCHES_REGEX
+                formulaid: B
+          lifetime_type: DELETE_NEVER
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: 7e726f1aaf4d4117b57b1520eda764ba
+              name: 'raw[{#URL}]'
+              type: HTTP_AGENT
+              key: 'raw[{#URL}]'
+              delay: 3h
+              value_type: LOG
+              url: '{#URL}'
+              status_codes: ''
+              follow_redirects: 'NO'
+            - uuid: 84bc5c890b4a41ffa9d49f615bb60028
+              name: 'url[{#URL}]'
+              type: DEPENDENT
+              key: 'url[{#URL}]'
+              trends: '0'
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - 'return value.match(/{#PRICE}/gm) ? {#PRICE} : 0;'
+              master_item:
+                key: 'raw[{#URL}]'
+              trigger_prototypes:
+                - uuid: 3176177fe1ee455bbb4a3b8bccbf31a4
+                  expression: |
+                    last(/ss.com appartment/url[{#URL}]) > {$PRICE.MIN}
+                    and
+                    last(/ss.com appartment/url[{#URL}]) <= {$PRICE.MAX}
+                  name: '{#DISTRICT}, {#STREET}, {#TYPE}, {#SIZE}, {#ROOMS} rooms for {#PRICE}'
+                  priority: AVERAGE
+                  description: |
+                    {#URL}
+                    
+                    google maps: https://maps.google.com/maps?q={#LATITUDE},{#LONGITUDE}
+                  manual_close: 'YES'
+                  tags:
+                    - tag: district
+                      value: '{#DISTRICT}'
+                    - tag: rooms
+                      value: '{#ROOMS}'
+                    - tag: size
+                      value: '{#RAW.SIZE}'
+                    - tag: street
+                      value: '{#STREET}'
+                    - tag: type
+                      value: '{#TYPE}'
+                - uuid: 15a1207a75ca484e939a5b702f6a21fd
+                  expression: |
+                    last(/ss.com appartment/url[{#URL}]) > {$PRICE.MIN}
+                    and
+                    last(/ss.com appartment/url[{#URL}]) <= {$PRICE.MAX}
+                    and dayofweek()=6
+                    and time()>090000
+                  name: '{#STREET}, {#DISTRICT}, {#SIZE} for {#PRICE} 2'
+                  url: '{#URL}'
+                  status: DISABLED
+                  discover: NO_DISCOVER
+                  priority: AVERAGE
+                  manual_close: 'YES'
+          host_prototypes:
+            - uuid: 2c37d952a62f4e50a6249d66286472e4
+              host: '{#HTML}'
+              name: '{#DISTRICT}, {#STREET}, {#ROOMS} rooms, {#SIZE}, stage {#FLOOR}, {#TYPE}, {#FACILITIES}, {#PRICE}, {#HTML}'
+              inventory_mode: AUTOMATIC
+              group_links:
+                - group:
+                    name: ss.com
+              templates:
+                - name: 'ss.com individual html'
+              macros:
+                - macro: '{$DISTRICT}'
+                  value: '{#DISTRICT}'
+                - macro: '{$FACILITIES}'
+                  value: '{#FACILITIES}'
+                - macro: '{$FLOOR}'
+                  value: '{#FLOOR}'
+                - macro: '{$FLOORS}'
+                  value: '{#FLOORS}'
+                - macro: '{$HTML}'
+                  value: '{#HTML}'
+                - macro: '{$LATITUDE}'
+                  value: '{#LATITUDE}'
+                - macro: '{$LONGITUDE}'
+                  value: '{#LONGITUDE}'
+                - macro: '{$PRICE}'
+                  value: '{#PRICE}'
+                - macro: '{$RAW.SIZE}'
+                  value: '{#RAW.SIZE}'
+                - macro: '{$ROOMS}'
+                  value: '{#ROOMS}'
+                - macro: '{$SERIES}'
+                  value: '{#SERIES}'
+                - macro: '{$SIZE}'
+                  value: '{#SIZE}'
+                - macro: '{$STREET}'
+                  value: '{#STREET}'
+                - macro: '{$TYPE}'
+                  value: '{#TYPE}'
+                - macro: '{$URL}'
+                  value: '{#URL}'
+              tags:
+                - tag: rooms
+                  value: '{#ROOMS}'
+                - tag: stage
+                  value: '{#FLOOR}'
+                - tag: '{#DISTRICT}'
+          master_item:
+            key: budget.and.needs
+          lld_macro_paths:
+            - lld_macro: '{#DISTRICT}'
+              path: '$.[''District'']'
+            - lld_macro: '{#FACILITIES}'
+              path: '$.[''Facilities'']'
+            - lld_macro: '{#FLOORS}'
+              path: '$.[''Floors'']'
+            - lld_macro: '{#FLOOR}'
+              path: '$.[''Floor'']'
+            - lld_macro: '{#HTML}'
+              path: '$.[''html'']'
+            - lld_macro: '{#LATITUDE}'
+              path: '$.[''latitude'']'
+            - lld_macro: '{#LONGITUDE}'
+              path: '$.[''longitude'']'
+            - lld_macro: '{#PRICE}'
+              path: '$.[''price'']'
+            - lld_macro: '{#RAW.SIZE}'
+              path: '$.[''RawSize'']'
+            - lld_macro: '{#ROOMS}'
+              path: '$.[''Rooms'']'
+            - lld_macro: '{#SERIES}'
+              path: '$.[''Series'']'
+            - lld_macro: '{#SIZE}'
+              path: '$.[''Size'']'
+            - lld_macro: '{#STREET}'
+              path: '$.[''Street'']'
+            - lld_macro: '{#TYPE}'
+              path: '$.[''Type'']'
+            - lld_macro: '{#URL}'
+              path: '$.[''url'']'
+      tags:
+        - tag: sendto
+          value: telegram
+      macros:
+        - macro: '{$FLAT.TYPE.MATCHES}'
+          value: '.*'
+        - macro: '{$FLAT.TYPE.NOT.MATCH}'
+          value: ^(6g02.th)$
+        - macro: '{$PRICE.MAX}'
+          value: '44001'
+        - macro: '{$PRICE.MIN}'
+          value: '1'
+        - macro: '{$PRICE.NOT.NOTIFY}'
+          value: '2900'
+        - macro: '{$RAW.SIZE}'
+          value: '1'
+          description: 'bigger than'
+        - macro: '{$REGION}'
+          value: plyavnieki
+        - macro: '{$ROOMS}'
+          value: '0'
+          description: 'more rooms than this number'
+    - uuid: 101a319318be407aa08469c20a0ab370
+      template: 'ss.com individual html'
+      name: 'ss.com individual html'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 3be4adf1ec7e4419bca3a59fabd9ffb3
+          name: facilities
+          type: CALCULATED
+          key: facilities
+          delay: '{$UPD}'
+          value_type: CHAR
+          params: '{$FACILITIES}'
+        - uuid: b18aded424804d1fb0789da1c4c94600
+          name: latitude
+          type: CALCULATED
+          key: latitude
+          delay: '{$UPD}'
+          history: '0'
+          value_type: FLOAT
+          trends: '0'
+          params: '{$LATITUDE}'
+          inventory_link: LOCATION_LAT
+        - uuid: f43b2b0f6375496897ede196dfd514b9
+          name: longitude
+          type: CALCULATED
+          key: longitude
+          delay: '{$UPD}'
+          history: '0'
+          value_type: FLOAT
+          trends: '0'
+          params: '{$LONGITUDE}'
+          inventory_link: LOCATION_LON
+        - uuid: 116a3e0a0fc84c04be321325181029f6
+          name: price
+          type: CALCULATED
+          key: price
+          delay: '{$UPD}'
+          value_type: FLOAT
+          trends: '0'
+          params: '{$PRICE}'
+        - uuid: 65c5c8bcfddd41ec8cbac737339e4265
+          name: rooms
+          type: CALCULATED
+          key: rooms
+          delay: '{$UPD}'
+          trends: '0'
+          params: '{$ROOMS}'
+        - uuid: bc3e33f756894edfab18fbc7f81fe7ca
+          name: type
+          type: CALCULATED
+          key: type
+          delay: '{$UPD}'
+          value_type: CHAR
+          params: '{$TYPE}'
+        - uuid: ec0b69983d83486facb9d51a4fe2ff4c
+          name: url
+          type: CALCULATED
+          key: url
+          delay: '{$UPD}'
+          history: '0'
+          value_type: CHAR
+          params: '{$URL}'
+          inventory_link: URL_A
+      macros:
+        - macro: '{$BUDGET}'
+          value: '44002'
+        - macro: '{$UPD}'
+          value: 5m
+  triggers:
+    - uuid: b6569c8d441243ad8d4f2fe784567b26
+      expression: |
+        last(/ss.com individual html/rooms)=1
+        and
+        find(/ss.com individual html/facilities,#1,"iregexp","Loggia")=1
+        and
+        find(/ss.com individual html/facilities,#1,"iregexp","Balcony")=0
+        and
+        last(/ss.com individual html/price) < {$BUDGET}
+      name: '1 room and Loggia'
+      priority: AVERAGE
+      manual_close: 'YES'
+    - uuid: 282c3032abc7429993d77b082c3d2e05
+      expression: |
+        last(/ss.com individual html/rooms)>1
+        and
+        find(/ss.com individual html/facilities,#1,"iregexp","Loggia")=0
+        and
+        find(/ss.com individual html/facilities,#1,"iregexp","Balcony")=1
+        and
+        last(/ss.com individual html/price) < {$BUDGET}
+      name: '2 rooms and Balcony'
+      priority: WARNING
+      manual_close: 'YES'
+    - uuid: f6df7a8dfe73441882e867411e1f6fa2
+      expression: |
+        last(/ss.com individual html/rooms) > 1
+        and
+        find(/ss.com individual html/facilities,#1,"iregexp","Loggia") = 1
+        and
+        last(/ss.com individual html/price) >= {$BUDGET}
+      name: '2 rooms and Loggia and outside budget'
+      priority: INFO
+      manual_close: 'YES'
+    - uuid: 1d48a53232ac46a296e8434cb3b87bff
+      expression: |
+        last(/ss.com individual html/rooms)>1
+        and
+        find(/ss.com individual html/facilities,#1,"iregexp","Loggia")=0
+        and
+        find(/ss.com individual html/facilities,#1,"iregexp","Balcony")=0
+        and
+        last(/ss.com individual html/price) < {$BUDGET}
+      name: '2 rooms but no Loggia and no Balcony'
+      priority: INFO
+      manual_close: 'YES'
+    - uuid: d7f7352bb3824a3d914ad5b1a4670dbe
+      expression: |
+        last(/ss.com individual html/rooms) > 1
+        and
+        find(/ss.com individual html/facilities,#1,"iregexp","Loggia") = 1
+        and
+        last(/ss.com individual html/price) < {$BUDGET}
+      name: 'At least 2 rooms and Loggia'
+      priority: HIGH
+      manual_close: 'YES'
