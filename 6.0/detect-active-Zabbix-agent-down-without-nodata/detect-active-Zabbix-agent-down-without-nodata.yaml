@@ -1,0 +1,144 @@
+zabbix_export:
+  version: '6.0'
+  date: '2024-08-30T15:47:42Z'
+  groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 6606252dfe274c33aa80b55ec85112bb
+      template: 'detect active Zabbix agent down without nodata'
+      name: 'detect active Zabbix agent down without nodata'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: df629e7042d041eca7ec1238f645cca8
+          name: 'Agent ping'
+          type: ZABBIX_ACTIVE
+          key: agent.ping
+          history: 7d
+          valuemap:
+            name: 'Zabbix agent ping status'
+          tags:
+            - tag: component
+              value: system
+            - tag: detect
+              value: agent
+        - uuid: d3b3c15b05a94bd78830bb7ebed94225
+          name: 'Last timestamp when agent reported back something'
+          type: DEPENDENT
+          key: time.at.data.pickup
+          delay: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return Math.round((new Date()).getTime() / 1000);'
+          master_item:
+            key: agent.ping
+          tags:
+            - tag: detect
+              value: agent
+        - uuid: f2932ac88915478d9f0ec7171e46dd32
+          name: 'Time snapshot on Zabbix proxy'
+          type: DEPENDENT
+          key: time.now
+          delay: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return Math.round((new Date()).getTime() / 1000);'
+          master_item:
+            key: 'zabbix[uptime]'
+          tags:
+            - tag: detect
+              value: agent
+        - uuid: 8266dbb15f274f319db387ac0e0db928
+          name: 'Trust calculated on central server'
+          type: CALCULATED
+          key: trust
+          params: 'count(//time.now,140)'
+          tags:
+            - tag: detect
+              value: agent
+        - uuid: 61dc2d2e3d9446859490753fb62695a8
+          name: 'Fake item'
+          type: INTERNAL
+          key: 'zabbix[uptime]'
+          history: '0'
+          trends: '0'
+          tags:
+            - tag: detect
+              value: agent
+      tags:
+        - tag: class
+          value: software
+        - tag: target
+          value: zabbix-agent
+      macros:
+        - macro: '{$AGENT.NODATA_TIMEOUT}'
+          value: 30m
+          description: 'No data timeout for active agents. Consider to keep it relatively high.'
+      dashboards:
+        - uuid: a51f899cb8cc4d09bfb8d37682c0b14b
+          name: 'Zabbix agent active: Overview'
+          pages:
+            - name: Main
+              widgets:
+                - type: ITEM
+                  name: 'Agent availability'
+                  width: '6'
+                  height: '3'
+                  fields:
+                    - type: ITEM
+                      name: itemid
+                      value:
+                        host: 'detect active Zabbix agent down without nodata'
+                        key: agent.ping
+                    - type: INTEGER
+                      name: show
+                      value: '2'
+                    - type: INTEGER
+                      name: show
+                      value: '4'
+                - type: ITEM
+                  name: Version
+                  x: '6'
+                  width: '6'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: show
+                      value: '2'
+                    - type: INTEGER
+                      name: show
+                      value: '4'
+                - type: GRAPH_CLASSIC
+                  x: '12'
+                  width: '12'
+                  height: '5'
+                  fields:
+                    - type: ITEM
+                      name: itemid
+                      value:
+                        host: 'detect active Zabbix agent down without nodata'
+                        key: agent.ping
+                    - type: INTEGER
+                      name: source_type
+                      value: '1'
+      valuemaps:
+        - uuid: bc3e351d86ce4dee816fd8678f1e382a
+          name: 'Zabbix agent ping status'
+          mappings:
+            - value: '1'
+              newvalue: Up
+  triggers:
+    - uuid: 5e15991faa4a44f4bd9311139db90cd7
+      expression: |
+        last(/detect active Zabbix agent down without nodata/time.at.data.pickup) + 3m < last(/detect active Zabbix agent down without nodata/time.now)
+        and
+        last(/detect active Zabbix agent down without nodata/trust) > 0
+      name: 'Proxy is healthy, no backlog on central server, Zabbix agent down'
+      priority: AVERAGE
+      manual_close: 'YES'
+      tags:
+        - tag: scope
+          value: availability

@@ -1,0 +1,32 @@
+zabbix_export:
+  version: '6.0'
+  date: '2024-09-06T02:46:43Z'
+  groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 0447cb86c45d4a4ea4c874cf2e81c9fd
+      template: 'simulate media type'
+      name: 'simulate media type'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: d94e9d4c572f4fce9628794f04957a0f
+          name: random.two.digit.number
+          type: CALCULATED
+          key: random.two.digit.number
+          params: '1'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return (Math.random() * 89) + 10;'
+            - type: REGEX
+              parameters:
+                - ^(\d+)
+                - \1
+          triggers:
+            - uuid: e6706fcb5a03481b824002d35f7ebf77
+              expression: 'last(/simulate media type/random.two.digit.number)>0'
+              name: '{ITEM.VALUE} is bigger than 0'
+              priority: DISASTER
+              manual_close: 'YES'
