@@ -1,0 +1,477 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 02534157795f4b8aa04aeba0c896a5b7
+      name: 'in use'
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  host_groups:
+    - uuid: f90205ad622441afa7f9588af11ee697
+      name: Interface
+  templates:
+    - uuid: 2c7946f09753443c988e69b478899c93
+      template: int
+      name: int
+      groups:
+        - name: 'in use'
+      items:
+        - uuid: be6c0f985a5642b6a17fea7b77ccb937
+          name: 'Bits received'
+          type: DEPENDENT
+          key: bits.received
+          delay: '0'
+          units: bps
+          preprocessing:
+            - type: SNMP_WALK_VALUE
+              parameters:
+                - '1.3.6.1.2.1.31.1.1.1.6.{$SNMPINDEX}'
+                - '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: walk
+        - uuid: cb7c7c64da654d9eb49aca9d75d1f202
+          name: 'Bits sent'
+          type: DEPENDENT
+          key: bits.sent
+          delay: '0'
+          units: bps
+          preprocessing:
+            - type: SNMP_WALK_VALUE
+              parameters:
+                - '1.3.6.1.2.1.31.1.1.1.10.{$SNMPINDEX}'
+                - '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: walk
+        - uuid: cb924a7c130349bc958a1b36c49a55ce
+          name: 'Bits total'
+          type: CALCULATED
+          key: bits.total
+          units: bps
+          params: |
+            last(//bits.received)
+            +
+            last(//bits.sent)
+        - uuid: 3bd311246fd44950a915f2476c4d364a
+          name: Speed
+          type: DEPENDENT
+          key: ifHighSpeed
+          delay: '0'
+          units: bps
+          preprocessing:
+            - type: SNMP_WALK_VALUE
+              parameters:
+                - '1.3.6.1.2.1.31.1.1.1.15.{$SNMPINDEX}'
+                - '0'
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1h
+          master_item:
+            key: walk
+        - uuid: 162d6f7a7db1430fac695f6324244e72
+          name: 'Inbound packets discarded'
+          type: DEPENDENT
+          key: ifInDiscards
+          delay: '0'
+          preprocessing:
+            - type: SNMP_WALK_VALUE
+              parameters:
+                - '1.3.6.1.2.1.2.2.1.13.{$SNMPINDEX}'
+                - '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: walk
+        - uuid: 77b6a274f4a0432bad5b9b331249ea29
+          name: 'Inbound packets with errors'
+          type: DEPENDENT
+          key: ifInErrors
+          delay: '0'
+          preprocessing:
+            - type: SNMP_WALK_VALUE
+              parameters:
+                - '1.3.6.1.2.1.2.2.1.14.{$SNMPINDEX}'
+                - '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 3m
+          master_item:
+            key: walk
+        - uuid: 06cae60aa99042b79dc8284176562802
+          name: 'Outbound packets discarded'
+          type: DEPENDENT
+          key: ifOutDiscards
+          delay: '0'
+          preprocessing:
+            - type: SNMP_WALK_VALUE
+              parameters:
+                - '1.3.6.1.2.1.2.2.1.19.{$SNMPINDEX}'
+                - '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: walk
+        - uuid: a903219542374a9bbcfa1bfb7b2fdff3
+          name: 'Outbound packets with errors'
+          type: DEPENDENT
+          key: ifOutErrors
+          delay: '0'
+          preprocessing:
+            - type: SNMP_WALK_VALUE
+              parameters:
+                - '1.3.6.1.2.1.2.2.1.20.{$SNMPINDEX}'
+                - '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 3m
+          master_item:
+            key: walk
+        - uuid: 243ad93f13e24fb586686dd10bba8888
+          name: Device
+          type: CALCULATED
+          key: origin
+          delay: 15m
+          value_type: CHAR
+          trends: '0'
+          params: '{$HOST.HOST}'
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+        - uuid: d8f93244de054ad590a25ad64d9a9d04
+          name: 'Total packets with errors'
+          type: CALCULATED
+          key: totalErrors
+          params: 'sum(//ifInErrors,1m)+sum(//ifOutErrors,1m)'
+        - uuid: 1eccbbf561954ef58045fdba0b80284f
+          name: 'Total packets disacarded'
+          type: CALCULATED
+          key: totalPacketsDiscarded
+          delay: 3m
+          params: 'sum(//ifOutDiscards,3m)+sum(//ifInDiscards,3m)'
+        - uuid: 19d89acf658749538d1d39962a7e8287
+          name: 'Interface utilization'
+          type: CALCULATED
+          key: utilization
+          units: '%'
+          params: |
+            100 / last(//ifHighSpeed)
+            *
+            ( last(//bits.received) + last(//bits.sent) )
+        - uuid: 1d86c0c9e88c42eb85b1f64ca38fd539
+          name: walk
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.2.1.31.1.1.1.6.{$SNMPINDEX},1.3.6.1.2.1.31.1.1.1.10.{$SNMPINDEX},1.3.6.1.2.1.31.1.1.1.15.{$SNMPINDEX},1.3.6.1.2.1.2.2.1.13.{$SNMPINDEX},1.3.6.1.2.1.2.2.1.14.{$SNMPINDEX},1.3.6.1.2.1.2.2.1.19.{$SNMPINDEX},1.3.6.1.2.1.2.2.1.20.{$SNMPINDEX}]'
+          key: walk
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+      dashboards:
+        - uuid: 26fc762536fe4007a354d51d975eaaee
+          name: Summary
+          pages:
+            - widgets:
+                - type: graph
+                  width: '72'
+                  height: '5'
+                  fields:
+                    - type: GRAPH
+                      name: graphid.0
+                      value:
+                        host: int
+                        name: Traffic
+                    - type: STRING
+                      name: reference
+                      value: EUEKF
+                - type: graph
+                  'y': '5'
+                  width: '72'
+                  height: '5'
+                  fields:
+                    - type: GRAPH
+                      name: graphid.0
+                      value:
+                        host: int
+                        name: Discards
+                    - type: STRING
+                      name: reference
+                      value: KNEIN
+                - type: graph
+                  'y': '10'
+                  width: '72'
+                  height: '5'
+                  fields:
+                    - type: GRAPH
+                      name: graphid.0
+                      value:
+                        host: int
+                        name: Errors
+                    - type: STRING
+                      name: reference
+                      value: DYIYQ
+                - type: graph
+                  'y': '15'
+                  width: '72'
+                  height: '5'
+                  fields:
+                    - type: GRAPH
+                      name: graphid.0
+                      value:
+                        host: int
+                        name: 'Traffic stacked'
+                    - type: STRING
+                      name: reference
+                      value: TBNCI
+                - type: item
+                  name: Speed
+                  'y': '20'
+                  width: '22'
+                  height: '3'
+                  fields:
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: int
+                        key: ifHighSpeed
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+    - uuid: 7510730ecdcc4b129b78c28cfd963a61
+      template: 'One host per interface'
+      name: 'One host per interface'
+      groups:
+        - name: 'in use'
+        - name: Templates/Modules
+      items:
+        - uuid: 9061979f00eb461aaea3595bf6008ad3
+          name: 'Walk network interfaces'
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.2.1.2.2.1.8,1.3.6.1.2.1.2.2.1.7,1.3.6.1.2.1.31.1.1.1.18,1.3.6.1.2.1.31.1.1.1.1,1.3.6.1.2.1.2.2.1.2,1.3.6.1.2.1.2.2.1.3,1.3.6.1.2.1.31.1.1.1.6,1.3.6.1.2.1.31.1.1.1.10,1.3.6.1.2.1.2.2.1.14,1.3.6.1.2.1.2.2.1.20, 1.3.6.1.2.1.2.2.1.19, 1.3.6.1.2.1.2.2.1.13,1.3.6.1.2.1.31.1.1.1.15]'
+          key: net.if.walk.one
+          delay: 15m
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          tags:
+            - tag: component
+              value: raw
+      discovery_rules:
+        - uuid: 9af20b66d55e49a8bab7da7f8cfbcfbb
+          name: Interface
+          type: DEPENDENT
+          key: int.host
+          delay: '0'
+          filter:
+            evaltype: FORMULA
+            formula: '(A and B) and (C and D) and (E and F) and (G or H or I)'
+            conditions:
+              - macro: '{#IFADMINSTATUS}'
+                value: '{$NET.IF.IFADMINSTATUS.MATCHES}'
+                formulaid: A
+              - macro: '{#IFADMINSTATUS}'
+                value: '{$NET.IF.IFADMINSTATUS.NOT_MATCHES}'
+                operator: NOT_MATCHES_REGEX
+                formulaid: B
+              - macro: '{#IFOPERSTATUS}'
+                value: '{$NET.IF.IFOPERSTATUS.MATCHES}'
+                formulaid: C
+              - macro: '{#IFOPERSTATUS}'
+                value: '{$NET.IF.IFOPERSTATUS.NOT_MATCHES}'
+                operator: NOT_MATCHES_REGEX
+                formulaid: D
+              - macro: '{#IFTYPE}'
+                value: '{$NET.IF.IFTYPE.MATCHES}'
+                formulaid: E
+              - macro: '{#IFTYPE}'
+                value: '{$NET.IF.IFTYPE.NOT_MATCHES}'
+                operator: NOT_MATCHES_REGEX
+                formulaid: F
+              - macro: '{#IFALIAS}'
+                value: '{$SNMP.INTERFACES}'
+                formulaid: G
+              - macro: '{#IFDESCR}'
+                value: '{$SNMP.INTERFACES}'
+                formulaid: H
+              - macro: '{#IFNAME}'
+                value: '{$SNMP.INTERFACES}'
+                formulaid: I
+          lifetime_type: DELETE_IMMEDIATELY
+          lifetime: '0'
+          host_prototypes:
+            - uuid: 6dc555b0cad946c380e8bfcf1c4ec126
+              host: '{#HOST.HOST} {#SNMPINDEX}'
+              name: '{#IFALIAS} {#HOST.ID}.{#SNMPINDEX}'
+              group_links:
+                - group:
+                    name: Interface
+              group_prototypes:
+                - name: 'Device/{#HOST.HOST}'
+              templates:
+                - name: int
+              macros:
+                - macro: '{$HOST.HOST}'
+                  value: '{#HOST.HOST}'
+                - macro: '{$IFALIAS}'
+                  value: '{#IFALIAS}'
+                - macro: '{$IFDESCR}'
+                  value: '{#IFDESCR}'
+                - macro: '{$IFNAME}'
+                  value: '{#IFNAME}'
+                - macro: '{$SNMPINDEX}'
+                  value: '{#SNMPINDEX}'
+              tags:
+                - tag: speed
+                  value: '{#IFSPEED}'
+                - tag: '{#HOST.HOST}'
+          master_item:
+            key: net.if.walk.one
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#IFOPERSTATUS}'
+                - 1.3.6.1.2.1.2.2.1.8
+                - '0'
+                - '{#IFADMINSTATUS}'
+                - 1.3.6.1.2.1.2.2.1.7
+                - '0'
+                - '{#IFALIAS}'
+                - 1.3.6.1.2.1.31.1.1.1.18
+                - '0'
+                - '{#IFNAME}'
+                - 1.3.6.1.2.1.31.1.1.1.1
+                - '0'
+                - '{#IFDESCR}'
+                - 1.3.6.1.2.1.2.2.1.2
+                - '0'
+                - '{#IFTYPE}'
+                - 1.3.6.1.2.1.2.2.1.3
+                - '0'
+                - '{#IFSPEED}'
+                - 1.3.6.1.2.1.31.1.1.1.15
+                - '0'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var jsonData = JSON.parse(value);
+                  lenghtOfArray=jsonData.length;
+                  
+                  var lld = [];
+                  
+                  for(var el = 0; el < lenghtOfArray; el++) {
+                  
+                  row = jsonData[el];
+                  row["{#HOST.HOST}"] = '{$HOST.HOST}';
+                  row["{#HOST.ID}"] = '{$HOST.ID}';
+                  //row["{#SNMP.INTERNALSNMPV3SWMI.CISCO.PRIVPASS}"] = '{$SNMP.INTERNALSNMPV3SWMI.CISCO.PRIVPASS}';
+                  
+                  //row["{#B64IFDESCR}"] = btoa(jsonData[el]['{#IFDESCR}']).replace(/=/gm,'');
+                  //row["{#B64IFNAME}"] = btoa(jsonData[el]['{#IFNAME}']).replace(/=/gm,'');
+                  
+                  lld.push(row);
+                  
+                  }
+                  
+                  return JSON.stringify(lld);
+                  
+      macros:
+        - macro: '{$NET.IF.IFADMINSTATUS.MATCHES}'
+          value: '^.*'
+        - macro: '{$NET.IF.IFADMINSTATUS.NOT_MATCHES}'
+          value: ^2$
+        - macro: '{$NET.IF.IFOPERSTATUS.MATCHES}'
+          value: '^.*$'
+        - macro: '{$NET.IF.IFOPERSTATUS.NOT_MATCHES}'
+          value: ^6$
+        - macro: '{$NET.IF.IFTYPE.MATCHES}'
+          value: '.*'
+        - macro: '{$NET.IF.IFTYPE.NOT_MATCHES}'
+          value: CHANGE_IF_NEEDED
+  graphs:
+    - uuid: bf1f43a93499447ab2ab3b17fa1f9829
+      name: Discards
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: int
+            key: ifInDiscards
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: int
+            key: ifOutDiscards
+    - uuid: aa8da11c936342e293609d2cf6f662c4
+      name: Errors
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: int
+            key: ifInErrors
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: int
+            key: ifOutErrors
+    - uuid: c582cb3c02504c02aabf80c9dda2f5db
+      name: Traffic
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: int
+            key: bits.received
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: int
+            key: bits.sent
+    - uuid: 4975f2d9dfbd4f2ea42b0bd361daa528
+      name: 'Traffic stacked'
+      type: STACKED
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: int
+            key: bits.received
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: int
+            key: bits.sent
