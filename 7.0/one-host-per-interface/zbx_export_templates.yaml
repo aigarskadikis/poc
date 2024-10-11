@@ -62,6 +62,21 @@ zabbix_export:
             last(//bits.received)
             +
             last(//bits.sent)
+        - uuid: 0882a8ace9d24eef9eb3e23d16c651b9
+          name: 'Bits total avg previous hour'
+          type: CALCULATED
+          key: bits.total.avg.previous.hour
+          delay: 1h
+          units: bps
+          params: |
+            trendavg(//bits.received,1h:now/h)
+            +
+            trendavg(//bits.sent,1h:now/h)
+          inventory_link: SOFTWARE_APP_A
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
         - uuid: 3bd311246fd44950a915f2476c4d364a
           name: Speed
           type: DEPENDENT
@@ -165,6 +180,14 @@ zabbix_export:
           delay: 1h
           params: 'sum(//ifInErrors,1d)+sum(//ifOutErrors,1d)'
           inventory_link: POC_1_PHONE_A
+          triggers:
+            - uuid: 55e9201a513448b6a4a5db8d034f5358
+              expression: 'last(/int/totalErrors) > {$ERRORS}'
+              name: Errors
+              event_name: '{ITEM.VALUE} errors detected in last 24h'
+              opdata: '{ITEM.LASTVALUE} now'
+              priority: HIGH
+              manual_close: 'YES'
         - uuid: 1eccbbf561954ef58045fdba0b80284f
           name: 'Total packets disacarded'
           type: CALCULATED
@@ -172,6 +195,24 @@ zabbix_export:
           delay: 1h
           params: 'sum(//ifOutDiscards,1d)+sum(//ifInDiscards,1d)'
           inventory_link: POC_1_PHONE_B
+          triggers:
+            - uuid: b50f8280c04e497ba9f545144d33b2ba
+              expression: 'last(/int/totalPacketsDiscarded) > {$DISCARDS}*2'
+              name: Discards
+              event_name: '{ITEM.VALUE} discards detected in last 24h'
+              opdata: '{ITEM.LASTVALUE} now'
+              priority: HIGH
+              manual_close: 'YES'
+            - uuid: 040344d1fee4415f91fcb6e68eac56d5
+              expression: |
+                last(/int/totalPacketsDiscarded) > {$DISCARDS}
+                and
+                last(/int/totalPacketsDiscarded) <= {$DISCARDS}*2
+              name: Discards
+              event_name: '{ITEM.VALUE} discards detected in last 24h'
+              opdata: '{ITEM.LASTVALUE} now'
+              priority: AVERAGE
+              manual_close: 'YES'
         - uuid: 19d89acf658749538d1d39962a7e8287
           name: 'Interface utilization'
           type: CALCULATED
@@ -181,6 +222,25 @@ zabbix_export:
             100 / last(//ifHighSpeed)
             *
             ( last(//bits.received) + last(//bits.sent) )
+        - uuid: 0af6b7f1abe34f0f9f5d5b7814645b1a
+          name: 'Interface utilization avg per last hour'
+          type: CALCULATED
+          key: utilization.avg.per.last.hour
+          delay: 1h
+          units: '%'
+          params: |
+            100 / trendmax(//ifHighSpeed,1h:now/h)
+            *
+            (
+            trendavg(//bits.received,1h:now/h)
+            +
+            trendavg(//bits.sent,1h:now/h)
+            )
+          inventory_link: SOFTWARE_APP_B
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
         - uuid: 1d86c0c9e88c42eb85b1f64ca38fd539
           name: walk
           type: SNMP_AGENT
@@ -193,13 +253,19 @@ zabbix_export:
             - type: CHECK_NOT_SUPPORTED
               parameters:
                 - '-1'
+          timeout: 14s
+      macros:
+        - macro: '{$DISCARDS}'
+          value: '222222'
+        - macro: '{$ERRORS}'
+          value: '0'
       dashboards:
         - uuid: 26fc762536fe4007a354d51d975eaaee
           name: Summary
           pages:
             - widgets:
                 - type: graph
-                  width: '72'
+                  width: '36'
                   height: '5'
                   fields:
                     - type: GRAPH
@@ -219,25 +285,12 @@ zabbix_export:
                       name: graphid.0
                       value:
                         host: int
-                        name: Discards
+                        name: 'Discards and errors'
                     - type: STRING
                       name: reference
                       value: KNEIN
                 - type: graph
                   'y': '10'
-                  width: '72'
-                  height: '5'
-                  fields:
-                    - type: GRAPH
-                      name: graphid.0
-                      value:
-                        host: int
-                        name: Errors
-                    - type: STRING
-                      name: reference
-                      value: DYIYQ
-                - type: graph
-                  'y': '15'
                   width: '72'
                   height: '5'
                   fields:
@@ -251,7 +304,7 @@ zabbix_export:
                       value: TBNCI
                 - type: item
                   name: Speed
-                  'y': '20'
+                  'y': '15'
                   width: '22'
                   height: '3'
                   fields:
@@ -266,6 +319,19 @@ zabbix_export:
                     - type: INTEGER
                       name: show.1
                       value: '3'
+                - type: graph
+                  x: '36'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: GRAPH
+                      name: graphid.0
+                      value:
+                        host: int
+                        name: 'Interface utilization'
+                    - type: STRING
+                      name: reference
+                      value: SMLHJ
     - uuid: 7510730ecdcc4b129b78c28cfd963a61
       template: 'One host per interface'
       name: 'One host per interface'
@@ -418,36 +484,35 @@ zabbix_export:
         - macro: '{$NET.IF.IFTYPE.NOT_MATCHES}'
           value: CHANGE_IF_NEEDED
   graphs:
-    - uuid: bf1f43a93499447ab2ab3b17fa1f9829
-      name: Discards
+    - uuid: 8b182d5bf04f4291b3521b2dd90f7f88
+      name: 'Discards and errors'
       ymin_type_1: FIXED
       graph_items:
-        - color: 1A7C11
+        - drawtype: BOLD_LINE
+          color: FF0000
           calc_fnc: ALL
           item:
             host: int
-            key: ifInDiscards
+            key: totalErrors
         - sortorder: '1'
-          color: '274482'
+          drawtype: BOLD_LINE
+          color: 0080FF
+          yaxisside: RIGHT
           calc_fnc: ALL
           item:
             host: int
-            key: ifOutDiscards
-    - uuid: aa8da11c936342e293609d2cf6f662c4
-      name: Errors
+            key: totalPacketsDiscarded
+    - uuid: 85ed10a7d7ab4c73a468613969658764
+      name: 'Interface utilization'
       ymin_type_1: FIXED
+      ymax_type_1: FIXED
       graph_items:
-        - color: 1A7C11
+        - drawtype: FILLED_REGION
+          color: 1A7C11
           calc_fnc: ALL
           item:
             host: int
-            key: ifInErrors
-        - sortorder: '1'
-          color: '274482'
-          calc_fnc: ALL
-          item:
-            host: int
-            key: ifOutErrors
+            key: utilization
     - uuid: c582cb3c02504c02aabf80c9dda2f5db
       name: Traffic
       ymin_type_1: FIXED
