@@ -5,8 +5,8 @@ zabbix_export:
       name: Templates/Modules
   templates:
     - uuid: ad81852bc71e477a8a3d2e12b21b3424
-      template: 'Zabbix GUI speed benchmark'
-      name: 'Zabbix GUI speed benchmark'
+      template: 'Zabbix GUI speed test'
+      name: 'Zabbix GUI speed test'
       groups:
         - name: Templates/Modules
       httptests:
@@ -25,12 +25,12 @@ zabbix_export:
               value: '{$BNCHMRK.USER}'
           steps:
             - name: '01. landing page'
-              url: '{schema}://{HOST.HOST}{port}{path}/index.php'
+              url: '{schema}://{HOST.CONN}{port}{path}/index.php'
               follow_redirects: 'NO'
               required: 'Zabbix SIA'
               status_codes: '200'
             - name: '02. login test'
-              url: '{schema}://{HOST.HOST}{port}{path}/index.php'
+              url: '{schema}://{HOST.CONN}{port}{path}/index.php'
               posts:
                 - name: name
                   value: '{username}'
@@ -42,39 +42,39 @@ zabbix_export:
                 - name: '{csrf_token}'
                   value: 'regex:([0-9a-z]{64})'
             - name: '04. proxy list'
-              url: '{schema}://{HOST.HOST}{port}{path}/zabbix.php?action=proxy.list&filter_rst=1'
+              url: '{schema}://{HOST.CONN}{port}{path}/zabbix.php?action=proxy.list&filter_rst=1'
               follow_redirects: 'NO'
               required: 'Last seen'
               status_codes: '200'
             - name: '05. template list'
-              url: '{schema}://{HOST.HOST}{port}{path}/zabbix.php?action=template.list&filter_rst=1'
+              url: '{schema}://{HOST.CONN}{port}{path}/zabbix.php?action=template.list&filter_rst=1'
               follow_redirects: 'NO'
               required: 'by Zabbix agent'
               status_codes: '200'
             - name: '06. host groups'
-              url: '{schema}://{HOST.HOST}{port}{path}/zabbix.php?action=hostgroup.list&filter_rst=1'
+              url: '{schema}://{HOST.CONN}{port}{path}/zabbix.php?action=hostgroup.list&filter_rst=1'
               follow_redirects: 'NO'
               required: 'Create host group'
               status_codes: '200'
             - name: '07. template groups'
-              url: '{schema}://{HOST.HOST}{port}{path}/zabbix.php?action=templategroup.list&filter_rst=1'
+              url: '{schema}://{HOST.CONN}{port}{path}/zabbix.php?action=templategroup.list&filter_rst=1'
               follow_redirects: 'NO'
               required: 'Create template group'
             - name: '08. search linux'
-              url: '{schema}://{HOST.HOST}{port}{path}/zabbix.php?action=search&search=linux'
+              url: '{schema}://{HOST.CONN}{port}{path}/zabbix.php?action=search&search=linux'
               follow_redirects: 'NO'
               required: 'Search:'
               status_codes: '200'
             - name: '09. open host list'
-              url: '{schema}://{HOST.HOST}{port}{path}/zabbix.php?action=host.list&filter_rst=1'
+              url: '{schema}://{HOST.CONN}{port}{path}/zabbix.php?action=host.list&filter_rst=1'
               follow_redirects: 'NO'
               required: 'Create host'
             - name: '10. trigger actions'
-              url: '{schema}://{HOST.HOST}{port}{path}/zabbix.php?action=action.list&eventsource=0&filter_rst=1'
+              url: '{schema}://{HOST.CONN}{port}{path}/zabbix.php?action=action.list&eventsource=0&filter_rst=1'
               follow_redirects: 'NO'
               required: 'Create action'
             - name: '99. log out'
-              url: '{schema}://{HOST.HOST}{port}{path}/index.php'
+              url: '{schema}://{HOST.CONN}{port}{path}/index.php'
               posts:
                 - name: reconnect
                   value: '1'
@@ -83,13 +83,14 @@ zabbix_export:
               follow_redirects: 'NO'
       macros:
         - macro: '{$BNCHMRK.PASS}'
-          value: HWObCaYiKiXXkPzKbpCXP7oQ
+          description: '< /dev/urandom tr -dc ''A-Za-z0-9~!@#$%^&*()-+<>.,/\"'' | head -c${1:-20};echo;'
         - macro: '{$BNCHMRK.PATH}'
-          description: /zabbix
+          description: 'use "/zabbix" in case of apache2/httpd'
         - macro: '{$BNCHMRK.PORT}'
-          value: ':44370'
-          description: 'most of times must be empty'
+          description: 'must write ":80" or ":443" or keep field empty'
         - macro: '{$BNCHMRK.SCHEMA}'
           value: https
+          description: '"https" or "http"'
         - macro: '{$BNCHMRK.USER}'
-          value: benchmark
+          value: speed
+          description: 'dedicated user'
