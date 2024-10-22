@@ -10,6 +10,95 @@ zabbix_export:
       groups:
         - name: Templates/Modules
       items:
+        - uuid: efa9ef79135d49bcad4b7fe056c92464
+          name: 'HTML vertical'
+          type: DEPENDENT
+          key: getHtmlGroupedByRow
+          delay: '0'
+          history: 90d
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'{$CSS:table.th}\'>' + (getValues(header).join('</th><th style=\'{$CSS:table.th}\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'{$CSS:table.td}\'>' + (rows[i].join('</td><td style=\'{$CSS:table.td}\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td style=\'{$CSS:table.td}\'></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th style=\'{$CSS:table.th}\'>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th style=\'{$CSS:table.th}\'>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td style=\'{$CSS:table.td}\'>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByRow(json_array);
+          master_item:
+            key: hostinterface.get
         - uuid: 913394d2d112459fb120bc8b7b8019ad
           name: hostinterface.get
           type: HTTP_AGENT
@@ -201,7 +290,7 @@ zabbix_export:
             - tag: Application
               value: api
         - uuid: 233c46daa45149e58fe3bb1d3221dae4
-          name: HTML
+          name: 'HTML horizontal'
           type: DEPENDENT
           key: HtmlGroupedByColumn
           delay: '0'
@@ -301,18 +390,24 @@ zabbix_export:
           master_item:
             key: HtmlGroupedByColumn
       macros:
+        - macro: '{$CSS:table}'
+          value: 'border:1px gray solid'
+        - macro: '{$CSS:table.td}'
+          value: 'border:1px gray dotted'
+        - macro: '{$CSS:table.th}'
+          value: 'border:1px gray dotted;font-weight:bold'
         - macro: '{$RECORDS}'
-          value: '10'
+          value: '50'
       dashboards:
         - uuid: c100b83607c344b888273653b13e8da4
           name: 'Unavailable hosts'
           display_period: '3600'
           pages:
-            - widgets:
+            - name: Horizontal
+              widgets:
                 - type: itemhistory
-                  name: HTML
                   width: '72'
-                  height: '8'
+                  height: '64'
                   fields:
                     - type: INTEGER
                       name: columns.0.display
@@ -335,10 +430,54 @@ zabbix_export:
                       name: reference
                       value: AAAZE
                     - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
                       name: show_lines
                       value: '1'
                     - type: INTEGER
-                      name: show_timestamp
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: Vertical
+              widgets:
+                - type: itemhistory
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix APi'
+                        key: getHtmlGroupedByRow
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: HTML
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: TVXTO
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
                       value: '1'
                     - type: STRING
                       name: time_period.from
