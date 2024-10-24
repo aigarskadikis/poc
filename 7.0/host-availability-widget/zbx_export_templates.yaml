@@ -5,8 +5,8 @@ zabbix_export:
       name: Templates/Modules
   templates:
     - uuid: 06f5beff8644415e878816d05aec7309
-      template: 'Host availability widget Zabbix APi'
-      name: 'Host availability widget Zabbix APi'
+      template: 'Host availability widget Zabbix API'
+      name: 'Host availability widget Zabbix API'
       groups:
         - name: Templates/Modules
       items:
@@ -132,12 +132,12 @@ zabbix_export:
                   // this will be JSON call
                   req.addHeader('Content-Type: application/json');
                   
-                  // get host list
+                  // get list of hosts
                   var hostList = JSON.parse(req.post(json_rpc,
                       '{"jsonrpc":"2.0","method":"host.get","params":{"output":["host","name","hostid","status","proxyid"]},"auth":"{$Z_API_SESSIONID}","id": 1}'
                   )).result;
                   
-                  // get host list
+                  // get list of proxies
                   var proxyList = JSON.parse(req.post(json_rpc,
                       '{"jsonrpc":"2.0","method":"proxy.get","params":{"output":["name","proxyid"]},"auth":"{$Z_API_SESSIONID}","id": 1}'
                   )).result;
@@ -152,7 +152,7 @@ zabbix_export:
                       var row = {};
                       row = interfaceList[i];
                   
-                      // iterate through host array to find the matching host title
+                      // merge interface table with host table by using "hostid" as mapping field
                       for (h in hostList) {
                   
                           // check if there is a match between the hostid which belongs at item level and the host array
@@ -203,7 +203,7 @@ zabbix_export:
             - type: JAVASCRIPT
               parameters:
                 - |
-                  // useip => chose IP or DNS
+                  // select IP or DNS
                   var input = JSON.parse(value);
                   
                   // output will be an array
@@ -398,6 +398,7 @@ zabbix_export:
           value: 'border:1px gray dotted;font-weight:bold'
         - macro: '{$RECORDS}'
           value: '50'
+        - macro: '{$Z_API_SESSIONID}'
       dashboards:
         - uuid: c100b83607c344b888273653b13e8da4
           name: 'Unavailable hosts'
@@ -415,7 +416,7 @@ zabbix_export:
                     - type: ITEM
                       name: columns.0.itemid
                       value:
-                        host: 'Host availability widget Zabbix APi'
+                        host: 'Host availability widget Zabbix API'
                         key: HtmlGroupedByColumn
                     - type: INTEGER
                       name: columns.0.monospace_font
@@ -456,7 +457,7 @@ zabbix_export:
                     - type: ITEM
                       name: columns.0.itemid
                       value:
-                        host: 'Host availability widget Zabbix APi'
+                        host: 'Host availability widget Zabbix API'
                         key: getHtmlGroupedByRow
                     - type: INTEGER
                       name: columns.0.monospace_font
