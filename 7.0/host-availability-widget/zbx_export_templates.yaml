@@ -1,0 +1,488 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 06f5beff8644415e878816d05aec7309
+      template: 'Host availability widget Zabbix API'
+      name: 'Host availability widget Zabbix API'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: efa9ef79135d49bcad4b7fe056c92464
+          name: 'HTML vertical'
+          type: DEPENDENT
+          key: getHtmlGroupedByRow
+          delay: '0'
+          history: 90d
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'{$CSS:table.th}\'>' + (getValues(header).join('</th><th style=\'{$CSS:table.th}\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'{$CSS:table.td}\'>' + (rows[i].join('</td><td style=\'{$CSS:table.td}\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td style=\'{$CSS:table.td}\'></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th style=\'{$CSS:table.th}\'>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th style=\'{$CSS:table.th}\'>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td style=\'{$CSS:table.td}\'>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByRow(json_array);
+          master_item:
+            key: hostinterface.get
+        - uuid: 913394d2d112459fb120bc8b7b8019ad
+          name: hostinterface.get
+          type: HTTP_AGENT
+          key: hostinterface.get
+          delay: 1d
+          history: 90d
+          value_type: TEXT
+          trends: '0'
+          description: 'an API call which gets all items'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.result
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''main''] == "1" && @.[''available''] == "2")]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // interface + host + proxy
+                  
+                  var interfaceList = JSON.parse(value);
+                  
+                  var req = new HttpRequest();
+                  
+                  // where Zabbix API endpoint is located
+                  var json_rpc = '{$ZABBIX.URL}/api_jsonrpc.php';
+                  
+                  // this will be JSON call
+                  req.addHeader('Content-Type: application/json');
+                  
+                  // get list of hosts
+                  var hostList = JSON.parse(req.post(json_rpc,
+                      '{"jsonrpc":"2.0","method":"host.get","params":{"output":["host","name","hostid","status","proxyid"]},"auth":"{$Z_API_SESSIONID}","id": 1}'
+                  )).result;
+                  
+                  // get list of proxies
+                  var proxyList = JSON.parse(req.post(json_rpc,
+                      '{"jsonrpc":"2.0","method":"proxy.get","params":{"output":["name","proxyid"]},"auth":"{$Z_API_SESSIONID}","id": 1}'
+                  )).result;
+                  
+                  
+                  // output will be an array
+                  var allTogether = [];
+                  
+                  // take one full itemid containing all characteristics like key_, units, name
+                  for (i in interfaceList) {
+                  
+                      var row = {};
+                      row = interfaceList[i];
+                  
+                      // merge interface table with host table by using "hostid" as mapping field
+                      for (h in hostList) {
+                  
+                          // check if there is a match between the hostid which belongs at item level and the host array
+                          if (interfaceList[i].hostid === hostList[h].hostid) {
+                  
+                              row["hostStatus"] = hostList[h].status;
+                              row["name"] = hostList[h].name;
+                              row["proxyid"] = hostList[h].proxyid;
+                  
+                              break;
+                          }
+                  
+                      }
+                  
+                  
+                      // map the host list with proxy (if there is even a proxy)
+                      for (p in proxyList) {
+                  
+                          // check if this host belongs to proxy
+                          if (row["proxyid"] > 0) {
+                  
+                              // iterate through list and try to map with existing proxy name
+                              if (row["proxyid"] === proxyList[p].proxyid) {
+                  
+                                  row["Proxy"] = proxyList[p].name;
+                  
+                                  break;
+                              }
+                          } else {
+                              row["Proxy"] = '';
+                          }
+                  
+                  
+                  
+                      }
+                  
+                  
+                      allTogether.push(row);
+                  
+                  }
+                  
+                  return JSON.stringify(allTogether);
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''hostStatus''] == "0")]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // select IP or DNS
+                  var input = JSON.parse(value);
+                  
+                  // output will be an array
+                  var output = [];
+                  
+                  for (e in input) {
+                  
+                      // create new row
+                      var row = {};
+                  
+                      // transfer all columns from existing element
+                      row = input[e];
+                  
+                      // validate if passive checks are connected to IP address or DNS entry
+                      if (input[e].useip === '1') {
+                          row["IP or DNS"] = input[e].ip;
+                      } else {
+                          row["IP or DNS"] = input[e].dns;
+                      }
+                  
+                      // create new field "interface" and translate to human readable interface name
+                      if (input[e].type === '1') { row["Interface"] = 'ZBX' } 
+                      if (input[e].type === '2') { row["Interface"] = 'SNMP' } 
+                      if (input[e].type === '3') { row["Interface"] = 'IPMI' } 
+                      if (input[e].type === '4') { row["Interface"] = 'JMX' }
+                  
+                      row["Host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid='+input[e].hostid+'\' target=\'_blank\'>'+input[e].name+'</a>';
+                  
+                      row["Error"] = input[e].error;
+                      row["Port"] = input[e].port;
+                  
+                      // add the existing content + new field "connect"
+                      output.push(row);
+                  
+                  }
+                  
+                  return JSON.stringify(output);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // delete fields
+                  var array = JSON.parse(value);
+                  
+                  for (i=0; i<array.length; i++) {
+                      delete array[i].available;
+                      delete array[i].interfaceid;
+                      delete array[i].main;
+                      delete array[i].errors_from;
+                      delete array[i].disable_until;
+                      delete array[i].hostStatus;
+                      delete array[i].ip;
+                      delete array[i].useip;
+                      delete array[i].dns;
+                      delete array[i].type;
+                      delete array[i].name;
+                      delete array[i].hostid;
+                      delete array[i].proxy_hostid;
+                      delete array[i].error;
+                      delete array[i].port;
+                      delete array[i].proxyid;
+                  }
+                  
+                  return JSON.stringify(array);
+            - type: JSONPATH
+              parameters:
+                - '$.[0:{$RECORDS}]'
+              error_handler: DISCARD_VALUE
+          timeout: 9s
+          url: '{$ZABBIX.URL}/api_jsonrpc.php'
+          status_codes: ''
+          post_type: JSON
+          posts: |
+            {
+                "jsonrpc": "2.0",
+                "method": "hostinterface.get",
+                "params": {
+                    "output": ["errors_from","disable_until","dns","main","error","available","useip","hostid","type","port","ip"]
+                },
+                "auth": "{$Z_API_SESSIONID}",
+                "id": 1
+            }
+          request_method: POST
+          tags:
+            - tag: Application
+              value: api
+        - uuid: 233c46daa45149e58fe3bb1d3221dae4
+          name: 'HTML horizontal'
+          type: DEPENDENT
+          key: HtmlGroupedByColumn
+          delay: '0'
+          history: 90d
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'border:1px gray solid\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: hostinterface.get
+        - uuid: f659f1fc65b84a0d9b6f0a977aa1ac4e
+          name: Size
+          type: DEPENDENT
+          key: size.of.html
+          delay: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.length;'
+          master_item:
+            key: HtmlGroupedByColumn
+      macros:
+        - macro: '{$CSS:table}'
+          value: 'border:1px gray solid'
+        - macro: '{$CSS:table.td}'
+          value: 'border:1px gray dotted'
+        - macro: '{$CSS:table.th}'
+          value: 'border:1px gray dotted;font-weight:bold'
+        - macro: '{$RECORDS}'
+          value: '50'
+        - macro: '{$Z_API_SESSIONID}'
+      dashboards:
+        - uuid: c100b83607c344b888273653b13e8da4
+          name: 'Unavailable hosts'
+          display_period: '3600'
+          pages:
+            - name: Horizontal
+              widgets:
+                - type: itemhistory
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: HtmlGroupedByColumn
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: HTML
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: AAAZE
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: Vertical
+              widgets:
+                - type: itemhistory
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: getHtmlGroupedByRow
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: HTML
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: TVXTO
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
