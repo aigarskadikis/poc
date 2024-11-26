@@ -1,0 +1,27 @@
+zabbix_export:
+  version: '6.0'
+  date: '2024-11-15T07:31:01Z'
+  groups:
+    - uuid: 8cf4c389e4ba4836b26b595c6186f1b7
+      name: Templates/Debug
+  templates:
+    - uuid: a8dffe56652a47b892ed78b8dc50c958
+      template: 'VMware debug VMs'
+      name: 'VMware debug VMs'
+      groups:
+        - name: Templates/Debug
+      items:
+        - uuid: aa0bbfac401245d69fb3aca1fb74645c
+          name: 'Write VM JSON into log'
+          type: SIMPLE
+          key: 'vmware.vm.discovery["{$VMWARE.URL}"]'
+          delay: 1d
+          history: 7d
+          trends: '0'
+          value_type: TEXT
+          username: '{$VMWARE.USERNAME}'
+          password: '{$VMWARE.PASSWORD}'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'Zabbix.Log(3,''VMware debug from {$VMWARE.URL}: ''+value); return value;'
