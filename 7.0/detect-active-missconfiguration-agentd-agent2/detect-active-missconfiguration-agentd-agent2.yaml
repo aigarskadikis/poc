@@ -1,0 +1,81 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 2c663a5e38074dea9e8675d97b7c70aa
+      template: 'detect active missconfiguration agentd agent2'
+      name: 'detect active missconfiguration agentd agent2'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 75bad85e9f954093b2244b3f01e228d9
+          name: zabbix_agent2.conf
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agent2.conf]'
+          delay: 1d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.match(/^1$/gm) ? ''[{"{#AGENT2.CONF}":"/etc/zabbix/zabbix_agent2.conf"}]'' : ''[]'';'
+        - uuid: 2c9e9fbef2d048aba222ed424548b310
+          name: zabbix_agentd.conf
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agentd.conf]'
+          delay: 1d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.match(/^1$/gm) ? ''[{"{#AGENTD.CONF}":"/etc/zabbix/zabbix_agentd.conf"}]'' : ''[]'';'
+      discovery_rules:
+        - uuid: 9d4c71b696524ae5be10b978e2014e6c
+          name: zabbix_agent2.conf.lld
+          type: DEPENDENT
+          key: zabbix_agent2.conf.lld
+          delay: '0'
+          item_prototypes:
+            - uuid: 3ef8224af77f4dcb85b4ceb502ca9330
+              name: '{#AGENT2.CONF} contents'
+              key: 'vfs.file.contents[{#AGENT2.CONF}]'
+              delay: 1d
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - 'return value.match(/^Hostname=Zabbix server$/gm) ? 1 : 0;'
+              trigger_prototypes:
+                - uuid: dd8ebfba55c54a89b8d81347ea9212a5
+                  expression: 'last(/detect active missconfiguration agentd agent2/vfs.file.contents[{#AGENT2.CONF}])>0'
+                  name: 'Zabbix server identity detected inside {#AGENT2.CONF}'
+                  priority: HIGH
+                  manual_close: 'YES'
+          master_item:
+            key: 'vfs.file.exists[/etc/zabbix/zabbix_agent2.conf]'
+        - uuid: 7568e3504008476a8ded38d8696f5934
+          name: zabbix_agentd.conf.lld
+          type: DEPENDENT
+          key: zabbix_agentd.conf.lld
+          delay: '0'
+          item_prototypes:
+            - uuid: 6c22b14278de48cdab12748cd832a0bd
+              name: '{#AGENTD.CONF} contents'
+              key: 'vfs.file.contents[{#AGENTD.CONF}]'
+              delay: 1d
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - 'return value.match(/^Hostname=Zabbix server$/gm) ? 1 : 0;'
+              trigger_prototypes:
+                - uuid: 7376f6cc4df84595a121e197341a529a
+                  expression: 'last(/detect active missconfiguration agentd agent2/vfs.file.contents[{#AGENTD.CONF}])>0'
+                  name: 'Zabbix server identity detected inside {#AGENTD.CONF}'
+                  priority: HIGH
+                  manual_close: 'YES'
+          master_item:
+            key: 'vfs.file.exists[/etc/zabbix/zabbix_agentd.conf]'
