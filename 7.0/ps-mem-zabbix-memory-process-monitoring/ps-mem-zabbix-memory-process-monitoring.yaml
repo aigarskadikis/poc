@@ -1,0 +1,70 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 1fb0f254f0bb426581b18343044f9f6a
+      template: 'ps_mem zabbix memory process monitoring'
+      name: 'ps_mem zabbix memory process monitoring'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 6368a7a047044fa19e7509b649ede0d9
+          name: proc.list.custom
+          type: TRAP
+          key: proc.list.custom
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          tags:
+            - tag: debug
+      discovery_rules:
+        - uuid: 3fdb8f5a2fc042738b89bf10c0a0732d
+          name: proc.monitoring.lld
+          type: DEPENDENT
+          key: proc.monitoring.lld
+          delay: '0'
+          item_prototypes:
+            - uuid: 0a49f00b56754b61ab6d792d156865dd
+              name: 'Memory for "{#PROCESS}"'
+              type: TRAP
+              key: 'ps_mem[{#PROCESS}]'
+              delay: '0'
+              units: B
+              tags:
+                - tag: debug
+          master_item:
+            key: proc.list.custom
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  var lines = value.split("\n");
+                  var lines_num = lines.length;
+                  for (i = 0; i < lines_num; i++)
+                  {
+                    var row = {};
+                    row["{#PROCESS}"] = lines[i];
+                    lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+      dashboards:
+        - uuid: 04ee8c10943d43598a2fe1b4481cf080
+          name: Memory
+          pages:
+            - widgets:
+                - type: dataover
+                  width: '72'
+                  height: '7'
+                  fields:
+                    - type: INTEGER
+                      name: tags.0.operator
+                      value: '0'
+                    - type: STRING
+                      name: tags.0.tag
+                      value: debug
+                    - type: STRING
+                      name: tags.0.value
+                      value: ''
