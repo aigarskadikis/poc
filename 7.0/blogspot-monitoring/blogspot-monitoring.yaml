@@ -1,0 +1,847 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  host_groups:
+    - uuid: 073906d169264653b116e63f07279c18
+      name: 'Google Blogger'
+  templates:
+    - uuid: 4850578e997643069ef589d8a3a7ebbc
+      template: 'google blogger blogspot monitoring 200 posts'
+      name: 'google blogger blogspot monitoring 200 posts'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: ccfcf358895f47a3badc562c95c2b66a
+          name: 'Get post IDs'
+          type: SCRIPT
+          key: fetch.post.ids
+          delay: 1d
+          history: 7d
+          value_type: TEXT
+          trends: '0'
+          params: |
+            var params = JSON.parse(value);
+            
+            var schema = params.schema;
+            var name = params.name
+            
+            var req = new HttpRequest();
+            
+            var lld = [];
+            var url = "";
+            var resp = "";
+            
+            // loop starts
+            var step = 0;
+            var is_content = 1;
+            
+            do {
+            
+            step++
+            
+            // define url to fetch
+            url = schema + "://"+name+"/feeds/posts/default/?atom.xml?redirect=false&start-index="+step+"&max-results=1"
+            
+            Zabbix.Log(3,url);
+            // clear variable
+            var resp = "";
+            
+            // download page
+            resp = req.get(url);
+            
+            is_content = resp.match(/<\/content>/) ? 1 : 0;
+            
+            // check if there is content
+            while (is_content) {
+            
+            // define an empty row
+            var row = {};
+            
+            // blog name
+            row["{#BLOG.ADDRESS}"] = params.name;
+            
+            row["{#BLOG.NAME}"] = params.name.replace(/.blogspot.com/,'');
+            
+            // blog identification
+            row["{#BLOG.ID}"] = resp.match(/blog-([0-9]+)\.post-[0-9]+/)[1];
+            
+            // post identification
+            row["{#POST.ID}"] = resp.match(/blog-[0-9]+\.post-([0-9]+)/)[1];
+            
+            // extract title
+            row["{#POST.TITLE}"] = resp.match(/html..title=.(.*).\/><author>/)[1];
+            
+            // lookup URL
+            row["{#POST.URL}"] = resp.match(/><link rel=.alternate. type=.text.html. href=.(https[a-zA-Z0-9_\-\.\/:]+\.html). title=/)[1];
+            
+            // add this to array
+            lld.push(row);
+            
+            break;
+            
+            }
+            // end of content check
+            
+            }
+            while (is_content)
+            
+            return JSON.stringify(lld);
+          timeout: 10m
+          parameters:
+            - name: name
+              value: '{HOST.HOST}'
+            - name: schema
+              value: '{$BLOG.SCHEMA}'
+      discovery_rules:
+        - uuid: b91cf34b945c452d919a81db39d0a872
+          name: post
+          type: DEPENDENT
+          key: blogger.posts
+          delay: '0'
+          lifetime_type: DELETE_NEVER
+          lifetime: '0'
+          enabled_lifetime_type: DISABLE_NEVER
+          host_prototypes:
+            - uuid: a09be01e8d704013b664c38161e7eb1c
+              host: '{#BLOG.NAME}.{#POST.ID}'
+              name: '{#BLOG.NAME}.{#POST.ID}'
+              inventory_mode: AUTOMATIC
+              group_links:
+                - group:
+                    name: 'Google Blogger'
+              group_prototypes:
+                - name: '{#BLOG.NAME}'
+              templates:
+                - name: 'google blogger blogspot post monitoring'
+              macros:
+                - macro: '{$BLOG.ADDRESS}'
+                  value: '{#BLOG.ADDRESS}'
+                - macro: '{$BLOG.ID}'
+                  value: '{#BLOG.ID}'
+                - macro: '{$BLOG.NAME}'
+                  value: '{#BLOG.NAME}'
+                - macro: '{$POST.ID}'
+                  value: '{#POST.ID}'
+                - macro: '{$POST.TITLE}'
+                  value: '{#POST.TITLE}'
+                - macro: '{$POST.URL}'
+                  value: '{#POST.URL}'
+          master_item:
+            key: fetch.post.ids
+      macros:
+        - macro: '{$BLOG.SCHEMA}'
+          value: https
+    - uuid: c457da6e4bcc497b807da4cb23a5a43a
+      template: 'google blogger blogspot monitoring 2000 posts'
+      name: 'google blogger blogspot monitoring 2000 posts'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 33788e45bc094a19a543cccf6a9f1a83
+          name: 'Get post IDs'
+          type: SCRIPT
+          key: fetch.post.ids
+          delay: 0;m/10s21
+          history: 7d
+          value_type: TEXT
+          trends: '0'
+          params: |
+            var params = JSON.parse(value);
+            
+            var schema = params.schema;
+            var name = params.name
+            
+            var req = new HttpRequest();
+            
+            var lld = [];
+            var url = "";
+            var resp = "";
+            
+            // loop starts
+            var step = 0;
+            var position = 0;
+            var is_content = 1;
+            
+            var now = new Date();
+            var minutes = now.getMinutes();
+            var hours = now.getHours();
+            
+            var secondsAfterMidnight = (hours * 3600) + (minutes * 60);
+            var batch = Math.floor(secondsAfterMidnight / 600);
+            
+            do {
+            
+            step=step + 144;
+            
+            position = step - batch;
+            
+            // define url to fetch
+            url = schema + "://"+name+"/feeds/posts/default/?atom.xml?redirect=false&start-index="+position+"&max-results=1"
+            
+            Zabbix.Log(3,url);
+            // clear variable
+            var resp = "";
+            
+            // download page
+            resp = req.get(url);
+            
+            is_content = resp.match(/<\/content>/) ? 1 : 0;
+            
+            // check if there is content
+            while (is_content) {
+            
+            // define an empty row
+            var row = {};
+            
+            // blog name
+            row["{#BLOG.ADDRESS}"] = params.name;
+            
+            row["{#BLOG.NAME}"] = params.name.replace(/.blogspot.com/,'');
+            
+            // blog identification
+            row["{#BLOG.ID}"] = resp.match(/blog-([0-9]+)\.post-[0-9]+/)[1];
+            
+            // post identification
+            row["{#POST.ID}"] = resp.match(/blog-[0-9]+\.post-([0-9]+)/)[1];
+            
+            // extract title
+            row["{#POST.TITLE}"] = resp.match(/html..title=.(.*).\/><author>/)[1];
+            
+            // lookup URL
+            row["{#POST.URL}"] = resp.match(/><link rel=.alternate. type=.text.html. href=.(https[a-zA-Z0-9_\-\.\/:]+\.html). title=/)[1];
+            
+            // add this to array
+            lld.push(row);
+            
+            break;
+            
+            }
+            // end of content check
+            
+            }
+            while (is_content)
+            
+            return JSON.stringify(lld);
+          timeout: '599'
+          parameters:
+            - name: name
+              value: '{HOST.HOST}'
+            - name: schema
+              value: '{$BLOG.SCHEMA}'
+      discovery_rules:
+        - uuid: c420e54002bf4a378b0bb32a38d595a9
+          name: post
+          type: DEPENDENT
+          key: blogger.posts
+          delay: '0'
+          lifetime_type: DELETE_NEVER
+          lifetime: '0'
+          enabled_lifetime_type: DISABLE_NEVER
+          host_prototypes:
+            - uuid: 6943029db3904a02a44960ee49e3d2e4
+              host: '{#BLOG.NAME}.{#POST.ID}'
+              name: '{#BLOG.NAME}.{#POST.ID}'
+              inventory_mode: AUTOMATIC
+              group_links:
+                - group:
+                    name: 'Google Blogger'
+              group_prototypes:
+                - name: '{#BLOG.NAME}'
+              templates:
+                - name: 'google blogger blogspot post monitoring'
+              macros:
+                - macro: '{$BLOG.ADDRESS}'
+                  value: '{#BLOG.ADDRESS}'
+                - macro: '{$BLOG.ID}'
+                  value: '{#BLOG.ID}'
+                - macro: '{$BLOG.NAME}'
+                  value: '{#BLOG.NAME}'
+                - macro: '{$POST.ID}'
+                  value: '{#POST.ID}'
+                - macro: '{$POST.TITLE}'
+                  value: '{#POST.TITLE}'
+                - macro: '{$POST.URL}'
+                  value: '{#POST.URL}'
+          master_item:
+            key: fetch.post.ids
+      macros:
+        - macro: '{$BLOG.SCHEMA}'
+          value: https
+    - uuid: 29e6065d68144a7c955c1095cced9f39
+      template: 'google blogger blogspot post monitoring'
+      name: 'google blogger blogspot post monitoring'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 8cbd8494acd14bc6abd44dd3c497648c
+          name: blogger.post.content.size
+          type: DEPENDENT
+          key: 'blogger.post.content.size[{$POST.ID}]'
+          delay: '0'
+          history: 7d
+          trends: '0'
+          units: B
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.content[''$t'']'
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.length;'
+          master_item:
+            key: 'id[{$POST.ID}]'
+          triggers:
+            - uuid: bdaa43b67e8445799115059522b06335
+              expression: 'last(/google blogger blogspot post monitoring/blogger.post.content.size[{$POST.ID}])>{$POST.SIZE.LIMIT}'
+              name: 'Size of post "{$POST.TITLE}" is {ITEM.LASTVALUE}'
+              url: 'https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}'
+              priority: AVERAGE
+              description: '{$POST.URL}'
+              manual_close: 'YES'
+              tags:
+                - tag: PostID
+                  value: '{$POST.ID}'
+        - uuid: b5b33f75fbf34ab883492e4a275eb96a
+          name: 'blogger.post.links.bash.variable[{$POST.ID}]'
+          type: DEPENDENT
+          key: 'blogger.post.links.bash.variable[{$POST.ID}]'
+          delay: '0'
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.content[''$t'']'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  
+                  // check if there are any links at all
+                  if (value.match(/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.\/\$\+_?&=]+/gm)) {
+                  
+                  	// if there are links, then extract and make sure there are no dublicates:
+                  	var lines = value.match(/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\(\)\-\.\/\$\+_?&%=]+/gm).reduce(function(a,b){if(a.indexOf(b)< 0)a.push(b);return a;},[]);
+                  	var lines_num = lines.length;
+                  	
+                  	for (i = 0; i < lines_num; i++)	{
+                  		
+                  		var row = {};
+                  
+                  		// a patch to extract a variable (the one with a dollar sign) 
+                  		// if the following input turn out some sort of bash code
+                  		if (lines[i].match(/\$[a-zA-Z0-9_-]+/gm)) {
+                  		  
+                  			// extract full title of variable and value
+                  			var variable = value.match(/([a-zA-Z0-9_-]+)=([a-zA-Z0-9\._-]+)/gm);
+                  
+                  			// how many variables are in bash code
+                  			var count_of_variables = variable.length;
+                  			
+                  			// go through all variables in bash code
+                  			for (j = 0; j < count_of_variables; j++) {
+                  				var regexp = /([a-zA-Z0-9_-]+)=([a-zA-Z0-9\._-]+)/gm;
+                  				var unpack = regexp.exec(variable[j]);
+                  
+                  				var var_name = '$' + unpack[1];
+                  				var var_value = unpack[2];
+                  				
+                  				// do replacement for the link
+                  				for (k = 0; k < (lines[i].match(/\$/g) || []).length; k++) {
+                  					lines[i] = lines[i].replace(var_name,var_value);
+                  				}
+                  				
+                  			}
+                  
+                  			row["{#POST.URL}"] = lines[i];
+                  		  
+                  		} else {
+                  			row["{#POST.URL}"] = lines[i];
+                  		}
+                  
+                  		lld.push(row);
+                  	}
+                  	
+                  	return JSON.stringify(lld);
+                  
+                  } else {
+                  	return JSON.stringify(lld);
+                  }
+          master_item:
+            key: 'id[{$POST.ID}]'
+        - uuid: 6b11d4793e8141b4a5932d5bd7140bbd
+          name: 'blogger.post.links[{$POST.ID}]'
+          type: DEPENDENT
+          key: 'blogger.post.links[{$POST.ID}]'
+          delay: '0'
+          history: 7d
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.content[''$t'']'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  
+                  // check if there are any links at all
+                  if (value.match(/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.\/_?&=]+/gm)) {
+                  
+                  // if there are links, then extract and make sure there are no dublicates:
+                  var lines = value.match(/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.\/_?&=]+/gm).reduce(function(a,b){if(a.indexOf(b)< 0)a.push(b);return a;},[]);
+                  var lines_num = lines.length;
+                  for (i = 0; i < lines_num; i++)
+                  {
+                    var row = {};
+                    row["{#POST.URL}"] = lines[i]
+                    lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+                  
+                  }
+                  
+                  
+                  else
+                  {
+                  return JSON.stringify(lld);
+                  }
+          master_item:
+            key: 'id[{$POST.ID}]'
+        - uuid: d1aa0a0fffb2477485d5576e068ef515
+          name: categories
+          type: DEPENDENT
+          key: 'categories[{$POST.ID}]'
+          delay: '0'
+          history: 1d
+          value_type: TEXT
+          trends: '0'
+          inventory_link: TAG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.["category"].[*].term'
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'id[{$POST.ID}]'
+        - uuid: cde89b43c7d14a80ada6f54990a16ab8
+          name: count.of.categories
+          type: DEPENDENT
+          key: 'count.of.categories[{$POST.ID}]'
+          delay: '0'
+          history: 7d
+          trends: '0'
+          units: categories
+          inventory_link: SERIALNO_A
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.["category"].[*].term.length()'
+          master_item:
+            key: 'id[{$POST.ID}]'
+        - uuid: 7361654a0319403eb1f9cee4883d1ee8
+          name: id
+          type: HTTP_AGENT
+          key: 'id[{$POST.ID}]'
+          delay: 1d
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          timeout: 1m
+          url: 'https://{$BLOG.ADDRESS}/feeds/posts/default/{$POST.ID}'
+          query_fields:
+            - name: alt
+              value: json
+          request_method: POST
+        - uuid: 9148d4a69f7f4b2c987ffd4683385e72
+          name: link.list
+          type: DEPENDENT
+          key: link.list
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[*][''{#POST.URL}'']'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var input = JSON.parse(value);
+                  var output = "";
+                  for (var i = 0; i < input.length; i++) {
+                      output += input[i];
+                      if (i < input.length - 1) {
+                          output += "\n"; // Add a newline if it's not the last element
+                      }
+                  }
+                  
+                  return output;
+          master_item:
+            key: 'blogger.post.links[{$POST.ID}]'
+        - uuid: 0a064138c21a429db8eeb5a9adedf45e
+          name: 'post.comments[{$POST.ID}]'
+          type: DEPENDENT
+          key: 'post.comments[{$POST.ID}]'
+          delay: '0'
+          history: 7d
+          trends: '0'
+          units: comments
+          inventory_link: SOFTWARE_APP_C
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.link[?(@.rel == ''replies'' && @.type == ''text/html'')].title'
+            - type: REGEX
+              parameters:
+                - '([0-9]+)'
+                - \1
+          master_item:
+            key: 'id[{$POST.ID}]'
+          triggers:
+            - uuid: 015152dadfff43b68df7efab14ef7457
+              expression: '(last(/google blogger blogspot post monitoring/post.comments[{$POST.ID}],#1)<>last(/google blogger blogspot post monitoring/post.comments[{$POST.ID}],#2))=1'
+              name: 'Count of comments has been changed on "{$POST.TITLE}"'
+              url: 'https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}'
+              priority: INFO
+              description: '{$POST.URL}'
+              manual_close: 'YES'
+              tags:
+                - tag: PostID
+                  value: '{$POSTID}'
+        - uuid: be2d16ab7d44407a87c8654359caf078
+          name: 'post.html.content[{$POST.ID}]'
+          type: HTTP_AGENT
+          key: 'post.html.content[{$POST.ID}]'
+          delay: 1d
+          history: 1d
+          value_type: TEXT
+          trends: '0'
+          timeout: 1m
+          url: '{$POST.URL}'
+          status_codes: ''
+          follow_redirects: 'NO'
+        - uuid: 6f9525ada5db494baf62b7f5aef005c5
+          name: 'post.published.str[{$POST.ID}]'
+          type: DEPENDENT
+          key: 'post.published.str[{$POST.ID}]'
+          delay: '0'
+          history: '0'
+          value_type: CHAR
+          trends: '0'
+          inventory_link: SOFTWARE_APP_A
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.published.[''$t'']'
+          master_item:
+            key: 'id[{$POST.ID}]'
+        - uuid: baf48daafbc94d35a331522b4130f168
+          name: 'post.published.unixtime[{$POST.ID}]'
+          type: DEPENDENT
+          key: 'post.published.unixtime[{$POST.ID}]'
+          delay: '0'
+          history: 90d
+          trends: '0'
+          units: unixtime
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.published.[''$t'']'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var t = new Date(Date.parse(value));
+                  var localOffset = (-1) * t.getTimezoneOffset() * 60000;
+                  return Math.round((t.getTime() + localOffset) / 1000);
+          master_item:
+            key: 'id[{$POST.ID}]'
+        - uuid: e0a1a35e239b411f8dea6bca531fb685
+          name: 'post.title[{$POST.ID}]'
+          type: DEPENDENT
+          key: 'post.title[{$POST.ID}]'
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          inventory_link: NAME
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.title[''$t'']'
+          master_item:
+            key: 'id[{$POST.ID}]'
+        - uuid: c0f7e347ea3a454182098cbd5602db76
+          name: 'post.updated.str[{$POST.ID}]'
+          type: DEPENDENT
+          key: 'post.updated.str[{$POST.ID}]'
+          delay: '0'
+          history: '0'
+          value_type: CHAR
+          trends: '0'
+          inventory_link: SOFTWARE_APP_B
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.updated.[''$t'']'
+          master_item:
+            key: 'id[{$POST.ID}]'
+        - uuid: be28bd4db863436595fd03135b7fead0
+          name: 'post.updated.unixtime[{$POST.ID}]'
+          type: DEPENDENT
+          key: 'post.updated.unixtime[{$POST.ID}]'
+          delay: '0'
+          history: 90d
+          trends: '0'
+          units: unixtime
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.updated.[''$t'']'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var t = new Date(Date.parse(value));
+                  var localOffset = (-1) * t.getTimezoneOffset() * 60000;
+                  return Math.round((t.getTime() + localOffset) / 1000);
+          master_item:
+            key: 'id[{$POST.ID}]'
+        - uuid: 8627e1c8165f49ec84c50b059ed71139
+          name: size.of.html
+          type: DEPENDENT
+          key: 'size.of.html[{$POST.ID}]'
+          delay: '0'
+          history: 90d
+          units: B
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.length;'
+          master_item:
+            key: 'post.html.content[{$POST.ID}]'
+      discovery_rules:
+        - uuid: eee784354ba148ceb5aaa08933a432f3
+          name: extract.links.from.post.content
+          type: DEPENDENT
+          key: extract.links.from.post.content
+          delay: '0'
+          filter:
+            evaltype: AND
+            conditions:
+              - macro: '{#POST.URL}'
+                value: '^.*(PNG|png|JPG|jpg)$'
+                operator: NOT_MATCHES_REGEX
+                formulaid: A
+              - macro: '{#POST.URL}'
+                value: '^.*googleusercontent.*$'
+                operator: NOT_MATCHES_REGEX
+                formulaid: B
+          lifetime_type: DELETE_IMMEDIATELY
+          lifetime: '0'
+          item_prototypes:
+            - uuid: c33250e45f454792894729bf298963e3
+              name: 'code[{#URL.ID}]'
+              type: DEPENDENT
+              key: 'code[{#URL.ID}]'
+              delay: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - 'HTTP\S+ (\d+)'
+                    - \1
+              master_item:
+                key: 'header[{#URL.ID}]'
+              trigger_prototypes:
+                - uuid: a7695d271f3c4006bfa21e036476ff6c
+                  expression: 'count(/google blogger blogspot post monitoring/code[{#URL.ID}],#1,"eq","404")>0'
+                  name: '404 for "{#URL.ID}"'
+                  url: 'https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}'
+                  priority: HIGH
+                  description: |
+                    post:
+                    {$POST.URL}
+                    
+                    has problem with the link:
+                    {#POST.URL}
+                    
+                    edit post to fix the issue:
+                    https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}
+                  manual_close: 'YES'
+                - uuid: f6d07dd110254718b4abb3e4cebb9a6c
+                  expression: 'count(/google blogger blogspot post monitoring/code[{#URL.ID}],#1,"eq","100003")>0'
+                  name: 'Cannot perform request "{#URL.ID}"'
+                  url: 'https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}'
+                  priority: HIGH
+                  description: |
+                    post:
+                    {$POST.URL}
+                    
+                    has problem with the link:
+                    {#POST.URL}
+                    
+                    edit post to fix the issue:
+                    https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}
+                  manual_close: 'YES'
+                - uuid: 913b10fb1d7941a1b5f0d026115b9068
+                  expression: 'count(/google blogger blogspot post monitoring/code[{#URL.ID}],#1,"eq","100002")>0'
+                  name: 'Could not resolve host "{#URL.ID}"'
+                  url: 'https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}'
+                  priority: HIGH
+                  description: |
+                    post:
+                    {$POST.URL}
+                    
+                    has problem with the link:
+                    {#POST.URL}
+                    
+                    edit post to fix the issue:
+                    https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}
+                  manual_close: 'YES'
+                - uuid: 4ddd524c23694667ae88d4a154bb6ef4
+                  expression: 'count(/google blogger blogspot post monitoring/code[{#URL.ID}],#1,"eq","100001")>0'
+                  name: 'Operation timed out after "{#URL.ID}"'
+                  url: 'https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}'
+                  priority: HIGH
+                  description: |
+                    post:
+                    {$POST.URL}
+                    
+                    has problem with the link:
+                    {#POST.URL}
+                    
+                    edit post to fix the issue:
+                    https://www.blogger.com/blog/post/edit/{$BLOG.ID}/{$POST.ID}
+                  manual_close: 'YES'
+            - uuid: 0017e06bc4d5444281b89c030a6bf796
+              name: 'header[{#URL.ID}]'
+              type: HTTP_AGENT
+              key: 'header[{#URL.ID}]'
+              delay: 1d
+              history: 1d
+              value_type: LOG
+              trends: '0'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '0'
+                    - '.*Operation timed out after.*'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: 'HTTP: 100001'
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '0'
+                    - '.*Could not resolve host.*'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: 'HTTP: 100002'
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '0'
+                    - '.*Connection timed out after.*'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: 'HTTP: 100003'
+              timeout: 29s
+              url: '{#POST.URL}'
+              status_codes: ''
+              follow_redirects: 'NO'
+              retrieve_mode: HEADERS
+              request_method: HEAD
+              tags:
+                - tag: Application
+                  value: 'Blogger link header'
+          master_item:
+            key: 'id[{$POST.ID}]'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.entry.content[''$t'']'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  
+                  var out = [];
+                  
+                  
+                  // check if there are any links at all
+                  if (value.match(/\"(http|https|ftp|ftps)\:\/\/[^\"]+/gm)) {
+                  
+                  	// search links which start with http, ftp
+                  	var lines = value
+                  		.match(/\"(http|https|ftp|ftps)\:\/\/[^\"]+/gm)
+                  		.reduce(function (a, b) { if (a.indexOf(b) < 0) a.push(b); return a; }, [])
+                  		.join("\n")
+                  		.replace(/^\"/gm, '')
+                  		.replace(/\"$/gm, '')
+                  		.match(/^.*$/gm);
+                  
+                  	out = out.concat(lines);
+                  }
+                  
+                  if (value.match(/\"\/[0-9]+\/[0-9]+\/.*?\.html\"/gm)) {
+                  
+                  	// add canonical links
+                  	var canonical = value
+                  		.match(/\"\/[0-9]+\/[0-9]+\/.*?\.html\"/gm)
+                  		.reduce(function (a, b) { if (a.indexOf(b) < 0) a.push(b); return a; }, [])
+                  		.join("\n")
+                  		.replace(/^\"/gm, 'https://{$BLOG.ADDRESS}')
+                  		.replace(/\"$/gm, '')
+                  		.match(/^.*$/gm);
+                  
+                  	out = out.concat(canonical);
+                  }
+                  
+                  
+                  var lines_num = out.length;
+                  
+                  for (i = 0; i < lines_num; i++) {
+                  
+                  	var row = {};
+                  
+                  	// a patch to extract a variable (the one with a dollar sign) 
+                  	// if the following input turn out some sort of bash code
+                  	if (out[i].match(/\$[a-zA-Z0-9_-]+/gm)) {
+                  
+                  		// extract full title of variable and value
+                  		var variable = value.match(/([a-zA-Z0-9_-]+)=([a-zA-Z0-9\._-]+)/gm);
+                  
+                  		// how many variables are in bash code
+                  		var count_of_variables = variable.length;
+                  
+                  		// go through all variables in bash code
+                  		for (j = 0; j < count_of_variables; j++) {
+                  			var regexp = /([a-zA-Z0-9_-]+)=([a-zA-Z0-9\._-]+)/gm;
+                  			var unpack = regexp.exec(variable[j]);
+                  
+                  			var var_name = '$' + unpack[1];
+                  			var var_value = unpack[2];
+                  
+                  			// do replacement for the link
+                  			for (k = 0; k < (out[i].match(/\$/g) || []).length; k++) {
+                  				out[i] = out[i].replace(var_name, var_value);
+                  			}
+                  
+                  		}
+                  
+                  		row["{#POST.URL}"] = out[i];
+                          if (out[i].length > 200) {row["{#URL.ID}"] = out[i].match(/.{200}$/g)[0]} else {row["{#URL.ID}"] = out[i];}
+                  
+                  	} else {
+                  		row["{#POST.URL}"] = out[i];
+                          if (out[i].length > 200) {row["{#URL.ID}"] = out[i].match(/.{200}$/g)[0]} else {row["{#URL.ID}"] = out[i];}
+                  
+                  	}
+                  
+                  	lld.push(row);
+                  }
+                  
+                  	return JSON.stringify(lld);
+                  
+                  
+      macros:
+        - macro: '{$POST.SIZE.LIMIT}'
+          value: 480K
