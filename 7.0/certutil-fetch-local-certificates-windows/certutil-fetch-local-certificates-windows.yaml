@@ -1,0 +1,138 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 325c0c8c3c47421cb2a19bc82ba75600
+      template: 'certutil fetch local certificates windows'
+      name: 'certutil fetch local certificates windows'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: bea3d8f7986f42828489ec6a0c816151
+          name: format
+          type: DEPENDENT
+          key: fomrmated
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // Selecting all lines
+                  var data = value.match(/^.*$/gm);
+                  
+                  // Merging all lines in one long line. Splitting lines into parts starting with the 'NotAfter' pattern
+                  var single_line = data.join(" ").replace(/NotAfter/gm,'\nNotAfter');
+                  
+                  // making sure every line contains certificate content
+                  var lines = single_line.match(/NotAfter.*Subject.*$/gm);
+                  
+                  // Designing JSON tree
+                  var json = [];
+                  
+                  for (i = 0; i < lines.length; i++)
+                  {
+                    var row = {};
+                    row["NotAfter"] = lines[i].replace(/^.*NotAfter:/,'').replace(/Subject:.*$/,'').replace(/^\s+|\s+$/gm,'');
+                    row["Subject"] = lines[i].replace(/.*Subject:\s+/,'').replace(/^\s+|\s+$/gm,'');
+                    json.push(row);
+                  }
+                  
+                  return JSON.stringify(json);
+          master_item:
+            key: 'system.run["{$CERTUTIL}"]'
+        - uuid: 1e36c0e1f2274f5b9b96a450c40b80a5
+          name: certificates.info1
+          type: ZABBIX_ACTIVE
+          key: 'system.run["{$CERTUTIL}"]'
+          value_type: TEXT
+          trends: '0'
+      discovery_rules:
+        - uuid: 9ec30beaf22d431eb5e4ab428c0e40ee
+          name: cert
+          type: DEPENDENT
+          key: cert
+          delay: '0'
+          item_prototypes:
+            - uuid: 2ef1a1416dea4e54967d05d4784865bd
+              name: 'cert {#SUBJECT}'
+              type: DEPENDENT
+              key: 'cert[{#SUBJECT}]'
+              delay: '0'
+              value_type: CHAR
+              trends: '0'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.Subject== ''{#SUBJECT}'')].NotAfter.first()'
+              master_item:
+                key: fomrmated
+            - uuid: c08ae17711d144b6b831a272680b6831
+              name: 'NotAfter {#SUBJECT}'
+              type: DEPENDENT
+              key: 'NotAfter[{#SUBJECT}]'
+              delay: '0'
+              units: unixtime
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - |
+                      function toUnixTime(dateString) {
+                          // Split the input into date and time parts
+                          var parts = dateString.split(" ");
+                          var datePart = parts[0]; // e.g., "6/14/2025"
+                          var timePart = parts[1]; // e.g., "7:15"
+                          var meridian = parts[2]; // e.g., "AM"
+                      
+                          // Split the date into month, day, and year
+                          var dateParts = datePart.split("/");
+                          var month = Number(dateParts[0]) - 1; // Months are 0-based in Date()
+                          var day = Number(dateParts[1]);
+                          var year = Number(dateParts[2]);
+                      
+                          // Split the time into hours and minutes
+                          var timeParts = timePart.split(":");
+                          var hours = Number(timeParts[0]);
+                          var minutes = Number(timeParts[1]);
+                      
+                          // Adjust hours for AM/PM
+                          if (meridian === "PM" && hours < 12) {
+                              hours += 12;
+                          } else if (meridian === "AM" && hours === 12) {
+                              hours = 0;
+                          }
+                      
+                          // Create a Date object
+                          var date = new Date(year, month, day, hours, minutes, 0, 0);
+                      
+                          // Convert to Unix time (in seconds)
+                          return Math.floor(date.getTime() / 1000);
+                      }
+                      
+                      // Example usage
+                      return toUnixTime(value);
+                      
+              master_item:
+                key: 'cert[{#SUBJECT}]'
+              trigger_prototypes:
+                - uuid: 471063a5e50048ad936e92b5afe96995
+                  expression: |
+                    last(/certutil fetch local certificates windows/NotAfter[{#SUBJECT}]) - 
+                    now() < {$NOTAFTER:"{#SUBJECT}"}
+                  name: '{#SUBJECT} ends'
+                  event_name: '{#SUBJECT} ends at {ITEM.VALUE}'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+          master_item:
+            key: fomrmated
+          lld_macro_paths:
+            - lld_macro: '{#SUBJECT}'
+              path: '$.[''Subject'']'
+      macros:
+        - macro: '{$CERTUTIL}'
+          value: 'certutil -store My | findstr /C:"Subject" /C:"NotAfter"'
+        - macro: '{$NOTAFTER}'
+          value: 90d
