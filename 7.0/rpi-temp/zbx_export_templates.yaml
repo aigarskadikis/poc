@@ -1,0 +1,201 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 708e7d6f90e945dc87e043b855c0bf82
+      template: 'Raspberry Pi internals temp'
+      name: 'Raspberry Pi internals temp'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: e6a7e0d65ff6455a8bc9d779b9e95683
+          name: 'CPU 0'
+          type: ZABBIX_ACTIVE
+          key: 'system.cpu.util[0,idle]'
+          delay: 6s
+          value_type: FLOAT
+          units: '%'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return 100-value;'
+        - uuid: 0178896cca2241e2b8cf54013b2d0e0e
+          name: 'CPU 1'
+          type: ZABBIX_ACTIVE
+          key: 'system.cpu.util[1,idle]'
+          delay: 6s
+          value_type: FLOAT
+          units: '%'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return 100-value;'
+        - uuid: b31d709be3d244cd83d1d46d8be93634
+          name: 'CPU 2'
+          type: ZABBIX_ACTIVE
+          key: 'system.cpu.util[2,idle]'
+          delay: 6s
+          value_type: FLOAT
+          units: '%'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return 100-value;'
+        - uuid: e2080bba1f49491eaebcce507223698b
+          name: 'CPU 3'
+          type: ZABBIX_ACTIVE
+          key: 'system.cpu.util[3,idle]'
+          delay: 6s
+          value_type: FLOAT
+          units: '%'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return 100-value;'
+        - uuid: af313215bd82469a85139ac03d2e2885
+          name: Temperature
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[/sys/class/thermal/thermal_zone0/hwmon0/temp1_input]'
+          delay: 2s
+          history: 90d
+          value_type: FLOAT
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '0.001'
+          tags:
+            - tag: rpi
+              value: temp
+      dashboards:
+        - uuid: 8d9f560d82cf4155a7aac4377f4fa38d
+          name: Temperature
+          display_period: '3600'
+          pages:
+            - widgets:
+                - type: svggraph
+                  width: '72'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: Temperature
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: STRING
+                      name: ds.1.color
+                      value: '247003'
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: 'CPU 0'
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.2.color
+                      value: FFD54F
+                    - type: INTEGER
+                      name: ds.2.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.2.items.0
+                      value: 'CPU 1'
+                    - type: INTEGER
+                      name: ds.2.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.3.color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: ds.3.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.3.items.0
+                      value: 'CPU 2'
+                    - type: INTEGER
+                      name: ds.3.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.4.color
+                      value: 524BBC
+                    - type: INTEGER
+                      name: ds.4.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.4.items.0
+                      value: 'CPU 3'
+                    - type: INTEGER
+                      name: ds.4.transparency
+                      value: '0'
+                    - type: STRING
+                      name: lefty_max
+                      value: '100'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '5'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: QBWIZ
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                    - type: INTEGER
+                      name: source
+                      value: '1'
+  graphs:
+    - uuid: ad90e0cac2ad4c698b78b87b397fc384
+      name: 'new cpu'
+      ymin_type_1: FIXED
+      graph_items:
+        - color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Raspberry Pi internals temp'
+            key: 'system.cpu.util[1,idle]'
+        - sortorder: '1'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'Raspberry Pi internals temp'
+            key: 'system.cpu.util[2,idle]'
+        - sortorder: '2'
+          color: 2774A4
+          calc_fnc: ALL
+          item:
+            host: 'Raspberry Pi internals temp'
+            key: 'system.cpu.util[3,idle]'
+    - uuid: 62d83d565ced4b94aacff3462c308d53
+      name: 'rpi temp'
+      ymin_type_1: FIXED
+      graph_items:
+        - color: FF0000
+          calc_fnc: ALL
+          item:
+            host: 'Raspberry Pi internals temp'
+            key: 'vfs.file.contents[/sys/class/thermal/thermal_zone0/hwmon0/temp1_input]'
