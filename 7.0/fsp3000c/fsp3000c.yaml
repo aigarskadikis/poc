@@ -1,0 +1,2455 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: 36bff6c29af64692839d077febfc7079
+      name: 'Templates/Network devices'
+  templates:
+    - uuid: d6876d08451346b291ed778494983a9f
+      template: fsp3000c
+      name: fsp3000c
+      groups:
+        - name: 'Templates/Network devices'
+      items:
+        - uuid: cb0acfc07080474eba5c1a11c4c69aa6
+          name: AmpJSON
+          type: DEPENDENT
+          key: AmpJSON
+          delay: '0'
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#OPERTIME}'
+                - .1.3.6.1.4.1.2544.1.20.1.5.2.4.1.1
+                - '0'
+                - '{#TOTALGAIN}'
+                - .1.3.6.1.4.1.2544.1.20.1.5.2.4.1.2
+                - '0'
+                - '{#TOTALLASE}'
+                - .1.3.6.1.4.1.2544.1.20.1.5.2.4.1.3
+                - '0'
+                - '{#IFDESCR}'
+                - .1.3.6.1.2.1.2.2.1.2
+                - '0'
+              error_handler: DISCARD_VALUE
+            - type: JSONPATH
+              parameters:
+                - '$[?(@.[''{#OPERTIME}''] && @.[''{#TOTALGAIN}''] && @.[''{#TOTALLASE}''] && @.[''{#IFDESCR}''])]'
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = [];
+                  for (var i = 0; i < data.length; i++) {
+                      var item = data[i];
+                      result.push({ "{#IFDESCR}": item["{#IFDESCR}"], "{#SNMPINDEX}": item["{#SNMPINDEX}"] });
+                  }
+                  return JSON.stringify(result);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: walk
+          tags:
+            - tag: component
+              value: raw
+        - uuid: 3ae98a96c2904b658b2e85673350836d
+          name: ent
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.2.1.47.1.1.1.1.2,1.3.6.1.2.1.47.1.1.1.1.4,1.3.6.1.2.1.47.1.1.1.1.7,1.3.6.1.2.1.47.1.1.1.1.8,1.3.6.1.2.1.47.1.1.1.1.11,1.3.6.1.2.1.47.1.1.1.1.12,1.3.6.1.2.1.47.1.1.1.1.13,1.3.6.1.2.1.47.1.1.1.1.14]'
+          key: ent
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          tags:
+            - tag: component
+              value: raw
+        - uuid: 9fc40fc0718a4c9ba6b95022c7d6f898
+          name: OpticalPowerJSON
+          type: DEPENDENT
+          key: OpticalPowerJSON
+          delay: '0'
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#OPTICALPOWERRX}'
+                - .1.3.6.1.4.1.2544.1.20.1.3.2.1.1.1
+                - '0'
+                - '{#OPTICALPOWERTX}'
+                - .1.3.6.1.4.1.2544.1.20.1.3.2.1.1.2
+                - '0'
+                - '{#IFDESCR}'
+                - .1.3.6.1.2.1.2.2.1.2
+                - '0'
+              error_handler: DISCARD_VALUE
+            - type: JSONPATH
+              parameters:
+                - '$[?(@.[''{#OPTICALPOWERRX}''] && @.[''{#OPTICALPOWERTX}''] && @.[''{#IFDESCR}''])]'
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = [];
+                  for (var i = 0; i < data.length; i++) {
+                      var item = data[i];
+                      result.push({ "{#IFDESCR}": item["{#IFDESCR}"], "{#SNMPINDEX}": item["{#SNMPINDEX}"] });
+                  }
+                  return JSON.stringify(result);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: walk
+          tags:
+            - tag: component
+              value: raw
+        - uuid: 30f04a0c8dc44d30b77d42932971a244
+          name: OscLaserJSON
+          type: DEPENDENT
+          key: OscLaserJSON
+          delay: '0'
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#BIASCURR}'
+                - .1.3.6.1.4.1.2544.1.20.1.5.2.2.1.1
+                - '0'
+                - '{#TEMP}'
+                - .1.3.6.1.4.1.2544.1.20.1.5.2.2.1.2
+                - '0'
+                - '{#IFDESCR}'
+                - .1.3.6.1.2.1.2.2.1.2
+                - '0'
+              error_handler: DISCARD_VALUE
+            - type: JSONPATH
+              parameters:
+                - '$[?(@.[''{#BIASCURR}''] && @.[''{#TEMP}''] && @.[''{#IFDESCR}''])]'
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = [];
+                  for (var i = 0; i < data.length; i++) {
+                      var item = data[i];
+                      result.push({ "{#IFDESCR}": item["{#IFDESCR}"], "{#SNMPINDEX}": item["{#SNMPINDEX}"] });
+                  }
+                  return JSON.stringify(result);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: walk
+          tags:
+            - tag: component
+              value: raw
+        - uuid: dd35303e70624cd6b45341e7569b5ddb
+          name: OscOptPowerJSON
+          type: DEPENDENT
+          key: OscOptPowerJSON
+          delay: '0'
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#OSCOPTPOWERENTRY}'
+                - .1.3.6.1.4.1.2544.1.20.1.5.2.1.1.0
+                - '0'
+                - '{#OSCOPTPOWERRX}'
+                - .1.3.6.1.4.1.2544.1.20.1.5.2.1.1.1
+                - '0'
+                - '{#IFDESCR}'
+                - .1.3.6.1.2.1.2.2.1.2
+                - '0'
+              error_handler: DISCARD_VALUE
+            - type: JSONPATH
+              parameters:
+                - '$[?(@.[''{#OSCOPTPOWERENTRY}''] && @.[''{#OSCOPTPOWERRX}''] && @.[''{#IFDESCR}''])]'
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = [];
+                  for (var i = 0; i < data.length; i++) {
+                      var item = data[i];
+                      result.push({ "{#IFDESCR}": item["{#IFDESCR}"], "{#SNMPINDEX}": item["{#SNMPINDEX}"] });
+                  }
+                  return JSON.stringify(result);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: walk
+          tags:
+            - tag: component
+              value: raw
+        - uuid: e0c94954551c4191aec1d7ae9404a5fc
+          name: PhysicalJSON
+          type: DEPENDENT
+          key: PhysicalJSON
+          delay: '0'
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#CONTAINEDIN}'
+                - .1.3.6.1.2.1.47.1.1.1.1.4
+                - '0'
+                - '{#NAME}'
+                - .1.3.6.1.2.1.47.1.1.1.1.7
+                - '0'
+                - '{#HARDWAREREV}'
+                - .1.3.6.1.2.1.47.1.1.1.1.8
+                - '0'
+                - '{#SERIALNUM}'
+                - .1.3.6.1.2.1.47.1.1.1.1.11
+                - '0'
+                - '{#MFGNAME}'
+                - .1.3.6.1.2.1.47.1.1.1.1.12
+                - '0'
+                - '{#MODELNAME}'
+                - .1.3.6.1.2.1.47.1.1.1.1.13
+                - '0'
+                - '{#ALIAS}'
+                - .1.3.6.1.2.1.47.1.1.1.1.14
+                - '0'
+            - type: JSONPATH
+              parameters:
+                - '$[?(@.[''{#CONTAINEDIN}''] && @.[''{#NAME}''] && @.[''{#HARDWAREREV}''] && @.[''{#SERIALNUM}''] && @.[''{#MFGNAME}''] && @.[''{#MODELNAME}''] && @.[''{#ALIAS}''])]'
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = [];
+                  for (var i = 0; i < data.length; i++) {
+                      var item = data[i];
+                      result.push({ "{#MODELNAME}": item["{#MODELNAME}"], "{#MFGNAME}": item["{#MFGNAME}"], "{#NAME}": item["{#NAME}"], "{#ALIAS}": item["{#ALIAS}"], "{#SNMPINDEX}": item["{#SNMPINDEX}"] });
+                  }
+                  return JSON.stringify(result);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ent
+          tags:
+            - tag: component
+              value: raw
+        - uuid: 790125fad1274a859885e87abbed4445
+          name: RMON
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.2.1.2.2.1.2,1.3.6.1.2.1.2.2.1.3,1.3.6.1.2.1.31.1.1.1.15,1.3.6.1.2.1.2.2.1.7,1.3.6.1.2.1.2.2.1.8,1.3.6.1.2.1.16.1.1.1.3,1.3.6.1.2.1.16.1.1.1.6,1.3.6.1.2.1.16.1.1.1.7,1.3.6.1.2.1.16.1.1.1.8,1.3.6.1.2.1.16.1.1.1.9,1.3.6.1.2.1.16.1.1.1.10,1.3.6.1.2.1.16.1.1.1.11,1.3.6.1.2.1.16.1.1.1.12,1.3.6.1.2.1.16.1.1.1.13,1.3.6.1.2.1.16.1.1.1.20,1.3.6.1.2.1.16.1.1.1.21,1.3.6.1.2.1.16.1.7.1.1,1.3.6.1.2.1.16.1.7.1.2,1.3.6.1.2.1.16.1.7.1.3,1.3.6.1.2.1.16.1.7.1.4]'
+          key: RMON
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          tags:
+            - tag: component
+              value: raw
+        - uuid: 8c318adc161a47fca09e6b6519e88a1f
+          name: rmonJSON
+          type: DEPENDENT
+          key: rmonJSON
+          delay: '0'
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#IFDESCR}'
+                - .1.3.6.1.2.1.2.2.1.2
+                - '0'
+                - '{#IFTYPE}'
+                - .1.3.6.1.2.1.2.2.1.3
+                - '0'
+                - '{#IFADMINSTATUS}'
+                - .1.3.6.1.2.1.2.2.1.7
+                - '0'
+                - '{#IFOPERSTATUS}'
+                - .1.3.6.1.2.1.2.2.1.8
+                - '0'
+                - '{#STATUS}'
+                - .1.3.6.1.2.1.16.1.1.1.21
+                - '0'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: RMON
+        - uuid: 8e802416d9b74bd29e1dd8e3f51f6893
+          name: SpanLossJSON
+          type: DEPENDENT
+          key: SpanLossJSON
+          delay: '0'
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#SPANLOSSRX}'
+                - .1.3.6.1.4.1.2544.1.20.1.5.2.3.1.1
+                - '0'
+                - '{#SPANLOSSTX}'
+                - .1.3.6.1.4.1.2544.1.20.1.5.2.3.1.2
+                - '0'
+                - '{#IFDESCR}'
+                - .1.3.6.1.2.1.2.2.1.2
+                - '0'
+              error_handler: DISCARD_VALUE
+            - type: JSONPATH
+              parameters:
+                - '$[?(@.[''{#SPANLOSSRX}''] && @.[''{#SPANLOSSTX}''] && @.[''{#IFDESCR}''])]'
+              error_handler: DISCARD_VALUE
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = [];
+                  for (var i = 0; i < data.length; i++) {
+                      var item = data[i];
+                      result.push({ "{#IFDESCR}": item["{#IFDESCR}"], "{#SNMPINDEX}": item["{#SNMPINDEX}"] });
+                  }
+                  return JSON.stringify(result);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: walk
+          tags:
+            - tag: component
+              value: raw
+        - uuid: 08fdbda3b6954c89a4d4c27dc2679353
+          name: Walk
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.2.1.2.2.1.2,1.3.6.1.4.1.2544.1.20.1.5.2.3.1.1,1.3.6.1.4.1.2544.1.20.1.5.2.3.1.2,1.3.6.1.4.1.2544.1.20.1.5.2.2.1.1,1.3.6.1.4.1.2544.1.20.1.5.2.2.1.2,1.3.6.1.4.1.2544.1.20.1.5.2.4.1.1,1.3.6.1.4.1.2544.1.20.1.5.2.4.1.2,1.3.6.1.4.1.2544.1.20.1.5.2.4.1.3,1.3.6.1.4.1.2544.1.20.1.3.2.1.1.1,1.3.6.1.4.1.2544.1.20.1.3.2.1.1.2,1.3.6.1.4.1.2544.1.20.1.5.2.1.1.0,1.3.6.1.4.1.2544.1.20.1.5.2.1.1.1]'
+          key: walk
+          history: '{$DEBUG}'
+          value_type: TEXT
+          trends: '0'
+          description: 'ifDescr,SpanLossRx,SpanLossTx,BiasCurr,Temp,OperTime,TotalGain,TotalLase,OpticalPowerRx,OpticalPowerTx,OscOptPowerEntry,OscOptPowerRx'
+          tags:
+            - tag: component
+              value: raw
+      discovery_rules:
+        - uuid: 05d33aa093624785ab03e5f191094120
+          name: Amp
+          type: DEPENDENT
+          key: Amp
+          delay: '0'
+          item_prototypes:
+            - uuid: 79218adc41264ab18c7cc41dd5242332
+              name: 'OperTime {#IFDESCR}'
+              type: DEPENDENT
+              key: 'OperTime[{#SNMPINDEX}]'
+              delay: '0'
+              units: s
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2544.1.20.1.5.2.4.1.1.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '3600'
+              master_item:
+                key: walk
+              tags:
+                - tag: Amp
+                  value: OperTime
+                - tag: Interface
+                  value: '{#IFDESCR}'
+              trigger_prototypes:
+                - uuid: 91cc747953de429a96325d3361bc6828
+                  expression: 'last(/fsp3000c/OperTime[{#SNMPINDEX}]) < {$OPERTIME}'
+                  name: '{#IFDESCR} operation time resets'
+                  priority: WARNING
+                  manual_close: 'YES'
+            - uuid: ff9b934c28a3485395c2202f3b3106eb
+              name: 'TotalGainDelta {#IFDESCR}'
+              type: CALCULATED
+              key: 'TotalGainDelta[{#SNMPINDEX}]'
+              value_type: FLOAT
+              units: '!dB'
+              params: |
+                last(//TotalGain[{#SNMPINDEX}],#1)
+                - last(//TotalGain[{#SNMPINDEX}],#2)
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - ''
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: STR_REPLACE
+                  parameters:
+                    - '-'
+                    - ''
+            - uuid: df96e4a43c1c450ba1172c72313d5714
+              name: 'Total Gain {#IFDESCR}'
+              type: DEPENDENT
+              key: 'TotalGain[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '!dB'
+              description: 'Monitored total gain of an amplifier stage'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2544.1.20.1.5.2.4.1.2.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              master_item:
+                key: walk
+              tags:
+                - tag: Amp
+                  value: TotalGain
+                - tag: Interface
+                  value: '{#IFDESCR}'
+              trigger_prototypes:
+                - uuid: 7bba15bd8c95454d9b1645a97ca23a02
+                  expression: |
+                    ( trendavg(/fsp3000c/TotalGain[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/TotalGain[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:TotalGain})
+                    or
+                    (trendavg(/fsp3000c/TotalGain[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/TotalGain[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:TotalGain})
+                  name: 'Change factor {$COMPARE.FACTOR:TotalGain} detected while comparing 1d VS {$COMPARE.AGO:TotalGain} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+            - uuid: 250bd09ba2934975a6be06b556244945
+              name: 'TotalLaseDelta {#IFDESCR}'
+              type: CALCULATED
+              key: 'TotalLaseDelta[{#SNMPINDEX}]'
+              value_type: FLOAT
+              units: '!dBm'
+              params: |
+                last(//TotalLase[{#SNMPINDEX}],#1)
+                - last(//TotalLase[{#SNMPINDEX}],#2)
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - ''
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: STR_REPLACE
+                  parameters:
+                    - '-'
+                    - ''
+            - uuid: 1372718f831948adb7af004696df2e61
+              name: 'Total Lase {#IFDESCR}'
+              type: DEPENDENT
+              key: 'TotalLase[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '!dBm'
+              description: 'Calculated total lase contribution port to port of an amplifier'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2544.1.20.1.5.2.4.1.3.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              master_item:
+                key: walk
+              tags:
+                - tag: Amp
+                  value: TotalLase
+                - tag: Interface
+                  value: '{#IFDESCR}'
+              trigger_prototypes:
+                - uuid: f8a8293960ce4739adc2d25568a7cdb5
+                  expression: |
+                    ( trendavg(/fsp3000c/TotalLase[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/TotalLase[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:TotalLase})
+                    or
+                    (trendavg(/fsp3000c/TotalLase[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/TotalLase[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:TotalLase})
+                  name: 'Change factor {$COMPARE.FACTOR:TotalLase} detected while comparing 1d VS {$COMPARE.AGO:TotalLase} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+          trigger_prototypes:
+            - uuid: ac1c6de0870143cea3f0a4a7c2d0ddbb
+              expression: |
+                sum(/fsp3000c/TotalGainDelta[{#SNMPINDEX}],{$TIME.FRAME:TotalGain}) > {$DELTA:TotalGain}
+                and
+                count(/fsp3000c/TotalGain[{#SNMPINDEX}],#1)=1
+              name: 'Fluctuation sum in last {$TIME.FRAME:TotalGain} has reached {ITEM.VALUE1} (threshold: {$DELTA:TotalGain})'
+              opdata: '{ITEM.LASTVALUE1}'
+              priority: WARNING
+              manual_close: 'YES'
+            - uuid: 4f5d3de3b4ea483c81a39f121928447e
+              expression: |
+                sum(/fsp3000c/TotalLaseDelta[{#SNMPINDEX}],{$TIME.FRAME:TotalLase}) > {$DELTA:TotalLase}
+                and
+                count(/fsp3000c/TotalLase[{#SNMPINDEX}],#1)=1
+              name: 'Fluctuation sum in last {$TIME.FRAME:TotalLase} has reached {ITEM.VALUE1} (threshold: {$DELTA:TotalLase})'
+              opdata: '{ITEM.LASTVALUE1}'
+              priority: WARNING
+              manual_close: 'YES'
+          master_item:
+            key: AmpJSON
+        - uuid: aca459407f144171a14d364ffeb23905
+          name: OpticalPower
+          type: DEPENDENT
+          key: OpticalPower
+          delay: '0'
+          item_prototypes:
+            - uuid: 214fbabd0e6f42b18f99e80f502c4e7a
+              name: 'OpticalPowerRxDelta {#IFDESCR}'
+              type: CALCULATED
+              key: 'OpticalPowerRxDelta[{#SNMPINDEX}]'
+              value_type: FLOAT
+              units: '!dBm'
+              params: |
+                last(//OpticalPowerRx[{#SNMPINDEX}],#1)
+                - last(//OpticalPowerRx[{#SNMPINDEX}],#2)
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - ''
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: STR_REPLACE
+                  parameters:
+                    - '-'
+                    - ''
+            - uuid: 3c7cde562f554074a84abea3e45c1f68
+              name: 'OpticalPowerRx {#IFDESCR}'
+              type: DEPENDENT
+              key: 'OpticalPowerRx[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '!dBm'
+              description: 'The optical power monitored at the input'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2544.1.20.1.3.2.1.1.1.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              master_item:
+                key: walk
+              tags:
+                - tag: Interface
+                  value: '{#IFDESCR}'
+                - tag: OpticalPower
+                  value: Rx
+              trigger_prototypes:
+                - uuid: 534e2d023c0c4d108f1d28b075e67ea0
+                  expression: |
+                    ( trendavg(/fsp3000c/OpticalPowerRx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/OpticalPowerRx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:OpticalPowerRx})
+                  name: 'Change factor up {$COMPARE.FACTOR:OpticalPowerRx} detected while comparing 1d VS {$COMPARE.AGO:OpticalPowerRx} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                - uuid: eb1e097054e34be2bfc4120aa6ffca10
+                  expression: |
+                    ( trendavg(/fsp3000c/OpticalPowerRx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/OpticalPowerRx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:OpticalPowerRx})
+                    or
+                    (trendavg(/fsp3000c/OpticalPowerRx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/OpticalPowerRx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:OpticalPowerRx})
+                  name: 'Change factor {$COMPARE.FACTOR:OpticalPowerRx} detected while comparing 1d VS {$COMPARE.AGO:OpticalPowerRx} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                - uuid: 84335b1bd0e043c7aa1d7089fe496535
+                  expression: |
+                    (change(/fsp3000c/OpticalPowerRx[{#SNMPINDEX}]) > {$IMMEDIATE.CHANGE:OpticalPowerRx})
+                    or
+                    (change(/fsp3000c/OpticalPowerRx[{#SNMPINDEX}]) < -{$IMMEDIATE.CHANGE:OpticalPowerRx})
+                  name: '{ITEM.VALUE1} shift detected (threshold: {$IMMEDIATE.CHANGE:OpticalPowerRx})'
+                  priority: HIGH
+                  manual_close: 'YES'
+            - uuid: 3ee078e59a524bb8a88de22f331634c8
+              name: 'OpticalPowerTxDelta {#IFDESCR}'
+              type: CALCULATED
+              key: 'OpticalPowerTxDelta[{#SNMPINDEX}]'
+              value_type: FLOAT
+              units: '!dBm'
+              params: |
+                last(//OpticalPowerTx[{#SNMPINDEX}],#1)
+                - last(//OpticalPowerTx[{#SNMPINDEX}],#2)
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - ''
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: STR_REPLACE
+                  parameters:
+                    - '-'
+                    - ''
+            - uuid: d80e860d01144e8285ec8e813db378fe
+              name: 'OpticalPowerTx {#IFDESCR}'
+              type: DEPENDENT
+              key: 'OpticalPowerTx[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '!dBm'
+              description: 'The optical power monitored at the output'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2544.1.20.1.3.2.1.1.2.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              master_item:
+                key: walk
+              tags:
+                - tag: Interface
+                  value: '{#IFDESCR}'
+                - tag: OpticalPower
+                  value: Tx
+              trigger_prototypes:
+                - uuid: 6ce372cc7cd647f1a5c54c60886e5c08
+                  expression: |
+                    ( trendavg(/fsp3000c/OpticalPowerTx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/OpticalPowerTx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:OpticalPowerTx})
+                    or
+                    (trendavg(/fsp3000c/OpticalPowerTx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/OpticalPowerTx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:OpticalPowerTx})
+                  name: 'Change factor {$COMPARE.FACTOR:OpticalPowerTx} detected while comparing 1d VS {$COMPARE.AGO:OpticalPowerRx} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                - uuid: 5e11eab16d9249b89c2b64c31d0753a7
+                  expression: |
+                    (change(/fsp3000c/OpticalPowerTx[{#SNMPINDEX}]) > {$IMMEDIATE.CHANGE:OpticalPowerTx})
+                    or
+                    (change(/fsp3000c/OpticalPowerTx[{#SNMPINDEX}]) < -{$IMMEDIATE.CHANGE:OpticalPowerTx})
+                  name: '{ITEM.VALUE1} shift detected (threshold: {$IMMEDIATE.CHANGE:OpticalPowerTx})'
+                  priority: HIGH
+                  manual_close: 'YES'
+          trigger_prototypes:
+            - uuid: 48208086f658432980d894cc1ddf0d19
+              expression: |
+                sum(/fsp3000c/OpticalPowerRxDelta[{#SNMPINDEX}],{$TIME.FRAME:OpticalPowerRxDelta}) > {$DELTA:OpticalPowerRx}
+                and
+                count(/fsp3000c/OpticalPowerRx[{#SNMPINDEX}],#1)=1
+              name: 'Fluctuation sum in last {$TIME.FRAME:OpticalPowerRx} has reached {ITEM.VALUE1} (threshold: {$DELTA:OpticalPowerRx})'
+              opdata: '{ITEM.LASTVALUE1}'
+              priority: WARNING
+              manual_close: 'YES'
+            - uuid: faa9ae142f574d0fb54d82b4137564ce
+              expression: |
+                sum(/fsp3000c/OpticalPowerTxDelta[{#SNMPINDEX}],{$TIME.FRAME:OpticalPowerTxDelta}) > {$DELTA:OpticalPowerTx}
+                and
+                count(/fsp3000c/OpticalPowerTx[{#SNMPINDEX}],#1)=1
+              name: 'Fluctuation sum in last {$TIME.FRAME:OpticalPowerTx} has reached {ITEM.VALUE1} (threshold: {$DELTA:OpticalPowerTx})'
+              opdata: '{ITEM.LASTVALUE1}'
+              priority: WARNING
+              manual_close: 'YES'
+          graph_prototypes:
+            - uuid: 2f35371da73c4238b39cf393497410b5
+              name: 'Optical power {#IFDESCR}'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'OpticalPowerRx[{#SNMPINDEX}]'
+                - sortorder: '1'
+                  color: '274482'
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'OpticalPowerTx[{#SNMPINDEX}]'
+          master_item:
+            key: OpticalPowerJSON
+        - uuid: 176db6668941430697b52dcb879b5d9b
+          name: OscLaser
+          type: DEPENDENT
+          key: OscLaser
+          delay: '0'
+          item_prototypes:
+            - uuid: fc05b31ef9d64f5e9e55a584fcc247d3
+              name: 'Laser Bias Current {#IFDESCR}'
+              type: DEPENDENT
+              key: 'BiasCurr[{#SNMPINDEX}]'
+              delay: '0'
+              units: '!mA'
+              description: 'Optical laser bias current'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2544.1.20.1.5.2.2.1.1.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: walk
+              tags:
+                - tag: Interface
+                  value: '{#IFDESCR}'
+                - tag: OscLaser
+                  value: Current
+              trigger_prototypes:
+                - uuid: a579ebe425904f5dba68977053531d91
+                  expression: |
+                    ( trendavg(/fsp3000c/BiasCurr[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/BiasCurr[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:BiasCurr})
+                    or
+                    (trendavg(/fsp3000c/BiasCurr[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/BiasCurr[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:BiasCurr})
+                  name: 'Change factor {$COMPARE.FACTOR:BiasCurr} detected while comparing 1d VS {$COMPARE.AGO:BiasCurr} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                - uuid: 70cbb1f965584392a08805b4663604db
+                  expression: 'min(/fsp3000c/BiasCurr[{#SNMPINDEX}],{$TIME.FRAME}) > {$LASER.CURRENT.MAX:"{#IFDESCR}"}'
+                  name: 'Current is {ITEM.VALUE1} (threshold: {$LASER.CURRENT.MAX:"{#IFDESCR}"})'
+                  opdata: '{ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  manual_close: 'YES'
+            - uuid: 61a1fccffaf0414298f4a4107be6c2dd
+              name: 'Laser temp {#IFDESCR}'
+              type: DEPENDENT
+              key: 'LaserTemp[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: FLOAT
+              units: C
+              description: 'Optical laser bias current'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2544.1.20.1.5.2.2.1.2.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              master_item:
+                key: walk
+              tags:
+                - tag: Interface
+                  value: '{#IFDESCR}'
+                - tag: OscLaser
+                  value: Temp
+              trigger_prototypes:
+                - uuid: 6a460f55f21b421dbc53fc5a3c64fc0f
+                  expression: |
+                    ( trendavg(/fsp3000c/LaserTemp[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/LaserTemp[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:LaserTemp})
+                    or
+                    (trendavg(/fsp3000c/LaserTemp[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/LaserTemp[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:LaserTemp})
+                  name: 'Change factor {$COMPARE.FACTOR:LaserTemp} detected while comparing 1d VS {$COMPARE.AGO:LaserTemp} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                - uuid: 033ed49973b84d3e935792671a7d52cc
+                  expression: 'min(/fsp3000c/LaserTemp[{#SNMPINDEX}],{$TIME.FRAME}) > {$LASER.TEMP:"{#IFDESCR}"}'
+                  name: 'Temperature is {ITEM.VALUE1} (threshold: {$TEMP.LASER:"{#IFDESCR}"})'
+                  opdata: '{ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  manual_close: 'YES'
+          graph_prototypes:
+            - uuid: dd4bacada2a6421083cd9dddd31d6de0
+              name: 'Laser current and temp {#IFDESCR}'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'BiasCurr[{#SNMPINDEX}]'
+                - sortorder: '1'
+                  color: FF0000
+                  yaxisside: RIGHT
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'LaserTemp[{#SNMPINDEX}]'
+          master_item:
+            key: OscLaserJSON
+        - uuid: 2f7fe2e59f0249168072d4f55ac3a7df
+          name: OscOptPower
+          type: DEPENDENT
+          key: OscOptPower
+          delay: '0'
+          item_prototypes:
+            - uuid: 95ab06f74bc948768e74c9d071eb9a31
+              name: 'OptPowerEntryDelta {#IFDESCR}'
+              type: CALCULATED
+              key: 'OptPowerEntryDelta[{#SNMPINDEX}]'
+              value_type: FLOAT
+              units: '!dBm'
+              params: |
+                last(//OptPowerEntry[{#SNMPINDEX}],#1)
+                - last(//OptPowerEntry[{#SNMPINDEX}],#2)
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - ''
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: STR_REPLACE
+                  parameters:
+                    - '-'
+                    - ''
+            - uuid: 2861bcca677f4b2cae0b85041d4a65a4
+              name: 'OptPowerEntry {#IFDESCR}'
+              type: DEPENDENT
+              key: 'OptPowerEntry[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '!dBm'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.4.1.2544.1.20.1.5.2.1.1.0.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              master_item:
+                key: walk
+              tags:
+                - tag: Interface
+                  value: '{#IFDESCR}'
+                - tag: OscOptPower
+                  value: Entry
+              trigger_prototypes:
+                - uuid: b71048f12e784c749f0a9203ab600985
+                  expression: |
+                    ( trendavg(/fsp3000c/OptPowerEntry[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/OptPowerEntry[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:OptPowerEntry})
+                    or
+                    (trendavg(/fsp3000c/OptPowerEntry[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/OptPowerEntry[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:OptPowerEntry})
+                  name: 'Change factor {$COMPARE.FACTOR:OptPowerEntry} detected while comparing 1d VS {$COMPARE.AGO:OptPowerEntry} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                - uuid: fa34c08f73bd4e9c8fac583c1bb5e0b9
+                  expression: |
+                    (change(/fsp3000c/OptPowerEntry[{#SNMPINDEX}]) > {$IMMEDIATE.CHANGE:OptPowerEntry})
+                    or
+                    (change(/fsp3000c/OptPowerEntry[{#SNMPINDEX}]) < -{$IMMEDIATE.CHANGE:OptPowerEntry})
+                  name: '{ITEM.VALUE1} shift detected (threshold: {$IMMEDIATE.CHANGE:OptPowerEntry})'
+                  priority: HIGH
+                  manual_close: 'YES'
+            - uuid: f1004e69c6204e4ba8a0c9262e1678a7
+              name: 'OptPowerRxDelta {#IFDESCR}'
+              type: CALCULATED
+              key: 'OptPowerRxDelta[{#SNMPINDEX}]'
+              value_type: FLOAT
+              units: '!dBm'
+              params: |
+                last(//OptPowerRx[{#SNMPINDEX}],#1)
+                - last(//OptPowerRx[{#SNMPINDEX}],#2)
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - ''
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: STR_REPLACE
+                  parameters:
+                    - '-'
+                    - ''
+            - uuid: 1b39f7d85a5147128a08ca48d140a7a4
+              name: 'OptPowerRx {#IFDESCR}'
+              type: DEPENDENT
+              key: 'OptPowerRx[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '!dBm'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.4.1.2544.1.20.1.5.2.1.1.1.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              master_item:
+                key: walk
+              tags:
+                - tag: Interface
+                  value: '{#IFDESCR}'
+                - tag: OscOptPower
+                  value: Rx
+              trigger_prototypes:
+                - uuid: 5cef02ef281d42489fad3c00086e3ad5
+                  expression: |
+                    ( trendavg(/fsp3000c/OptPowerRx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/OptPowerRx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:OptPowerRx})
+                    or
+                    (trendavg(/fsp3000c/OptPowerRx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/OptPowerRx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:OptPowerRx})
+                  name: 'Change factor {$COMPARE.FACTOR:OptPowerRx} detected while comparing 1d VS {$COMPARE.AGO:OptPowerRx} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                - uuid: 787eb635a3b64789b8c22043cd50e0f5
+                  expression: |
+                    (change(/fsp3000c/OptPowerRx[{#SNMPINDEX}]) > {$IMMEDIATE.CHANGE:OptPowerRx})
+                    or
+                    (change(/fsp3000c/OptPowerRx[{#SNMPINDEX}]) < -{$IMMEDIATE.CHANGE:OptPowerRx})
+                  name: '{ITEM.VALUE1} shift detected (threshold: {$IMMEDIATE.CHANGE:OptPowerRx})'
+                  priority: HIGH
+                  manual_close: 'YES'
+          trigger_prototypes:
+            - uuid: 22c76e3757fe4dcfbfe38359ed79f8f7
+              expression: |
+                sum(/fsp3000c/OptPowerEntryDelta[{#SNMPINDEX}],{$TIME.FRAME:OptPowerEntry}) > {$DELTA:OptPowerEntry}
+                and
+                count(/fsp3000c/OptPowerEntry[{#SNMPINDEX}],#1)=1
+              name: 'Fluctuation sum in last {$TIME.FRAME:OptPowerEntry} has reached {ITEM.VALUE1} (threshold: {$DELTA:OptPowerEntry})'
+              opdata: '{ITEM.LASTVALUE1}'
+              priority: WARNING
+              manual_close: 'YES'
+            - uuid: fa4c338926a24eefb1c12ca61952c3e9
+              expression: |
+                sum(/fsp3000c/OptPowerRxDelta[{#SNMPINDEX}],{$TIME.FRAME:OptPowerRx}) > {$DELTA:OptPowerRx}
+                and
+                count(/fsp3000c/OptPowerRx[{#SNMPINDEX}],#1)=1
+              name: 'Fluctuation sum in last {$TIME.FRAME:OptPowerRx} has reached {ITEM.VALUE1} (threshold: {$DELTA:OptPowerRx})'
+              opdata: '{ITEM.LASTVALUE1}'
+              priority: WARNING
+              manual_close: 'YES'
+          graph_prototypes:
+            - uuid: a95fa07977104e5c805b3208cd278aac
+              name: 'OSC optical power {#IFDESCR}'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'OptPowerRx[{#SNMPINDEX}]'
+                - sortorder: '1'
+                  color: '274482'
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'OptPowerEntry[{#SNMPINDEX}]'
+          master_item:
+            key: OscOptPowerJSON
+        - uuid: fbdcf58c431d4538af05bdb8a3db8e06
+          name: Physical
+          type: DEPENDENT
+          key: Physical
+          delay: '0'
+          item_prototypes:
+            - uuid: b428667242e74d6bbf166d8e720396f2
+              name: '{#NAME} ({#ALIAS}) ContainedIn'
+              type: DEPENDENT
+              key: 'ContainedIn[{#SNMPINDEX}]'
+              delay: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.47.1.1.1.1.4.{#SNMPINDEX}'
+                    - '0'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: ent
+              tags:
+                - tag: Alias
+                  value: '{#ALIAS}'
+                - tag: MfgName
+                  value: '{#MFGNAME}'
+                - tag: ModelName
+                  value: '{#MODELNAME}'
+                - tag: Physical
+                  value: ContainedIn
+            - uuid: 4119ac95bbc147f7a593a62ee9f37e0a
+              name: '{#NAME} ({#ALIAS}) Descr'
+              type: DEPENDENT
+              key: 'Descr[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: CHAR
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.47.1.1.1.1.2.{#SNMPINDEX}'
+                    - '0'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: ent
+              tags:
+                - tag: Alias
+                  value: '{#ALIAS}'
+                - tag: MfgName
+                  value: '{#MFGNAME}'
+                - tag: ModelName
+                  value: '{#MODELNAME}'
+                - tag: Physical
+                  value: Descr
+            - uuid: 821000845dd642c4988d3c6afa4b9722
+              name: '{#NAME} ({#ALIAS}) HardwareRev'
+              type: DEPENDENT
+              key: 'HardwareRev[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: CHAR
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.47.1.1.1.1.8.{#SNMPINDEX}'
+                    - '0'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: ent
+              tags:
+                - tag: Alias
+                  value: '{#ALIAS}'
+                - tag: MfgName
+                  value: '{#MFGNAME}'
+                - tag: ModelName
+                  value: '{#MODELNAME}'
+                - tag: Physical
+                  value: HardwareRev
+            - uuid: b4278e5da6e946339dddaacc52c2abbd
+              name: '{#NAME} ({#ALIAS}) MfgName'
+              type: DEPENDENT
+              key: 'MfgName[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: CHAR
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.47.1.1.1.1.12.{#SNMPINDEX}'
+                    - '0'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: ent
+              tags:
+                - tag: Alias
+                  value: '{#ALIAS}'
+                - tag: MfgName
+                  value: '{#MFGNAME}'
+                - tag: ModelName
+                  value: '{#MODELNAME}'
+                - tag: Physical
+                  value: MfgName
+            - uuid: a3a8f73facb24eae99f5790537c420b6
+              name: '{#NAME} ({#ALIAS}) ModelName'
+              type: DEPENDENT
+              key: 'ModelName[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: CHAR
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.47.1.1.1.1.13.{#SNMPINDEX}'
+                    - '0'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: ent
+              tags:
+                - tag: Alias
+                  value: '{#ALIAS}'
+                - tag: MfgName
+                  value: '{#MFGNAME}'
+                - tag: ModelName
+                  value: '{#MODELNAME}'
+                - tag: Physical
+                  value: ModelName
+            - uuid: 49546cf519d14024afa6b39ea849c0ab
+              name: '{#NAME} ({#ALIAS}) SerialNum'
+              type: DEPENDENT
+              key: 'SerialNum[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: CHAR
+              trends: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.47.1.1.1.1.11.{#SNMPINDEX}'
+                    - '0'
+                  error_handler: DISCARD_VALUE
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: ent
+              tags:
+                - tag: Alias
+                  value: '{#ALIAS}'
+                - tag: MfgName
+                  value: '{#MFGNAME}'
+                - tag: ModelName
+                  value: '{#MODELNAME}'
+                - tag: Physical
+                  value: SerialNum
+          master_item:
+            key: PhysicalJSON
+        - uuid: 829c60c92f4848d5860e142d4de96b9f
+          name: rmon
+          type: DEPENDENT
+          key: rmon
+          delay: '0'
+          item_prototypes:
+            - uuid: 845c405e857d46178fb93a813297d21d
+              name: 'Bits {#IFDESCR}'
+              type: DEPENDENT
+              key: 'Bits[{#SNMPINDEX}]'
+              delay: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.7.1.4.{#SNMPINDEX}'
+                    - '0'
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: Bits
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: 3a51904d6c224dd6a50adc851e2ea005
+              name: 'BroadcastPkts {#IFDESCR}'
+              type: DEPENDENT
+              key: 'BroadcastPkts[{#SNMPINDEX}]'
+              delay: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.1.1.6.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: BroadcastPkts
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: 4d6338bc07c34910ad0a86dc146b6218
+              name: 'Collisions {#IFDESCR}'
+              type: DEPENDENT
+              key: 'Collisions[{#SNMPINDEX}]'
+              delay: '0'
+              units: '!Collisions'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.1.1.13.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: Collisions
+                - tag: Interface
+                  value: '{#IFDESCR}'
+              trigger_prototypes:
+                - uuid: 6d64400f28b946c7a2f2a2002a02eb38
+                  expression: 'max(/fsp3000c/Collisions[{#SNMPINDEX}],{$TIME.FRAME}) > 0'
+                  name: '{ITEM.VALUE1} detected'
+                  opdata: '{ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  manual_close: 'YES'
+            - uuid: 11d3489501a34c47803bd509f4b233c4
+              name: 'CRCAlignErrors {#IFDESCR}'
+              type: DEPENDENT
+              key: 'CRCAlignErrors[{#SNMPINDEX}]'
+              delay: '0'
+              units: '!CRCAlignErrors'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.1.1.8.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: CRCAlignErrors
+                - tag: Interface
+                  value: '{#IFDESCR}'
+              trigger_prototypes:
+                - uuid: 6dccbf0cf08c498a84aaae10024d904c
+                  expression: 'max(/fsp3000c/CRCAlignErrors[{#SNMPINDEX}],{$TIME.FRAME}) > 0'
+                  name: '{ITEM.VALUE1} detected'
+                  opdata: '{ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  manual_close: 'YES'
+            - uuid: a64cd05700964d798e53429c378740c4
+              name: 'DropEvents {#IFDESCR}'
+              type: DEPENDENT
+              key: 'DropEvents[{#SNMPINDEX}]'
+              delay: '0'
+              units: '!DropEvents'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.1.1.3.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: DropEvents
+                - tag: Interface
+                  value: '{#IFDESCR}'
+              trigger_prototypes:
+                - uuid: 4f8625b46bc640e0adf63345a33db92f
+                  expression: 'max(/fsp3000c/DropEvents[{#SNMPINDEX}],{$TIME.FRAME}) > 0'
+                  name: '{ITEM.VALUE1} detected'
+                  opdata: '{ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  manual_close: 'YES'
+            - uuid: 6b59c6b5e2cb491f8066dcdeee7749d9
+              name: 'Fragments {#IFDESCR}'
+              type: DEPENDENT
+              key: 'Fragments[{#SNMPINDEX}]'
+              delay: '0'
+              units: '!Fragments'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.1.1.11.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: Fragments
+                - tag: Interface
+                  value: '{#IFDESCR}'
+              trigger_prototypes:
+                - uuid: 0c87448eac234e5c963ac059674094e5
+                  expression: 'max(/fsp3000c/Fragments[{#SNMPINDEX}],{$TIME.FRAME}) > 0'
+                  name: '{ITEM.VALUE1} detected'
+                  opdata: '{ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  manual_close: 'YES'
+            - uuid: 81a396cfb3864685a8291ee529a5bc36
+              name: 'ifAdminStatus {#IFDESCR}'
+              type: DEPENDENT
+              key: 'ifAdminStatus[{#SNMPINDEX}]'
+              delay: '0'
+              valuemap:
+                name: ifAdminStatus
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.2.2.1.7.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: ifAdminStatus
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: e9bb96274a8245de852bcb514d21aef6
+              name: 'ifHighSpeed {#IFDESCR}'
+              type: DEPENDENT
+              key: 'ifHighSpeed[{#SNMPINDEX}]'
+              delay: '0'
+              units: bps
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.31.1.1.1.15.{#SNMPINDEX}'
+                    - '0'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '1000000'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1h
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: ifHighSpeed
+                - tag: Interface
+                  value: '{#IFDESCR}'
+              trigger_prototypes:
+                - uuid: fe0f9bc3ed4d4382aaf6867d381d2d08
+                  expression: 'change(/fsp3000c/ifHighSpeed[{#SNMPINDEX}]) < 0'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'change(/fsp3000c/ifHighSpeed[{#SNMPINDEX}]) > 0'
+                  name: 'Interface speed degradation'
+                  event_name: 'Interface speed degradation, now it is {ITEM.VALUE1}'
+                  priority: WARNING
+                  manual_close: 'YES'
+            - uuid: df0d3e7431f04ccbad0f114e35b39f3f
+              name: 'ifOperStatus {#IFDESCR}'
+              type: DEPENDENT
+              key: 'ifOperStatus[{#SNMPINDEX}]'
+              delay: '0'
+              valuemap:
+                name: ifOperStatus
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.2.2.1.8.{#SNMPINDEX}'
+                    - '0'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: ifOperStatus
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: f7baf567a81445568ea3c42327586cca
+              name: 'ifType {#IFDESCR}'
+              type: DEPENDENT
+              key: 'ifType[{#SNMPINDEX}]'
+              delay: '0'
+              valuemap:
+                name: ifType
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.2.2.1.3.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: ifType
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: 9136abb3784642b18cbaf05a8ab00b36
+              name: 'Jabbers {#IFDESCR}'
+              type: DEPENDENT
+              key: 'Jabbers[{#SNMPINDEX}]'
+              delay: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.1.1.12.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: Jabbers
+                - tag: Interface
+                  value: '{#IFDESCR}'
+              trigger_prototypes:
+                - uuid: cbebbe5ea5f74c22b868815dc7dac6d6
+                  expression: 'max(/fsp3000c/Jabbers[{#SNMPINDEX}],{$TIME.FRAME}) > 0'
+                  name: '{ITEM.VALUE1} detected'
+                  opdata: '{ITEM.LASTVALUE1}'
+                  priority: WARNING
+                  manual_close: 'YES'
+            - uuid: a676d5bcd7fe466cbef0e5c0cf28ba2b
+              name: 'MulticastPkts {#IFDESCR}'
+              type: DEPENDENT
+              key: 'MulticastPkts[{#SNMPINDEX}]'
+              delay: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.1.1.7.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: MulticastPkts
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: 83d0be112a3c48c08c5bc714a868229d
+              name: 'OverflowBits {#IFDESCR}'
+              type: DEPENDENT
+              key: 'OverflowBits[{#SNMPINDEX}]'
+              delay: '0'
+              units: bps
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.7.1.3.{#SNMPINDEX}'
+                    - '0'
+                - type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: OverflowBits
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: 5c29cd371f35484189e28a52270753a7
+              name: 'OverflowPkts {#IFDESCR}'
+              type: DEPENDENT
+              key: 'OverflowPkts[{#SNMPINDEX}]'
+              delay: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.7.1.1.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: OverflowPkts
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: 2dddd8bc720446e6a40c888989fd9f83
+              name: 'OversizePkts {#IFDESCR}'
+              type: DEPENDENT
+              key: 'OversizePkts[{#SNMPINDEX}]'
+              delay: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.1.1.10.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: OversizePkts
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: 5789af7661fd485ea166b70a83df6f88
+              name: 'Pkts {#IFDESCR}'
+              type: DEPENDENT
+              key: 'Pkts[{#SNMPINDEX}]'
+              delay: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.7.1.2.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: Pkts
+                - tag: Interface
+                  value: '{#IFDESCR}'
+            - uuid: 21f14befd7fd455dade11432ef03d242
+              name: 'UndersizePkts {#IFDESCR}'
+              type: DEPENDENT
+              key: 'UndersizePkts[{#SNMPINDEX}]'
+              delay: '0'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.2.1.16.1.1.1.9.{#SNMPINDEX}'
+                    - '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+              master_item:
+                key: RMON
+              tags:
+                - tag: Category
+                  value: UndersizePkts
+                - tag: Interface
+                  value: '{#IFDESCR}'
+          graph_prototypes:
+            - uuid: 1f5276485e704f6faea2e81f1b5acfeb
+              name: 'Bits {#IFDESCR}'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'Bits[{#SNMPINDEX}]'
+                - sortorder: '1'
+                  color: FF0000
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'OverflowBits[{#SNMPINDEX}]'
+            - uuid: 3431378866aa4a4dad0234eb3fd62d3d
+              name: 'Collisions Fragments, Drop Events, Jabbers, CRC Align errors {#IFDESCR}'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'Collisions[{#SNMPINDEX}]'
+                - sortorder: '1'
+                  color: '274482'
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'CRCAlignErrors[{#SNMPINDEX}]'
+                - sortorder: '2'
+                  color: F63100
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'DropEvents[{#SNMPINDEX}]'
+                - sortorder: '3'
+                  color: 2774A4
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'Fragments[{#SNMPINDEX}]'
+                - sortorder: '4'
+                  color: A54F10
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'Jabbers[{#SNMPINDEX}]'
+            - uuid: 051eb9ad2fe3421ba1ce8adaf79d702e
+              name: 'Packets and Fragments {#IFDESCR}'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'BroadcastPkts[{#SNMPINDEX}]'
+                - sortorder: '1'
+                  color: '274482'
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'MulticastPkts[{#SNMPINDEX}]'
+                - sortorder: '2'
+                  color: F63100
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'OverflowPkts[{#SNMPINDEX}]'
+                - sortorder: '3'
+                  color: 2774A4
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'OversizePkts[{#SNMPINDEX}]'
+                - sortorder: '4'
+                  color: A54F10
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'Pkts[{#SNMPINDEX}]'
+                - sortorder: '5'
+                  color: FC6EA3
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'UndersizePkts[{#SNMPINDEX}]'
+                - sortorder: '6'
+                  color: 6C59DC
+                  yaxisside: RIGHT
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'Fragments[{#SNMPINDEX}]'
+          master_item:
+            key: rmonJSON
+        - uuid: 55cdd76bd20f47daba79bcc744274418
+          name: SpanLoss
+          type: DEPENDENT
+          key: SpanLoss
+          delay: '0'
+          item_prototypes:
+            - uuid: dfddfdc9e0334db6a1ffe0d2e9875ee1
+              name: 'SpanLossRxDelta {#IFDESCR}'
+              type: CALCULATED
+              key: 'SpanLossRxDelta[{#SNMPINDEX}]'
+              value_type: FLOAT
+              units: '!dB'
+              params: |
+                last(//SpanLossRx[{#SNMPINDEX}],#1)
+                - last(//SpanLossRx[{#SNMPINDEX}],#1)
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - ''
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: STR_REPLACE
+                  parameters:
+                    - '-'
+                    - ''
+            - uuid: 9ffd20aca08f4782aa187359652b196d
+              name: 'SpanLossRx {#IFDESCR}'
+              type: DEPENDENT
+              key: 'SpanLossRx[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '!dB'
+              description: 'Span loss on Rx fiber'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.4.1.2544.1.20.1.5.2.3.1.1.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              master_item:
+                key: walk
+              tags:
+                - tag: Interface
+                  value: '{#IFDESCR}'
+                - tag: SpanLoss
+                  value: Rx
+              trigger_prototypes:
+                - uuid: 1dc27491796b4f9abc99e5c48761f3f0
+                  expression: |
+                    ( trendavg(/fsp3000c/SpanLossRx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/SpanLossRx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:SpanLossRx})
+                    or
+                    (trendavg(/fsp3000c/SpanLossRx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/SpanLossRx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:SpanLossRx})
+                  name: 'Change factor {$COMPARE.FACTOR:SpanLossRx} detected while comparing 1d VS {$COMPARE.AGO:SpanLossRx} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                - uuid: ada818f69a8f4ef79411273d5a08c15e
+                  expression: |
+                    (change(/fsp3000c/SpanLossRx[{#SNMPINDEX}]) > {$IMMEDIATE.CHANGE:SpanLossRx})
+                    or
+                    (change(/fsp3000c/SpanLossRx[{#SNMPINDEX}]) < -{$IMMEDIATE.CHANGE:SpanLossRx})
+                  name: '{ITEM.VALUE1} shift detected (threshold: {$IMMEDIATE.CHANGE:SpanLossRx})'
+                  priority: HIGH
+                  manual_close: 'YES'
+            - uuid: 48350fbe32d743beaf2f5ca2a3020405
+              name: 'SpanLossTxDelta {#IFDESCR}'
+              type: CALCULATED
+              key: 'SpanLossTxDelta[{#SNMPINDEX}]'
+              value_type: FLOAT
+              units: '!dB'
+              params: |
+                last(//SpanLossTx[{#SNMPINDEX}],#1)
+                - last(//SpanLossTx[{#SNMPINDEX}],#1)
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - ''
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: STR_REPLACE
+                  parameters:
+                    - '-'
+                    - ''
+            - uuid: 554f1fd1252e4688ab6add1fb86f809a
+              name: 'SpanLossTx {#IFDESCR}'
+              type: DEPENDENT
+              key: 'SpanLossTx[{#SNMPINDEX}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '!dB'
+              description: 'Span loss on Tx fiber'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '.1.3.6.1.4.1.2544.1.20.1.5.2.3.1.2.{#SNMPINDEX}'
+                    - '0'
+                - type: MULTIPLIER
+                  parameters:
+                    - '0.1'
+              master_item:
+                key: walk
+              tags:
+                - tag: Interface
+                  value: '{#IFDESCR}'
+                - tag: SpanLoss
+                  value: Rx
+              trigger_prototypes:
+                - uuid: 4e4bff17115f4782a18b8dc3aee85792
+                  expression: |
+                    ( trendavg(/fsp3000c/SpanLossTx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/SpanLossTx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    > 1 + {$COMPARE.FACTOR:SpanLossTx})
+                    or
+                    (trendavg(/fsp3000c/SpanLossTx[{#SNMPINDEX}],1d:now/d) / trendavg(/fsp3000c/SpanLossTx[{#SNMPINDEX}],1d:now/d-{$COMPARE.AGO})
+                    < 1 - {$COMPARE.FACTOR:SpanLossTx})
+                  name: 'Change factor {$COMPARE.FACTOR:SpanLossTx} detected while comparing 1d VS {$COMPARE.AGO:SpanLossTx} ago'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                - uuid: ff93127aa8bf4a0ab70dc5f461143f23
+                  expression: |
+                    (change(/fsp3000c/SpanLossTx[{#SNMPINDEX}]) > {$IMMEDIATE.CHANGE:SpanLossTx})
+                    or
+                    (change(/fsp3000c/SpanLossTx[{#SNMPINDEX}]) < -{$IMMEDIATE.CHANGE:SpanLossTx})
+                  name: '{ITEM.VALUE1} shift detected (threshold: {$IMMEDIATE.CHANGE:SpanLossTx})'
+                  priority: HIGH
+                  manual_close: 'YES'
+          trigger_prototypes:
+            - uuid: 3319098de85446eb90d11e669e6f6016
+              expression: |
+                sum(/fsp3000c/SpanLossRxDelta[{#SNMPINDEX}],{$TIME.FRAME:SpanLossRx}) > {$DELTA:SpanLossRx}
+                and
+                count(/fsp3000c/SpanLossRx[{#SNMPINDEX}],#1)=1
+              name: 'Fluctuation sum in last {$TIME.FRAME:SpanLossRx} has reached {ITEM.VALUE1} (threshold:{$DELTA:SpanLossRx})'
+              opdata: '{ITEM.LASTVALUE1}'
+              priority: WARNING
+              manual_close: 'YES'
+            - uuid: c40bffb4e8e848cf9f8550d01940be23
+              expression: |
+                sum(/fsp3000c/SpanLossTxDelta[{#SNMPINDEX}],{$TIME.FRAME:SpanLossTx}) > {$DELTA:SpanLossTx}
+                and
+                count(/fsp3000c/SpanLossTx[{#SNMPINDEX}],#1)=1
+              name: 'Fluctuation sum in last {$TIME.FRAME:SpanLossTx} has reached {ITEM.VALUE1} (threshold:{$DELTA:SpanLossTx})'
+              opdata: '{ITEM.LASTVALUE1}'
+              priority: WARNING
+              manual_close: 'YES'
+          graph_prototypes:
+            - uuid: 082b63efaacf47c6b63731509270881f
+              name: 'Span Loss {#IFDESCR}'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'SpanLossRx[{#SNMPINDEX}]'
+                - sortorder: '1'
+                  color: '274482'
+                  calc_fnc: ALL
+                  item:
+                    host: fsp3000c
+                    key: 'SpanLossTx[{#SNMPINDEX}]'
+          master_item:
+            key: SpanLossJSON
+      macros:
+        - macro: '{$CARE}'
+          value: '1'
+          description: 'Care about all interfaces by default'
+        - macro: '{$COMPARE.AGO}'
+          value: 5d
+        - macro: '{$COMPARE.FACTOR}'
+          value: '0.025'
+        - macro: '{$COMPARE.FACTOR:OpticalPowerRx}'
+          value: '0.001'
+        - macro: '{$COMPARE.FACTOR:OpticalPowerTx}'
+          value: '0.001'
+        - macro: '{$DEBUG}'
+          value: '0'
+        - macro: '{$DELTA}'
+          value: '0.5'
+          description: 'Sensitiveness to detect a sudden increase, decrease, or zig-zag. A lower number detects more. It will take the last 5 values (defined in {$TIME.FRAME}), extract deltas between them and sum together. This applies to dBm, dB'
+        - macro: '{$IGNORE.CONDITION.TYPE}'
+          value: ^(1504|1505)$
+        - macro: '{$IMMEDIATE.CHANGE}'
+          value: '3.0'
+        - macro: '{$LASER.CURRENT.MAX}'
+          value: '200'
+        - macro: '{$LASER.TEMP}'
+          value: '30'
+          description: C
+        - macro: '{$OPERTIME}'
+          value: 20m
+          description: 'How long to keep an open event in the problems page when the link operation time resets'
+        - macro: '{$TIME.FRAME}'
+          value: 5m
+          description: 'Default time window capture data points for context'
+      valuemaps:
+        - uuid: 61122bd875c047489c569e336d87789d
+          name: aosCoreConditionType
+          mappings:
+            - value: '1'
+              newvalue: voltAnr
+            - value: '2'
+              newvalue: removed
+            - value: '3'
+              newvalue: fault
+            - value: '4'
+              newvalue: mea
+            - value: '5'
+              newvalue: incompatibleHardware
+            - value: '6'
+              newvalue: meaApprove
+            - value: '7'
+              newvalue: meaAccept
+            - value: '8'
+              newvalue: meaCapability
+            - value: '9'
+              newvalue: fwPackageMismatch
+            - value: '10'
+              newvalue: fwReboot
+            - value: '11'
+              newvalue: backplaneCommFail
+            - value: '12'
+              newvalue: meaPhys
+            - value: '13'
+              newvalue: meaDiffer
+            - value: '14'
+              newvalue: psuRedundancyMismatch
+            - value: '15'
+              newvalue: insufficientPower
+            - value: '16'
+              newvalue: backplaneEepromCommFail
+            - value: '17'
+              newvalue: powerFeedUndervoltage
+            - value: '18'
+              newvalue: powerFeedAFail
+            - value: '19'
+              newvalue: powerFeedBFail
+            - value: '20'
+              newvalue: outPowerFail
+            - value: '21'
+              newvalue: tcaOutCurrentHigh
+            - value: '22'
+              newvalue: tcaPowerConsumptionHigh
+            - value: '23'
+              newvalue: tcaTempHigh
+            - value: '24'
+              newvalue: tcaTempLow
+            - value: '25'
+              newvalue: lossOfSignal
+            - value: '26'
+              newvalue: laserFail
+            - value: '27'
+              newvalue: forceLaserOn
+            - value: '28'
+              newvalue: forceTransmitShutdown
+            - value: '29'
+              newvalue: lossOfClock
+            - value: '30'
+              newvalue: lossOfOverhead
+            - value: '31'
+              newvalue: lossOfPrbsPattern
+            - value: '32'
+              newvalue: laserOnDelay
+            - value: '33'
+              newvalue: autoPowerReduction
+            - value: '35'
+              newvalue: supportingEqptFailure
+            - value: '36'
+              newvalue: payloadMissingIndication
+            - value: '37'
+              newvalue: lossOfSignalPayload
+            - value: '38'
+              newvalue: tcaOptRcvPowerHigh
+            - value: '39'
+              newvalue: tcaOptTrmtPowerHigh
+            - value: '40'
+              newvalue: tcaOptLaserBiasCurrHigh
+            - value: '41'
+              newvalue: laserTempHigh
+            - value: '42'
+              newvalue: tcaOptRcvPowerLow
+            - value: '43'
+              newvalue: tcaOptTrmtPowerLow
+            - value: '44'
+              newvalue: laserTempLow
+            - value: '45'
+              newvalue: alarmIndicatorSigDefect
+            - value: '46'
+              newvalue: backwardDefectIndicator
+            - value: '47'
+              newvalue: backwardDefectIndicatorPayload
+            - value: '48'
+              newvalue: backwardDefectIndicatorOverhead
+            - value: '49'
+              newvalue: clientSigFail
+            - value: '50'
+              newvalue: degradedSig
+            - value: '51'
+              newvalue: forwardDefectIndicatorPayload
+            - value: '52'
+              newvalue: forwardDefectIndicatorOverhead
+            - value: '53'
+              newvalue: incomingAlignError
+            - value: '54'
+              newvalue: backwardIncomingAlignError
+            - value: '55'
+              newvalue: lossOfFrame
+            - value: '56'
+              newvalue: lossOfMultiframe
+            - value: '57'
+              newvalue: lossOfFrameAndMultiframe
+            - value: '58'
+              newvalue: lockedCondition
+            - value: '59'
+              newvalue: lossOfTandemConn
+            - value: '60'
+              newvalue: multiplexStructIdentifierMismatch
+            - value: '61'
+              newvalue: openConnIndication
+            - value: '62'
+              newvalue: payloadMismatch
+            - value: '63'
+              newvalue: serverSigFail
+            - value: '64'
+              newvalue: serverSigFailPayload
+            - value: '65'
+              newvalue: serverSigFailOverhead
+            - value: '66'
+              newvalue: trailSigFail
+            - value: '67'
+              newvalue: trailSigFailPayload
+            - value: '68'
+              newvalue: trailSigFailOverhead
+            - value: '69'
+              newvalue: trailTraceIdentifierMismatch
+            - value: '70'
+              newvalue: lossOfSignalOverhead
+            - value: '71'
+              newvalue: pumpEndOfLife
+            - value: '72'
+              newvalue: midstageLossHigh
+            - value: '73'
+              newvalue: ampControlAbnormal
+            - value: '74'
+              newvalue: autoPowerShutdown
+            - value: '75'
+              newvalue: voaControlFail
+            - value: '76'
+              newvalue: gainControlFail
+            - value: '77'
+              newvalue: tiltControlFail
+            - value: '78'
+              newvalue: optLimitHt
+            - value: '79'
+              newvalue: optLimitHtEx
+            - value: '80'
+              newvalue: oscLaserFail
+            - value: '81'
+              newvalue: oscPower
+            - value: '82'
+              newvalue: lossOfSigMidstage
+            - value: '83'
+              newvalue: lossOfOpuMultiframeId
+            - value: '84'
+              newvalue: tcaUnavailableSecondsHigh
+            - value: '85'
+              newvalue: tcaErroredSecondHigh
+            - value: '86'
+              newvalue: tcaSeverlyErroredSecondHigh
+            - value: '87'
+              newvalue: tcaBackgroundBlockErrorsHigh
+            - value: '88'
+              newvalue: tcaOscOptLaserBiasCurrHigh
+            - value: '89'
+              newvalue: tcaOscLaserTempHigh
+            - value: '90'
+              newvalue: tcaOscOptRcvPowerHigh
+            - value: '91'
+              newvalue: tcaOscOptTrmtPowerHigh
+            - value: '92'
+              newvalue: tcaSesPayloadHigh
+            - value: '93'
+              newvalue: tcaSesOverheadHigh
+            - value: '94'
+              newvalue: tcaUasPayloadHigh
+            - value: '95'
+              newvalue: tcaUasOverheadHigh
+            - value: '96'
+              newvalue: tcaOscLaserTempLow
+            - value: '97'
+              newvalue: tcaOscOptRcvPowerLow
+            - value: '98'
+              newvalue: tcaOscOptTrmtPowerLow
+            - value: '99'
+              newvalue: lossOfModemSync
+            - value: '100'
+              newvalue: lossOfCouplingAlignment
+            - value: '101'
+              newvalue: autoCdcFail
+            - value: '102'
+              newvalue: tcaDiffGroupDelayHigh
+            - value: '103'
+              newvalue: tcaCdcHigh
+            - value: '104'
+              newvalue: tcaCarrierFreqOffsetHigh
+            - value: '105'
+              newvalue: tcaSnrLow
+            - value: '106'
+              newvalue: tcaCdcLow
+            - value: '107'
+              newvalue: tcaCarrierFreqOffsetLow
+            - value: '108'
+              newvalue: lnkFail
+            - value: '109'
+              newvalue: lnkCblFault
+            - value: '110'
+              newvalue: lnkCblRmv
+            - value: '111'
+              newvalue: lnkAutonegFail
+            - value: '112'
+              newvalue: lnkNoRootCause
+            - value: '113'
+              newvalue: fendDupModeUnknown
+            - value: '114'
+              newvalue: jabThldExceed
+            - value: '115'
+              newvalue: lossOfSync
+            - value: '116'
+              newvalue: rxLocalFault
+            - value: '117'
+              newvalue: txLocalFault
+            - value: '118'
+              newvalue: lossOfBlockLock
+            - value: '119'
+              newvalue: hiBer
+            - value: '120'
+              newvalue: autoCdcInProgress
+            - value: '121'
+              newvalue: lossOfBlockLockLane
+            - value: '122'
+              newvalue: lossOfLaneAlgnMarkLane
+            - value: '123'
+              newvalue: lnkDownDeact
+            - value: '124'
+              newvalue: negBwExceed
+            - value: '125'
+              newvalue: rxSsf
+            - value: '126'
+              newvalue: txSsf
+            - value: '127'
+              newvalue: outputOvercurrent
+            - value: '128'
+              newvalue: tcaOutputPowerHigh
+            - value: '129'
+              newvalue: lossOfAlignment
+            - value: '130'
+              newvalue: ntpServerUnavailable
+            - value: '131'
+              newvalue: tunedFrequencyMismatch
+            - value: '133'
+              newvalue: temperatureHigh
+            - value: '134'
+              newvalue: temperatureLow
+            - value: '135'
+              newvalue: manifestMismatch
+            - value: '136'
+              newvalue: manifestIncomplete
+            - value: '137'
+              newvalue: laserBiasCurrentAbnormal
+            - value: '138'
+              newvalue: lossOfTrafficAfterFirmwareActivation
+            - value: '139'
+              newvalue: softwareVersionMismatch
+            - value: '140'
+              newvalue: fanFault
+            - value: '141'
+              newvalue: portConfigMismatch
+            - value: '142'
+              newvalue: licenseServerDisconnect
+            - value: '143'
+              newvalue: hwResourceUnavailableRecoverable
+            - value: '144'
+              newvalue: licenseInvalid
+            - value: '145'
+              newvalue: ssdWearoutLevelWarning
+            - value: '146'
+              newvalue: licenseExpire
+            - value: '147'
+              newvalue: databaseMismatch
+            - value: '148'
+              newvalue: licenseMissing
+            - value: '149'
+              newvalue: licenseOverdraft
+            - value: '150'
+              newvalue: cryptoPasswordMissing
+            - value: '151'
+              newvalue: vmResumeFailed
+            - value: '152'
+              newvalue: keyExchangeAuthMissing
+            - value: '153'
+              newvalue: keyLifetimeExpired
+            - value: '154'
+              newvalue: tamperDetected
+            - value: '155'
+              newvalue: selfTestFailed
+            - value: '156'
+              newvalue: cryptoTemporaryLockout
+            - value: '157'
+              newvalue: batteryLow
+            - value: '158'
+              newvalue: selfTestInProgress
+            - value: '159'
+              newvalue: vmCrashed
+            - value: '160'
+              newvalue: keyExchangeDegrade
+            - value: '161'
+              newvalue: internalEncryptionFailed
+            - value: '162'
+              newvalue: keyExchangeInProgress
+            - value: '163'
+              newvalue: keyExchangeChannelFail
+            - value: '164'
+              newvalue: terminalLoopbackInProgress
+            - value: '165'
+              newvalue: localOscBiarCurAbnormal
+            - value: '166'
+              newvalue: licenseFileMissing
+            - value: '167'
+              newvalue: licenseServerConfigMissing
+            - value: '168'
+              newvalue: hardwareBusy
+            - value: '169'
+              newvalue: fanFilterReplace
+            - value: '170'
+              newvalue: rebootInProgress
+            - value: '171'
+              newvalue: prbsDetectionInProgress
+            - value: '172'
+              newvalue: tcaOutOfFrameSecondHigh
+            - value: '173'
+              newvalue: msLineAis
+            - value: '174'
+              newvalue: localOscTemperatureLow
+            - value: '175'
+              newvalue: localOscTemperatureHigh
+            - value: '176'
+              newvalue: facilityLoopbackInProgress
+            - value: '177'
+              newvalue: prbsGenerationInProgress
+            - value: '178'
+              newvalue: transmitSignalFail
+            - value: '179'
+              newvalue: loopbackActive
+            - value: '180'
+              newvalue: meaPhyChanged
+            - value: '181'
+              newvalue: licenseBackupServerDisconnect
+            - value: '182'
+              newvalue: callHomeServerUnreachable
+            - value: '183'
+              newvalue: timinglicensemissing
+            - value: '184'
+              newvalue: eomplslicensemissing
+            - value: '185'
+              newvalue: fullcapacitylicensemissing
+            - value: '186'
+              newvalue: elephantflowlicensemissing
+            - value: '187'
+              newvalue: snmpdyinggasp
+            - value: '188'
+              newvalue: snmpdyinggasphostresourcesbusy
+            - value: '189'
+              newvalue: snmpdyinggasphostunreachable
+            - value: '190'
+              newvalue: controlplanelicensemissing
+            - value: '191'
+              newvalue: l3licensemissing
+            - value: '192'
+              newvalue: coldrebootrequired
+            - value: '197'
+              newvalue: tcaDropEvent
+            - value: '227'
+              newvalue: efmRemoteDyingGasp
+            - value: '228'
+              newvalue: efmFail
+            - value: '229'
+              newvalue: efmRemoteCriticalEvent
+            - value: '230'
+              newvalue: efmRemoteLinkDown
+            - value: '231'
+              newvalue: efmRemoteLoopbackFail
+            - value: '232'
+              newvalue: efmRemoteLoopbackRequest
+            - value: '233'
+              newvalue: tcaQFactorLow
+            - value: '234'
+              newvalue: tcaPolarizationDependentLHigh
+            - value: '235'
+              newvalue: tcaStateOfPolarizationChangeRateHigh
+            - value: '236'
+              newvalue: tcaOpticalSnrLow
+            - value: '300'
+              newvalue: srvDiscarded
+            - value: '301'
+              newvalue: bwExceedPortSpeed
+            - value: '302'
+              newvalue: meaPortalAddress
+            - value: '303'
+              newvalue: meaPortalPri
+            - value: '304'
+              newvalue: meaThreePortal
+            - value: '305'
+              newvalue: meaPortalSysNumber
+            - value: '306'
+              newvalue: meaActorAdminKey
+            - value: '307'
+              newvalue: meaPortDigest
+            - value: '308'
+              newvalue: meaGatewayDigest
+            - value: '400'
+              newvalue: ztpInProgress
+            - value: '401'
+              newvalue: ztpFailed
+            - value: '410'
+              newvalue: cryptoConfigMismatch
+            - value: '411'
+              newvalue: keyExchangeConfigMismatch
+            - value: '412'
+              newvalue: fingerprintAuthMissing
+            - value: '413'
+              newvalue: cryptoConfigError
+            - value: '414'
+              newvalue: keyExchangeAuthMismatch
+            - value: '550'
+              newvalue: crossConnectCCM
+            - value: '551'
+              newvalue: errorCCM
+            - value: '552'
+              newvalue: someRemoteMEPCCM
+            - value: '553'
+              newvalue: someMACstatus
+            - value: '554'
+              newvalue: someRDI
+            - value: '555'
+              newvalue: ethAIS
+            - value: '570'
+              newvalue: remoteInitSAT
+            - value: '580'
+              newvalue: erpFoPPM
+            - value: '581'
+              newvalue: erpFoPTO
+            - value: '582'
+              newvalue: erpBlockPort0RPL
+            - value: '583'
+              newvalue: erpBlockPort0SF
+            - value: '584'
+              newvalue: erpBlockPort0MS
+            - value: '585'
+              newvalue: erpBlockPort0FS
+            - value: '586'
+              newvalue: erpBlockPort0WTR
+            - value: '587'
+              newvalue: erpBlockPort1RPL
+            - value: '588'
+              newvalue: erpBlockPort1SF
+            - value: '589'
+              newvalue: erpBlockPort1MS
+            - value: '590'
+              newvalue: erpBlockPort1FS
+            - value: '591'
+              newvalue: erpBlockPort1WTR
+            - value: '600'
+              newvalue: avgHoldoverNotReady
+            - value: '601'
+              newvalue: freerun
+            - value: '602'
+              newvalue: fastAccquisition
+            - value: '603'
+              newvalue: holdover
+            - value: '604'
+              newvalue: lossOfLock
+            - value: '605'
+              newvalue: allSyncRefFail
+            - value: '606'
+              newvalue: syncRefLockOut
+            - value: '607'
+              newvalue: syncRefFS
+            - value: '608'
+              newvalue: syncRefMS
+            - value: '609'
+              newvalue: syncRefWTR
+            - value: '610'
+              newvalue: syncRefSW
+            - value: '611'
+              newvalue: syncRefFail
+            - value: '612'
+              newvalue: syncRefFreqOffset
+            - value: '616'
+              newvalue: ais
+            - value: '617'
+              newvalue: bitsLossOfFrame
+            - value: '618'
+              newvalue: qlMismatch
+            - value: '619'
+              newvalue: qlInvalid
+            - value: '620'
+              newvalue: esmcFail
+            - value: '621'
+              newvalue: linkdownMasterSlaveCfg
+            - value: '622'
+              newvalue: autoNegoMasterSlaveCfg
+            - value: '623'
+              newvalue: squelched
+            - value: '650'
+              newvalue: ptpFreerun
+            - value: '651'
+              newvalue: ptpTimeFreeRun
+            - value: '652'
+              newvalue: ptpFreqHoldover
+            - value: '653'
+              newvalue: ptpTimeHoldover
+            - value: '654'
+              newvalue: ptpFreqNotTraceable
+            - value: '655'
+              newvalue: ptpTimeNotTraceable
+            - value: '656'
+              newvalue: ptpAnnounceTimeout
+            - value: '657'
+              newvalue: ptpSyncTimeout
+            - value: '658'
+              newvalue: ptpDelayrespTimeout
+            - value: '659'
+              newvalue: ptpMultiplePeers
+            - value: '660'
+              newvalue: ptpWrongDomain
+            - value: '661'
+              newvalue: ptpNoTrafficFP
+            - value: '670'
+              newvalue: bgpNbrLinkDown
+            - value: '680'
+              newvalue: paAuthFail
+            - value: '690'
+              newvalue: noMGroupRes
+            - value: '1000'
+              newvalue: eomplsDstUnresovled
+            - value: '1020'
+              newvalue: trafficArpTableFull
+            - value: '1021'
+              newvalue: noRouteResources
+            - value: '1022'
+              newvalue: ipAddressConflict
+            - value: '1500'
+              newvalue: ntpLossOfServer
+            - value: '1501'
+              newvalue: remoteServerUnreachable
+            - value: '1502'
+              newvalue: sysLogServerUnreachable
+            - value: '1503'
+              newvalue: targetAddressUnreachable
+        - uuid: d3e734bd871f432788822fa3c3d88de2
+          name: ifAdminStatus
+          mappings:
+            - value: '1'
+              newvalue: up
+            - value: '2'
+              newvalue: down
+            - value: '3'
+              newvalue: testing
+        - uuid: db72ff353e4a46cda02531d1162d130f
+          name: ifOperStatus
+          mappings:
+            - value: '1'
+              newvalue: up
+            - value: '2'
+              newvalue: down
+            - value: '3'
+              newvalue: testing
+        - uuid: 79627c73acf64ffdb14634981d38f30e
+          name: ifType
+          mappings:
+            - value: '1'
+              newvalue: other
+            - value: '2'
+              newvalue: regular1822
+            - value: '3'
+              newvalue: hdh1822
+            - value: '4'
+              newvalue: ddn-x25
+            - value: '5'
+              newvalue: rfc877-x25
+            - value: '6'
+              newvalue: ethernet-csmacd
+            - value: '7'
+              newvalue: iso88023-csmacd
+            - value: '8'
+              newvalue: iso88024-tokenBus
+            - value: '9'
+              newvalue: iso88025-tokenRing
+            - value: '10'
+              newvalue: iso88026-man
+            - value: '11'
+              newvalue: starLan
+            - value: '12'
+              newvalue: proteon-10Mbit
+            - value: '13'
+              newvalue: proteon-80Mbit
+            - value: '14'
+              newvalue: hyperchannel
+            - value: '15'
+              newvalue: fddi
+            - value: '16'
+              newvalue: lapb
+            - value: '17'
+              newvalue: sdlc
+            - value: '18'
+              newvalue: ds1
+            - value: '19'
+              newvalue: e1
+            - value: '20'
+              newvalue: basicISDN
+            - value: '21'
+              newvalue: primaryISDN
+            - value: '22'
+              newvalue: propPointToPointSerial
+            - value: '23'
+              newvalue: ppp
+            - value: '24'
+              newvalue: softwareLoopback
+            - value: '25'
+              newvalue: eon
+            - value: '26'
+              newvalue: ethernet-3Mbit
+            - value: '27'
+              newvalue: nsip
+            - value: '28'
+              newvalue: slip
+            - value: '29'
+              newvalue: ultra
+            - value: '30'
+              newvalue: ds3
+            - value: '31'
+              newvalue: sip
+            - value: '32'
+              newvalue: frame-relay
