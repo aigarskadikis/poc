@@ -1,0 +1,258 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 42e64e07c9a347b4b3502d54e8cf97ba
+      template: 'ps3 temp'
+      name: 'ps3 temp'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 16f8bd069f654d7b8ceff815bf2bacf1
+          name: CPU
+          type: DEPENDENT
+          key: cpu
+          delay: '0'
+          units: C
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'CPU: (\d+)'
+                - \1
+          master_item:
+            key: cpursx
+        - uuid: 9bc4384afa8c4851ab6150e7798003e0
+          name: cpursx
+          type: HTTP_AGENT
+          key: cpursx
+          delay: 12s
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          timeout: 1s
+          url: 'http://{HOST.CONN}/cpursx.ps3?/sman.ps3'
+          status_codes: ''
+          follow_redirects: 'NO'
+        - uuid: 118f826e1bbd473f9e0c4a7ebe6a67e1
+          name: extra
+          type: DEPENDENT
+          key: extra
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'meta.*refresh.*cpursx.*'
+                - \0
+          master_item:
+            key: cpursx
+        - uuid: 7a0a1742896d481a93517e703a27d78f
+          name: 'Fan speed'
+          type: DEPENDENT
+          key: fan.speed
+          delay: '0'
+          units: '%'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '(\d+)% \('
+                - \1
+          master_item:
+            key: cpursx
+        - uuid: 4cccaf346674442a86f5053809da7baf
+          name: ping
+          type: SIMPLE
+          key: icmpping
+        - uuid: dc3064f6dc5541ec8d2dc96260d916fd
+          name: mount
+          type: DEPENDENT
+          key: mount
+          delay: '0'
+          value_type: CHAR
+          trends: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '\"(\/mount\.[^"]+)'
+                - \1
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1m
+          master_item:
+            key: cpursx
+        - uuid: 12a2f1265fa144c2b913d92babc15613
+          name: 'Playing now'
+          type: DEPENDENT
+          key: playing.now
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '\/([^\/]+)....$'
+                - \1
+            - type: STR_REPLACE
+              parameters:
+                - .
+                - ' '
+            - type: STR_REPLACE
+              parameters:
+                - +
+                - ' '
+          master_item:
+            key: mount
+        - uuid: 073585aa46fe469d8f75d2a2cc066544
+          name: RSX
+          type: DEPENDENT
+          key: rsx
+          delay: '0'
+          units: C
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'RSX: (\d+)'
+                - \1
+          master_item:
+            key: cpursx
+      dashboards:
+        - uuid: c010b951a2c24f3ab8a45219f819df91
+          name: 'PlayStation 3'
+          display_period: '10'
+          pages:
+            - widgets:
+                - type: svggraph
+                  width: '72'
+                  height: '6'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: RSX
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: STRING
+                      name: ds.1.color
+                      value: FF8000
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: CPU
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '2'
+                    - type: INTEGER
+                      name: ds.2.axisy
+                      value: '1'
+                    - type: STRING
+                      name: ds.2.color
+                      value: 00BFFF
+                    - type: INTEGER
+                      name: ds.2.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.2.items.0
+                      value: 'Fan speed'
+                    - type: INTEGER
+                      name: ds.2.width
+                      value: '2'
+                    - type: INTEGER
+                      name: graph_item_problems
+                      value: '0'
+                    - type: STRING
+                      name: lefty_max
+                      value: '100'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '3'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: KBQSZ
+                    - type: STRING
+                      name: righty_max
+                      value: '100'
+                    - type: STRING
+                      name: righty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: show_problems
+                      value: '1'
+                    - type: INTEGER
+                      name: tags.0.operator
+                      value: '1'
+                    - type: STRING
+                      name: tags.0.tag
+                      value: playing
+                    - type: STRING
+                      name: tags.0.value
+                      value: now
+  triggers:
+    - uuid: ece39237097d48bcbd9475a160998b73
+      expression: |
+        last(/ps3 temp/icmpping)=1
+        and
+        count(/ps3 temp/playing.now,5m)>2
+        and
+        change(/ps3 temp/playing.now)=0
+      name: 'Playing now'
+      event_name: '{?last(//playing.now)}'
+      priority: INFO
+      manual_close: 'YES'
+      tags:
+        - tag: playing
+          value: now
+  graphs:
+    - uuid: 8976e65774c347fe81dbfad9535e3fe8
+      name: 'CPU and RSX temp'
+      yaxismax: '80'
+      ymin_type_1: FIXED
+      ymax_type_1: FIXED
+      graph_items:
+        - drawtype: BOLD_LINE
+          color: FF8000
+          calc_fnc: ALL
+          item:
+            host: 'ps3 temp'
+            key: cpu
+        - sortorder: '1'
+          drawtype: BOLD_LINE
+          color: FF0000
+          calc_fnc: ALL
+          item:
+            host: 'ps3 temp'
+            key: rsx
+    - uuid: 9ab944715a1e43368f29ad2b307fe5f8
+      name: 'Fan speed'
+      ymin_type_1: FIXED
+      ymax_type_1: FIXED
+      graph_items:
+        - drawtype: FILLED_REGION
+          color: 00FFBF
+          calc_fnc: ALL
+          item:
+            host: 'ps3 temp'
+            key: fan.speed
