@@ -1,0 +1,62 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 7097181da3ab4a239f7216da03dea83a
+      template: 'hardware inventory cpuinfo audit meminfo'
+      name: 'hardware inventory cpuinfo audit meminfo'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 41ac1e47684240c6b8041a6b4c4b54fa
+          name: totalMem
+          type: DEPENDENT
+          key: totalMem
+          delay: '0'
+          trends: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'MemTotal:\s+(\d+) kB'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: 'vfs.file.contents[/proc/meminfo]'
+          tags:
+            - tag: audit
+              value: mem
+        - uuid: f090dbb9322c4167b51266b9db6ca610
+          name: os-release
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[/etc/os-release]'
+          delay: 1d
+          value_type: TEXT
+          trends: '0'
+          tags:
+            - tag: audit
+              value: os
+        - uuid: c41de4fb170d4a79ad68059a71f6c717
+          name: cpuinfo
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[/proc/cpuinfo]'
+          delay: 1d
+          value_type: TEXT
+          trends: '0'
+          tags:
+            - tag: audit
+              value: cpu
+        - uuid: b2e4f83ff50049089ec583f2bc9d4195
+          name: meminfo
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[/proc/meminfo]'
+          delay: 1d
+          value_type: TEXT
+          trends: '0'
+          tags:
+            - tag: audit
+              value: mem
