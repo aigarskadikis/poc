@@ -1,0 +1,37 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: c71022d564734f0fb2e0e5079a1c28dc
+      template: 'reboot required windows'
+      name: 'reboot required windows'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: a49d117375f64304a9a5808419f63d45
+          name: RebootRequired
+          type: DEPENDENT
+          key: RebootRequired
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''lastsubkey''] == ''RebootRequired'')].length()'
+          master_item:
+            key: 'registry.get["HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update",keys]'
+          triggers:
+            - uuid: 470bd75aa1e943a78039810d967ea662
+              expression: 'last(/reboot required windows/RebootRequired)>0'
+              name: 'Please reastart me!'
+              priority: AVERAGE
+              manual_close: 'YES'
+        - uuid: 37b10616717b4b7486bc8976ff60434f
+          name: 'Auto Update keys'
+          type: ZABBIX_ACTIVE
+          key: 'registry.get["HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update",keys]'
+          delay: 5m
+          history: '0'
+          value_type: TEXT
+          trends: '0'
