@@ -1,0 +1,30 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 67e15ee4fbfc4d66bd6a74293db7c1c3
+      template: randomProblem
+      name: 'random problems every second event generation mode multiple'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 4640c5295c7f42f892751e45e676a555
+          name: input
+          type: CALCULATED
+          key: input
+          delay: 12s
+          params: '1'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return Math.random() * 900 + 100;'
+          triggers:
+            - uuid: 1774d55b8b694ace8e4d93ec5353ae6a
+              expression: last(/randomProblem/input)>0
+              name: 'Number bigger than 0'
+              event_name: '{ITEM.VALUE} bigger than 0'
+              priority: AVERAGE
+              type: MULTIPLE
+              manual_close: 'YES'

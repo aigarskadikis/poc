@@ -1,0 +1,27 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: b968972ebad740358197149801d27905
+      template: 'ultimate snmp traps lazy solution'
+      name: 'ultimate snmp traps lazy solution'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: a0b1dc4fdcd940db968661eac742c331
+          name: fallback
+          type: SNMP_TRAP
+          key: snmptrap.fallback
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          triggers:
+            - uuid: 26a62fba686a4aacb6a4888a62e70005
+              expression: 'count(/ultimate snmp traps lazy solution/snmptrap.fallback,#1)>0'
+              name: 'device sent a message'
+              priority: HIGH
+              description: '{{ITEM.VALUE}.regsub("((?:.*\n?)*)",\1)}'
+              type: MULTIPLE
+              manual_close: 'YES'
