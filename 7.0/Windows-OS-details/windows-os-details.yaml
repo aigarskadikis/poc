@@ -1,0 +1,471 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: dfdea64514624d1fbc417d1ce460d5c8
+      template: 'Windows OS details'
+      name: 'Windows OS details'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 146e48734b4b42b1aef37dbe7528ecb8
+          name: select.all.root.cimv2
+          type: CALCULATED
+          key: select.all.root.cimv2
+          delay: 6s
+          value_type: TEXT
+          trends: '0'
+          params: |
+            "Name,Registry
+            Motherboard details,Win32_BaseBoard
+            Battery status,Win32_Battery
+            BIOS information,Win32_BIOS
+            Physical disk details,Win32_DiskDrive
+            Partitions on a disk,Win32_DiskPartition
+            Logical disks,Win32_LogicalDisk
+            IP addresses and configurations,Win32_NetworkAdapterConfiguration
+            Network adapters,Win32_NetworkAdapter
+            OS details,Win32_OperatingSystem
+            Installed physical memory,Win32_PhysicalMemory
+            Power settings and AC adapter status,Win32_PowerManagementEvent
+            CPU details,Win32_Processor
+            Running processes,Win32_Process
+            Installed programs,Win32_Product
+            System startup programs,Win32_StartupCommand
+            User accounts on the system,Win32_UserAccount"
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+            - type: CSV_TO_JSON
+              parameters:
+                - ','
+                - '"'
+                - '1'
+      discovery_rules:
+        - uuid: 5cd26b54c091470fbee92798c3304b57
+          name: wmi
+          type: DEPENDENT
+          key: wmi
+          delay: '0'
+          item_prototypes:
+            - uuid: 307ed1540a0c442888a35cdae6d797c2
+              name: '{#NAME}'
+              type: ZABBIX_ACTIVE
+              key: 'wmi.getall[root\cimv2,SELECT * FROM {#REGISTRY}]'
+              delay: '0;{$UPD:"{#INT1S}"}'
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              timeout: 1s
+              tags:
+                - tag: sec
+                  value: '{#INT1S}'
+                - tag: wmi
+                  value: cimv2
+          master_item:
+            key: select.all.root.cimv2
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: $.Name
+            - lld_macro: '{#REGISTRY}'
+              path: $.Registry
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // to enable custom update intervals
+                  var jsonData = JSON.parse(value);
+                  lenghtOfArray=jsonData.length;
+                  var lld = [];
+                  for(var el = 0; el < lenghtOfArray; el++) {
+                  row = jsonData[el];
+                  row["{#INT1S}"] = el;
+                  row["{#INT2S}"] = (el * 2) % 60;
+                  row["{#INT3S}"] = (el * 3) % 60;
+                  row["{#INT4S}"] = (el * 4) % 60;
+                  row["{#INT5S}"] = (el * 5) % 60;
+                  row["{#INT6S}"] = (el * 6) % 60;
+                  lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+                  // kindly document this
+      macros:
+        - macro: '{$UPD:0}'
+          value: m/1s0
+        - macro: '{$UPD:1}'
+          value: m/1s1
+        - macro: '{$UPD:2}'
+          value: m/1s2
+        - macro: '{$UPD:3}'
+          value: m/1s3
+        - macro: '{$UPD:4}'
+          value: m/1s4
+        - macro: '{$UPD:5}'
+          value: m/1s5
+        - macro: '{$UPD:6}'
+          value: m/1s6
+        - macro: '{$UPD:7}'
+          value: m/1s7
+        - macro: '{$UPD:8}'
+          value: m/1s8
+        - macro: '{$UPD:9}'
+          value: m/1s9
+        - macro: '{$UPD:10}'
+          value: m/1s10
+        - macro: '{$UPD:11}'
+          value: m/1s11
+        - macro: '{$UPD:12}'
+          value: m/1s12
+        - macro: '{$UPD:13}'
+          value: m/1s13
+        - macro: '{$UPD:14}'
+          value: m/1s14
+        - macro: '{$UPD:15}'
+          value: m/1s15
+        - macro: '{$UPD:16}'
+          value: m/1s16
+        - macro: '{$UPD:17}'
+          value: m/1s17
+        - macro: '{$UPD:18}'
+          value: m/1s18
+        - macro: '{$UPD:19}'
+          value: m/1s19
+        - macro: '{$UPD:20}'
+          value: m/1s20
+        - macro: '{$UPD:21}'
+          value: m/1s21
+        - macro: '{$UPD:22}'
+          value: m/1s22
+        - macro: '{$UPD:23}'
+          value: m/1s23
+        - macro: '{$UPD:24}'
+          value: m/1s24
+        - macro: '{$UPD:25}'
+          value: m/1s25
+        - macro: '{$UPD:26}'
+          value: m/1s26
+        - macro: '{$UPD:27}'
+          value: m/1s27
+        - macro: '{$UPD:28}'
+          value: m/1s28
+        - macro: '{$UPD:29}'
+          value: m/1s29
+        - macro: '{$UPD:30}'
+          value: m/1s30
+        - macro: '{$UPD:31}'
+          value: m/1s31
+        - macro: '{$UPD:32}'
+          value: m/1s32
+        - macro: '{$UPD:33}'
+          value: m/1s33
+        - macro: '{$UPD:34}'
+          value: m/1s34
+        - macro: '{$UPD:35}'
+          value: m/1s35
+        - macro: '{$UPD:36}'
+          value: m/1s36
+        - macro: '{$UPD:37}'
+          value: m/1s37
+        - macro: '{$UPD:38}'
+          value: m/1s38
+        - macro: '{$UPD:39}'
+          value: m/1s39
+        - macro: '{$UPD:40}'
+          value: m/1s40
+        - macro: '{$UPD:41}'
+          value: m/1s41
+        - macro: '{$UPD:42}'
+          value: m/1s42
+        - macro: '{$UPD:43}'
+          value: m/1s43
+        - macro: '{$UPD:44}'
+          value: m/1s44
+        - macro: '{$UPD:45}'
+          value: m/1s45
+        - macro: '{$UPD:46}'
+          value: m/1s46
+        - macro: '{$UPD:47}'
+          value: m/1s47
+        - macro: '{$UPD:48}'
+          value: m/1s48
+        - macro: '{$UPD:49}'
+          value: m/1s49
+        - macro: '{$UPD:50}'
+          value: m/1s50
+        - macro: '{$UPD:51}'
+          value: m/1s51
+        - macro: '{$UPD:52}'
+          value: m/1s52
+        - macro: '{$UPD:53}'
+          value: m/1s53
+        - macro: '{$UPD:54}'
+          value: m/1s54
+        - macro: '{$UPD:55}'
+          value: m/1s55
+        - macro: '{$UPD:56}'
+          value: m/1s56
+        - macro: '{$UPD:57}'
+          value: m/1s57
+        - macro: '{$UPD:58}'
+          value: m/1s58
+        - macro: '{$UPD:59}'
+          value: m/1s59
+    - uuid: e69600519dc045249385bf0e47977a8c
+      template: 'Windows OS details worst'
+      name: 'Windows OS details worst'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 217c4d8b27dd4c11a021e1d8da7b4f28
+          name: select.all.root.cimv2
+          type: CALCULATED
+          key: select.all.root.cimv2
+          delay: 6s
+          value_type: TEXT
+          trends: '0'
+          params: |
+            "Name,Registry
+            Motherboard details,Win32_BaseBoard
+            Battery status,Win32_Battery
+            BIOS information,Win32_BIOS
+            Physical disk details,Win32_DiskDrive
+            Partitions on a disk,Win32_DiskPartition
+            Logical disks,Win32_LogicalDisk
+            IP addresses and configurations,Win32_NetworkAdapterConfiguration
+            Network adapters,Win32_NetworkAdapter
+            OS details,Win32_OperatingSystem
+            Installed physical memory,Win32_PhysicalMemory
+            Power settings and AC adapter status,Win32_PowerManagementEvent
+            CPU details,Win32_Processor
+            Running processes,Win32_Process
+            Installed programs,Win32_Product
+            System startup programs,Win32_StartupCommand
+            User accounts on the system,Win32_UserAccount"
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+            - type: CSV_TO_JSON
+              parameters:
+                - ','
+                - '"'
+                - '1'
+      discovery_rules:
+        - uuid: 3e53556c28cc43d29df2a41099c805fe
+          name: wmi
+          type: DEPENDENT
+          key: wmi
+          delay: '0'
+          item_prototypes:
+            - uuid: 36e1358130584e2f82d8e0137f39bc5d
+              name: 'five[{#REGISTRY}]'
+              type: DEPENDENT
+              key: 'five[{#REGISTRY}]'
+              delay: '0'
+              value_type: TEXT
+              trends: '0'
+              master_item:
+                key: 'wmi.getall[root\cimv2,SELECT * FROM {#REGISTRY}]'
+            - uuid: 24d6ce3099094655af868e69352620fe
+              name: 'four[{#REGISTRY}]'
+              type: DEPENDENT
+              key: 'four[{#REGISTRY}]'
+              delay: '0'
+              value_type: TEXT
+              trends: '0'
+              master_item:
+                key: 'wmi.getall[root\cimv2,SELECT * FROM {#REGISTRY}]'
+            - uuid: 288d85d1b5684580a329a56927c64b7f
+              name: 'one[{#REGISTRY}]'
+              type: DEPENDENT
+              key: 'one[{#REGISTRY}]'
+              delay: '0'
+              value_type: TEXT
+              trends: '0'
+              master_item:
+                key: 'wmi.getall[root\cimv2,SELECT * FROM {#REGISTRY}]'
+            - uuid: de013c0cb30847f0bd441547833c7713
+              name: 'three[{#REGISTRY}]'
+              type: DEPENDENT
+              key: 'three[{#REGISTRY}]'
+              delay: '0'
+              value_type: TEXT
+              trends: '0'
+              master_item:
+                key: 'wmi.getall[root\cimv2,SELECT * FROM {#REGISTRY}]'
+            - uuid: e0b96498513e423da478c9553dd110e6
+              name: 'two[{#REGISTRY}]'
+              type: DEPENDENT
+              key: 'two[{#REGISTRY}]'
+              delay: '0'
+              value_type: TEXT
+              trends: '0'
+              master_item:
+                key: 'wmi.getall[root\cimv2,SELECT * FROM {#REGISTRY}]'
+            - uuid: 5f1d79765acb46aa8ab499923be69330
+              name: '{#NAME}'
+              type: ZABBIX_ACTIVE
+              key: 'wmi.getall[root\cimv2,SELECT * FROM {#REGISTRY}]'
+              delay: '6'
+              value_type: TEXT
+              trends: '0'
+              timeout: 1s
+              tags:
+                - tag: sec
+                  value: '{#INT1S}'
+                - tag: wmi
+                  value: cimv2
+          master_item:
+            key: select.all.root.cimv2
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: $.Name
+            - lld_macro: '{#REGISTRY}'
+              path: $.Registry
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // to enable custom update intervals
+                  var jsonData = JSON.parse(value);
+                  lenghtOfArray=jsonData.length;
+                  var lld = [];
+                  for(var el = 0; el < lenghtOfArray; el++) {
+                  row = jsonData[el];
+                  row["{#INT1S}"] = el;
+                  row["{#INT2S}"] = (el * 2) % 60;
+                  row["{#INT3S}"] = (el * 3) % 60;
+                  row["{#INT4S}"] = (el * 4) % 60;
+                  row["{#INT5S}"] = (el * 5) % 60;
+                  row["{#INT6S}"] = (el * 6) % 60;
+                  lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+                  // kindly document this
+      macros:
+        - macro: '{$UPD:0}'
+          value: m/1s0
+        - macro: '{$UPD:1}'
+          value: m/1s1
+        - macro: '{$UPD:2}'
+          value: m/1s2
+        - macro: '{$UPD:3}'
+          value: m/1s3
+        - macro: '{$UPD:4}'
+          value: m/1s4
+        - macro: '{$UPD:5}'
+          value: m/1s5
+        - macro: '{$UPD:6}'
+          value: m/1s6
+        - macro: '{$UPD:7}'
+          value: m/1s7
+        - macro: '{$UPD:8}'
+          value: m/1s8
+        - macro: '{$UPD:9}'
+          value: m/1s9
+        - macro: '{$UPD:10}'
+          value: m/1s10
+        - macro: '{$UPD:11}'
+          value: m/1s11
+        - macro: '{$UPD:12}'
+          value: m/1s12
+        - macro: '{$UPD:13}'
+          value: m/1s13
+        - macro: '{$UPD:14}'
+          value: m/1s14
+        - macro: '{$UPD:15}'
+          value: m/1s15
+        - macro: '{$UPD:16}'
+          value: m/1s16
+        - macro: '{$UPD:17}'
+          value: m/1s17
+        - macro: '{$UPD:18}'
+          value: m/1s18
+        - macro: '{$UPD:19}'
+          value: m/1s19
+        - macro: '{$UPD:20}'
+          value: m/1s20
+        - macro: '{$UPD:21}'
+          value: m/1s21
+        - macro: '{$UPD:22}'
+          value: m/1s22
+        - macro: '{$UPD:23}'
+          value: m/1s23
+        - macro: '{$UPD:24}'
+          value: m/1s24
+        - macro: '{$UPD:25}'
+          value: m/1s25
+        - macro: '{$UPD:26}'
+          value: m/1s26
+        - macro: '{$UPD:27}'
+          value: m/1s27
+        - macro: '{$UPD:28}'
+          value: m/1s28
+        - macro: '{$UPD:29}'
+          value: m/1s29
+        - macro: '{$UPD:30}'
+          value: m/1s30
+        - macro: '{$UPD:31}'
+          value: m/1s31
+        - macro: '{$UPD:32}'
+          value: m/1s32
+        - macro: '{$UPD:33}'
+          value: m/1s33
+        - macro: '{$UPD:34}'
+          value: m/1s34
+        - macro: '{$UPD:35}'
+          value: m/1s35
+        - macro: '{$UPD:36}'
+          value: m/1s36
+        - macro: '{$UPD:37}'
+          value: m/1s37
+        - macro: '{$UPD:38}'
+          value: m/1s38
+        - macro: '{$UPD:39}'
+          value: m/1s39
+        - macro: '{$UPD:40}'
+          value: m/1s40
+        - macro: '{$UPD:41}'
+          value: m/1s41
+        - macro: '{$UPD:42}'
+          value: m/1s42
+        - macro: '{$UPD:43}'
+          value: m/1s43
+        - macro: '{$UPD:44}'
+          value: m/1s44
+        - macro: '{$UPD:45}'
+          value: m/1s45
+        - macro: '{$UPD:46}'
+          value: m/1s46
+        - macro: '{$UPD:47}'
+          value: m/1s47
+        - macro: '{$UPD:48}'
+          value: m/1s48
+        - macro: '{$UPD:49}'
+          value: m/1s49
+        - macro: '{$UPD:50}'
+          value: m/1s50
+        - macro: '{$UPD:51}'
+          value: m/1s51
+        - macro: '{$UPD:52}'
+          value: m/1s52
+        - macro: '{$UPD:53}'
+          value: m/1s53
+        - macro: '{$UPD:54}'
+          value: m/1s54
+        - macro: '{$UPD:55}'
+          value: m/1s55
+        - macro: '{$UPD:56}'
+          value: m/1s56
+        - macro: '{$UPD:57}'
+          value: m/1s57
+        - macro: '{$UPD:58}'
+          value: m/1s58
+        - macro: '{$UPD:59}'
+          value: m/1s59
