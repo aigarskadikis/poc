@@ -310,7 +310,6 @@ zabbix_export:
                 key: 'wmi.getall[root\cimv2,SELECT * FROM {#REGISTRY}]'
             - uuid: 5f1d79765acb46aa8ab499923be69330
               name: '{#NAME}'
-              type: ZABBIX_ACTIVE
               key: 'wmi.getall[root\cimv2,SELECT * FROM {#REGISTRY}]'
               delay: '6'
               value_type: TEXT
