@@ -2064,7 +2064,7 @@ zabbix_export:
           preprocessing:
             - type: JSONPATH
               parameters:
-                - '$.networks[*].rt_bytes.sum()'
+                - '$.networks[*].tx_bytes.sum()'
               error_handler: CUSTOM_VALUE
               error_handler_params: '0'
             - type: CHANGE_PER_SECOND
