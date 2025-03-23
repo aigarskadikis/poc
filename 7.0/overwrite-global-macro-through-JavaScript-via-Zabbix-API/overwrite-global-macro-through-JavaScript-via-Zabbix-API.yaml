@@ -19,7 +19,7 @@ zabbix_export:
           name: 'Create or update global macro'
           type: SCRIPT
           key: create.or.update.global.macro
-          delay: 1d
+          delay: 56m
           history: 90d
           value_type: LOG
           trends: '0'
@@ -49,7 +49,7 @@ zabbix_export:
             
             // prepare values for replacement. order is important
             var valuesToInsert = [
-                now.getFullYear(),
+                now.getFullYear().toString(),
                 padLeft(now.getMonth() + 1, 2, '0'),
                 padLeft(now.getDate(), 2, '0'),
                 padLeft(now.getHours(), 2, '0'),
@@ -121,6 +121,9 @@ zabbix_export:
                     }
                 }
             }
+            
+            Zabbix.Log(4, 'about to macro update: ' + JSON.stringify(dataForUpdate));
+            
             
             // if there is anything to update (usually seconds has been changed)
             if (dataForUpdate.length > 0) {
