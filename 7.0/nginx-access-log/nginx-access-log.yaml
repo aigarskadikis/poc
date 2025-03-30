@@ -172,7 +172,7 @@ zabbix_export:
                       value: '5'
                     - type: STRING
                       name: ds.0.aggregate_interval
-                      value: 1m
+                      value: 10m
                     - type: STRING
                       name: ds.0.color
                       value: '247003'
@@ -203,7 +203,7 @@ zabbix_export:
                       value: '5'
                     - type: STRING
                       name: ds.0.aggregate_interval
-                      value: 1m
+                      value: 10m
                     - type: STRING
                       name: ds.0.color
                       value: '247003'
