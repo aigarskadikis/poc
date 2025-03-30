@@ -1,0 +1,198 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: fe88cdf5a25a4a258d373e89d6daf023
+      template: 'nginx access.log 2 not working'
+      name: 'nginx access.log 2 not working'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: b028339d0362440d91159e4a27511abb
+          name: access.log
+          type: ZABBIX_ACTIVE
+          key: 'log[/var/log/nginx/access.log]'
+          delay: 1s
+          value_type: LOG
+          trends: '0'
+        - uuid: 43d8884dc5714c71be5a3fbc16a07fb6
+          name: IPs
+          type: ZABBIX_ACTIVE
+          key: 'system.run["{$IP.ORIGIN}"]'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  var lines = value.match(/^..*$/gm);
+                  var lines_num = lines.length;
+                  for (i = 0; i < lines_num; i++)
+                  {
+                    var row = {};
+                    row["pattern"] = lines[i];
+                    lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+        - uuid: 7059492913e5433cac103c218bc3189f
+          name: 'site names'
+          type: ZABBIX_ACTIVE
+          key: 'system.run["{$SITE.NAMES}"]'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  var lines = value.match(/^..*$/gm);
+                  var lines_num = lines.length;
+                  for (i = 0; i < lines_num; i++)
+                  {
+                    var row = {};
+                    row["pattern"] = lines[i];
+                    lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+      discovery_rules:
+        - uuid: 5ca4c1ae49f4490e8b30c2a624e2ff82
+          name: ips
+          type: DEPENDENT
+          key: ips
+          delay: '0'
+          item_prototypes:
+            - uuid: 7c3487babd2f41dfa84d8d3304d924fa
+              name: 'hits per IP {#IP}'
+              type: CALCULATED
+              key: 'count.ip[{#IP}]'
+              delay: '{$BATCH}'
+              units: '!hits'
+              params: 'count(//ip[{#IP}],{$BATCH})'
+            - uuid: 309f2d5a82e4499092da22aad3faf716
+              name: 'content of {#IP}'
+              type: DEPENDENT
+              key: 'ip[{#IP}]'
+              delay: '0'
+              value_type: LOG
+              trends: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(.*{#IP}.*)'
+                    - '1'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'log[/var/log/nginx/access.log]'
+          master_item:
+            key: 'system.run["{$IP.ORIGIN}"]'
+          lld_macro_paths:
+            - lld_macro: '{#IP}'
+              path: '$.[''pattern'']'
+        - uuid: 89ba32f20902454fb8c023402222243c
+          name: site
+          type: DEPENDENT
+          key: site
+          delay: '0'
+          item_prototypes:
+            - uuid: 159124d959b94bbb895a2738b8e1a8a8
+              name: 'hits per site {#SITE}'
+              type: CALCULATED
+              key: 'count.site[{#SITE}]'
+              delay: '{$BATCH}'
+              units: '!hits'
+              params: 'count(//site[{#SITE}],{$BATCH})'
+            - uuid: e11b1d8efa844d28afb1dd44bf0486c9
+              name: 'content per {#SITE}'
+              type: DEPENDENT
+              key: 'site[{#SITE}]'
+              delay: '0'
+              value_type: LOG
+              trends: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '(.*{#SITE}.*)'
+                    - '1'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'log[/var/log/nginx/access.log]'
+          master_item:
+            key: 'system.run["{$SITE.NAMES}"]'
+          lld_macro_paths:
+            - lld_macro: '{#SITE}'
+              path: '$.[''pattern'']'
+      macros:
+        - macro: '{$BATCH}'
+          value: 12s
+        - macro: '{$IP.ORIGIN}'
+          value: 'grep -Eo "^\S+" /var/log/nginx/access.log | sort | uniq'
+        - macro: '{$SITE.NAMES}'
+          value: 'grep server_name -r /etc/nginx/conf.d | grep -Eo "([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|\S+\.com)" | sort | uniq'
+      dashboards:
+        - uuid: 27ca476292dd4bc4843a23e2d2e2263c
+          name: summary
+          pages:
+            - widgets:
+                - type: svggraph
+                  name: IPs
+                  width: '72'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.aggregate_function
+                      value: '3'
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF0000
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '*hits per IP*'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: FLBRJ
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: Sites
+                  'y': '5'
+                  width: '72'
+                  height: '5'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.aggregate_function
+                      value: '3'
+                    - type: STRING
+                      name: ds.0.color
+                      value: '247003'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'hits per site *'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: VVURG
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
