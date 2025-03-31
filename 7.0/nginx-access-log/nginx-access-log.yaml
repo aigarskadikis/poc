@@ -19,7 +19,7 @@ zabbix_export:
           value_type: LOG
           trends: '0'
         - uuid: 58d8241521cf443486ee87cb34eba094
-          name: 'site names'
+          name: 'IP addresses'
           type: ZABBIX_ACTIVE
           key: 'system.run["{$IP.ORIGIN}"]'
           delay: 1h
