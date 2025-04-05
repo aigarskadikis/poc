@@ -20,6 +20,9 @@ zabbix_export:
           value_type: LOG
           trends: '0'
           preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.["ppid"] > 0)]'
             - type: JAVASCRIPT
               parameters:
                 - |
@@ -35,6 +38,86 @@ zabbix_export:
                   }
                   
                   return JSON.stringify(lld);
+        - uuid: ce04e585829147b5a1a3687835c3ffb9
+          name: 'process path debug'
+          type: DEPENDENT
+          key: process.path.debug
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  //delay = {$SCH:delay};
+                  // delay = 300;
+                  
+                  var lld = [];
+                  var lines = JSON.parse(value);
+                  for (i = 0; i < lines.length; i++) {
+                    Zabbix.Log(3, JSON.stringify(lines[i]));
+                    var row = {};
+                    row["pid"] = lines[i].pid;
+                    row["ppid"] = lines[i].ppid;
+                    row["name"] = lines[i].name;
+                  
+                   // row["cmdline"] = lines[i].cmdline.match(/pidfile/) ? 'pod ' +
+                   //   lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)[1] :
+                   //   lines[i].cmdline.replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
+                  
+                    // special formating rule
+                    row["host"] = '';
+                   //if (lines[i].cmdline.match(/pidfile/)) {
+                   //   row["host"] = 'pod ' + lines[i].cmdline.replace(/\s+$/, '').match(/pidfile....(.*)...exit.dir/)[1];
+                   // } else if (lines[i].cmdline.match(/postgres: \S+ \S+ [0-9.]+/)) {
+                    //  row["host"] = lines[i].cmdline.replace(/\s+$/, '').match(/(postgres: \S+ \S+ [0-9.]+)/)[1].replace(/[^a-zA-Z0-9\. ]/g, '');
+                   // } else {
+                   //   row["host"] = lines[i].cmdline.replace(/\s+$/, '').replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
+                   // }
+                  
+                  
+                    lld.push(row);
+                  }
+                  
+                  var processes = lld;
+                  
+                  // Create a mapping from pid to process
+                  var pidMap = {};
+                  for (var i = 0; i < processes.length; i++) {
+                    pidMap[processes[i].pid] = processes[i];
+                  }
+                  
+                  // Function to build full path from root to a given pid
+                  function buildPath(pid) {
+                    var path = [];
+                    while (pidMap[pid]) {
+                      path.unshift(pid);
+                      pid = pidMap[pid].ppid;
+                    }
+                    path.unshift(pid); // Add the root (e.g., 1)
+                    return path.join("/");
+                  }
+                  
+                  // Find leaf nodes (those not being a parent of any other)
+                  var parentSet = {};
+                  for (var i = 0; i < processes.length; i++) {
+                    parentSet[processes[i].ppid] = true;
+                  }
+                  
+                  var out = [];
+                  for (var i = 0; i < processes.length; i++) {
+                    var pid = processes[i].pid;
+                    if (!parentSet[pid]) {
+                      out.push(buildPath(pid));
+                    }
+                  }
+                  
+                  
+                  return out.join("\n");
+                  
+                  
+          master_item:
+            key: 'proc.get[,,,process]'
         - uuid: 0cb4520bbae54ab4a2ae48acad9a9878
           name: 'process path translated'
           type: DEPENDENT
@@ -47,7 +130,7 @@ zabbix_export:
               parameters:
                 - |
                   delay = {$SCH:delay};
-                  // delay = 300;
+                  //delay = 300;
                   
                   var lld = [];
                   var lines = JSON.parse(value);
@@ -57,12 +140,12 @@ zabbix_export:
                     row["ppid"] = lines[i].ppid;
                     row["name"] = lines[i].name;
                   
-                    row["cmdline"] = lines[i].cmdline.match(/pidfile/) ? 'pod ' +
+                    row["cmdline"] = lines[i].cmdline.match(/pidfile....(.*)...exit.dir/) ? 'pod ' +
                       lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)[1] :
                       lines[i].cmdline.replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
                   
                   // special formating rule
-                   if (lines[i].cmdline.match(/pidfile/)) {
+                   if (lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)) {
                       row["host"] = 'pod ' + lines[i].cmdline.replace(/\s+$/, '').match(/pidfile....(.*)...exit.dir/)[1];
                   } else if (lines[i].cmdline.match(/postgres: \S+ \S+ [0-9.]+/)) {
                       row["host"] = lines[i].cmdline.replace(/\s+$/, '').match(/(postgres: \S+ \S+ [0-9.]+)/)[1].replace(/[^a-zA-Z0-9\. ]/g, '');
@@ -107,12 +190,11 @@ zabbix_export:
                     }
                   }
                   
-                  // Return as array of strings, one per line
-                  var path = out.join("\n").match(/^0\/1\/.*$/gm).join("\n").replace(/^0\/1\//gm, '');
-                  
-                  // return path;
-                  // substitue process ID with an executable
-                  var input = path.match(/^.*$/gm);
+                  var input = [];
+                  for (var i = 0; i < out.length; i++) {
+                    //Zabbix.Log(3,out[i])
+                    if (out[i].match(/^1\//)) {  input.push(out[i].match(/^1\/(.*)/)[1]); }
+                  }
                   
                   // return input;
                   
@@ -136,7 +218,24 @@ zabbix_export:
                         // if process ID match
                         if (parseInt(fullPath[f]) === parseInt(lld[n].pid)) {
                   
-                          if (translated === '') {translated = translated + lld[n].host} else {translated = translated + '/' + lld[n].host}
+                          if ( 
+                            lld[n].host.match(/^systemd/) || 
+                            lld[n].host.match(/^dbusbrokerlaunch/) || 
+                            lld[n].host.match(/^dbusbroker/) ||
+                            lld[n].host.match(/^sshd/) ||
+                            lld[n].host.match(/^volumes/)
+                          
+                          ) {
+                            addToString = lld[n].host.match(/^(\S+)/)[1];
+                          } else {
+                            addToString = lld[n].host;
+                          }
+                  
+                          if (translated === '') {
+                            translated = translated + addToString;
+                          } else {
+                            translated = translated + '/' + addToString;
+                          }
                           //Zabbix.Log(3,"translated: "+translated)
                           lastPid = lld[n].pid;
                   
@@ -148,7 +247,16 @@ zabbix_export:
                   
                     }
                   
-                    processPidRel.push({'host':translated.replace(/\//gm,' '),'path':translated.replace(/^\//,''),'pid':lastPid,'server':'{$HOST.HOST}'});
+                    processPidRel.push({'host':translated
+                    .replace(/\//gm,' ')
+                    .replace(/zabbixserver.*zabbixserver/gm,'zabbixserver')
+                    .replace(/zabbixproxy.*zabbixproxy/gm,'zabbixproxy')
+                    .replace(/zabbixagentd.*zabbixagentd/gm,'zabbixagentd')
+                    .replace(/zabbixagent2.*zabbixagent2/gm,'zabbixagent2')
+                    .replace(/zabbixjavagateway.*JavaGateway/gm,'ZabbixJavaGateway')
+                    .replace(/sshd.*oCASignatureAlgorithmsecdsasha2nistp256ecdsasha2nistp384ecdsasha2nistp521sshed25519rsasha2256rsasha2512sshrsa/gm,'sshd')
+                    .replace(/postgres.*postgres/gm,'postgres')
+                    ,'path':translated.replace(/^\//,''),'pid':lastPid,'server':'{$HOST.HOST}'});
                   
                   }
                   
@@ -181,6 +289,43 @@ zabbix_export:
                   return JSON.stringify(outcome);
                   
                   
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // avoid duplicate process names by adding number
+                  var data = JSON.parse(value);
+                  
+                  // Step 1: Count occurrences of each host
+                  var hostOccurrences = {};
+                  for (var i = 0; i < data.length; i++) {
+                      var host = data[i].host;
+                      if (hostOccurrences[host] === undefined) {
+                          hostOccurrences[host] = 1;
+                      } else {
+                          hostOccurrences[host]++;
+                      }
+                  }
+                  
+                  // Step 2: Modify host names only if duplicates exist
+                  var hostCount = {};  // Dictionary to track occurrences
+                  for (var i = 0; i < data.length; i++) {
+                      var host = data[i].host;
+                  
+                      if (hostOccurrences[host] > 1) {
+                          // If first occurrence, add "1"
+                          if (hostCount[host] === undefined) {
+                              hostCount[host] = 1;
+                              data[i].host = host + " 1";
+                          } else {
+                              hostCount[host]++;
+                              data[i].host = host + " " + hostCount[host];
+                          }
+                      }
+                  }
+                  
+                  // Print output (Duktape doesn't have console.log, use print)
+                  return JSON.stringify(data, null, 2);
+                  
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
                 - 1d
@@ -192,6 +337,7 @@ zabbix_export:
           type: DEPENDENT
           key: pidpr
           delay: '0'
+          lifetime: 1h
           host_prototypes:
             - uuid: 522909d1d40e437ea9bc1d2500ba604e
               host: '{#SERVER} {#HOST}'
@@ -211,6 +357,8 @@ zabbix_export:
                   value: '{#PATH}'
                 - macro: '{$PID}'
                   value: '{#PID}'
+              tags:
+                - tag: pid
           master_item:
             key: process.path.translated
           lld_macro_paths:
