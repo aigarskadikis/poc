@@ -16,88 +16,7 @@ zabbix_export:
         - uuid: a4becf905f2d486e840a730cd6c9c3e5
           name: process
           key: 'proc.get[,,,process]'
-          delay: 3m
-          value_type: LOG
-          trends: '0'
-        - uuid: 14f0e03a629d4f55aa96cba6a521cb1b
-          name: 'process path'
-          type: DEPENDENT
-          key: process.path
-          delay: '0'
-          value_type: LOG
-          trends: '0'
-          status: DISABLED
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  var lld = [];
-                  var lines = JSON.parse(value);
-                  for (i = 0; i < lines.length; i++)
-                  {
-                    var row = {};
-                    row["pid"] = lines[i].pid;
-                    row["ppid"] = lines[i].ppid;
-                    row["name"] = lines[i].name;
-                  
-                    row["cmdline"] = lines[i].cmdline.match(/pidfile/) ? 'pod '+
-                    lines[i].cmdline.match(/pidfile..(.*)..exit.dir/)[1] :
-                    lines[i].cmdline.replace(/.usr.sbin./g,'').replace(/ \[[^\]]+\]$/,'');
-                    
-                    row["host"] = lines[i].cmdline.match(/pidfile/) ? 'pod '+
-                    lines[i].cmdline.match(/pidfile..(.*)..exit.dir/)[1] :
-                    lines[i].cmdline.replace(/ \[[^\]]+\]$/,'').replace(/[#\/\.:_-]/g,'');
-                    
-                    lld.push(row);
-                  }
-                  
-                  var processes = lld;
-                  
-                  // Create a mapping from pid to process
-                  var pidMap = {};
-                  for (var i = 0; i < processes.length; i++) {
-                    pidMap[processes[i].pid] = processes[i];
-                  }
-                  
-                  // Function to build full path from root to a given pid
-                  function buildPath(pid) {
-                    var path = [];
-                    while (pidMap[pid]) {
-                      path.unshift(pid);
-                      pid = pidMap[pid].ppid;
-                    }
-                    path.unshift(pid); // Add the root (e.g., 1)
-                    return path.join("/");
-                  }
-                  
-                  // Find leaf nodes (those not being a parent of any other)
-                  var parentSet = {};
-                  for (var i = 0; i < processes.length; i++) {
-                    parentSet[processes[i].ppid] = true;
-                  }
-                  
-                  var out = [];
-                  for (var i = 0; i < processes.length; i++) {
-                    var pid = processes[i].pid;
-                    if (!parentSet[pid]) {
-                      out.push(buildPath(pid));
-                    }
-                  }
-                  
-                  // Return as array of strings, one per line
-                  return out.join("\n").match(/^0\/1\/.*$/gm).join("\n").replace(/^0\/1\//gm,'');
-                  
-                  
-            - type: DISCARD_UNCHANGED_HEARTBEAT
-              parameters:
-                - 1d
-          master_item:
-            key: 'proc.get[,,,process]'
-        - uuid: 0cb4520bbae54ab4a2ae48acad9a9878
-          name: 'process path translated'
-          type: DEPENDENT
-          key: process.path.translated
-          delay: '0'
+          delay: '{$SCH:delay}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -111,14 +30,46 @@ zabbix_export:
                     row["pid"] = lines[i].pid;
                     row["ppid"] = lines[i].ppid;
                     row["name"] = lines[i].name;
+                    row["cmdline"] = lines[i].cmdline;
+                    lld.push(row);
+                  }
+                  
+                  return JSON.stringify(lld);
+        - uuid: 0cb4520bbae54ab4a2ae48acad9a9878
+          name: 'process path translated'
+          type: DEPENDENT
+          key: process.path.translated
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  delay = {$SCH:delay};
+                  // delay = 300;
+                  
+                  var lld = [];
+                  var lines = JSON.parse(value);
+                  for (i = 0; i < lines.length; i++) {
+                    var row = {};
+                    row["pid"] = lines[i].pid;
+                    row["ppid"] = lines[i].ppid;
+                    row["name"] = lines[i].name;
                   
                     row["cmdline"] = lines[i].cmdline.match(/pidfile/) ? 'pod ' +
                       lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)[1] :
-                      lines[i].cmdline.replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9]/g, '');
+                      lines[i].cmdline.replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
                   
-                    row["host"] = lines[i].cmdline.match(/pidfile/) ? 'pod ' +
-                      lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)[1] :
-                      lines[i].cmdline.replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9]/g, '');
+                  // special formating rule
+                   if (lines[i].cmdline.match(/pidfile/)) {
+                      row["host"] = 'pod ' + lines[i].cmdline.replace(/\s+$/, '').match(/pidfile....(.*)...exit.dir/)[1];
+                  } else if (lines[i].cmdline.match(/postgres: \S+ \S+ [0-9.]+/)) {
+                      row["host"] = lines[i].cmdline.replace(/\s+$/, '').match(/(postgres: \S+ \S+ [0-9.]+)/)[1].replace(/[^a-zA-Z0-9\. ]/g, '');
+                  } else {
+                      row["host"] = lines[i].cmdline.replace(/\s+$/, '').replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
+                  }
+                  
                   
                     lld.push(row);
                   }
@@ -197,7 +148,7 @@ zabbix_export:
                   
                     }
                   
-                    processPidRel.push({'host':translated.replace(/\//gm,''),'path':translated.replace(/^\//,''),'pid':lastPid,'server':'{$HOST.HOST}'});
+                    processPidRel.push({'host':translated.replace(/\//gm,' '),'path':translated.replace(/^\//,''),'pid':lastPid,'server':'{$HOST.HOST}'});
                   
                   }
                   
@@ -216,13 +167,13 @@ zabbix_export:
                       return "m" + times.join(',') + "s" + perfectSecond;
                   }
                   var all = [];
-                  for (var n = 0; n < {$SCH:delay}; n++) { all.push(generateSchedule({$SCH:delay}, n)); }
+                  for (var n = 0; n < delay; n++) { all.push(generateSchedule(delay, n)); }
                   
                   // inject timestamp
                   var outcome = [];
                     for (var n = 0; n < processPidRel.length; n++) {
                   var row = processPidRel[n];
-                  row["itstime"] = all[ n % {$SCH:delay} ];
+                  row["itstime"] = all[ n % delay ];
                   outcome.push(row);
                   }
                   
@@ -233,215 +184,6 @@ zabbix_export:
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
                 - 1d
-          master_item:
-            key: 'proc.get[,,,process]'
-        - uuid: a68404ff7b1846ddb061dff9d84f8b21
-          name: relation
-          type: DEPENDENT
-          key: relation
-          delay: '0'
-          value_type: LOG
-          trends: '0'
-          status: DISABLED
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  var inputJSON = JSON.parse(value);
-                  
-                  lvl1 = [];
-                  
-                  for(var n = 0; n < inputJSON.length; n++){
-                  if (inputJSON[n].ppid === 1) {
-                  lvl1.push(inputJSON[n].pid);
-                  }
-                  }
-                  
-                  lvl2 = [];
-                  
-                  
-                  // analyze only level 2 pids which is attached directly to systemd (pid 1)
-                  for(var p = 0; p < lvl1.length; p++){
-                  
-                  var row = {};
-                  row["parrent"] = lvl1[p];
-                  
-                  // looks on big array
-                  var children = [];
-                  
-                  for(var n = 0; n < inputJSON.length; n++){
-                  
-                  // if parrent PID match level 2
-                  if (inputJSON[n].ppid === lvl1[p]) {
-                  children.push(inputJSON[n].pid);
-                  
-                  // look if children have more childrens
-                  //var moreChildrens = [];
-                  //for(var o = 0; o < inputJSON.length; o++){
-                  //if (inputJSON[o].ppid === inputJSON[n].pid) {
-                  //moreChildrens.push(inputJSON[o].pid);
-                  //}
-                  //}
-                  
-                  
-                  
-                  
-                  }
-                  
-                  }
-                  
-                  row["children"] = children;
-                  lvl2.push(row);
-                  
-                  
-                  }
-                  
-                  
-                  return JSON.stringify(lvl2);
-                  
-                  
-                  
-                  
-                  
-                  
-          master_item:
-            key: 'proc.get[,,,process]'
-        - uuid: ccae294cf2d8437397572562000b8651
-          name: relation2
-          type: DEPENDENT
-          key: relation2
-          delay: '0'
-          value_type: LOG
-          trends: '0'
-          status: DISABLED
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  var inputJSON = JSON.parse(value);
-                  
-                  var total = [];
-                  
-                  lvl1 = [];
-                  
-                  for(var n = 0; n < inputJSON.length; n++){
-                  if (inputJSON[n].ppid === 1) {
-                  lvl1.push(inputJSON[n].pid);
-                  total.push({'pid':inputJSON[n].pid,'comm':inputJSON[n].name});
-                  }
-                  }
-                  
-                  lvl2 = [];
-                  
-                  // analyze only level 2 pids which is attached directly to systemd (pid 1)
-                  for(var p = 0; p < lvl1.length; p++){
-                  for(var n = 0; n < inputJSON.length; n++){
-                  // if parrent PID match level 2
-                  if (inputJSON[n].ppid === lvl1[p]) {
-                  lvl2.push(inputJSON[n].pid);
-                  total.push({'pid':inputJSON[n].pid,'comm':inputJSON[n].name});
-                  }
-                  }
-                  }
-                  
-                  lvl3 = [];
-                  for(var p = 0; p < lvl2.length; p++){
-                  for(var n = 0; n < inputJSON.length; n++){
-                  // if parrent PID match level 3
-                  if (inputJSON[n].ppid === lvl2[p]) {
-                  lvl3.push(inputJSON[n].pid);
-                  total.push({'pid':inputJSON[n].pid,'comm':inputJSON[n].name});
-                  }
-                  }
-                  }
-                  
-                  
-                  lvl4 = [];
-                  for(var p = 0; p < lvl3.length; p++){
-                  for(var n = 0; n < inputJSON.length; n++){
-                  // if parrent PID match level 4
-                  if (inputJSON[n].ppid === lvl3[p]) {
-                  lvl4.push(inputJSON[n].pid);
-                  total.push({'pid':inputJSON[n].pid,'comm':inputJSON[n].name});
-                  }
-                  }
-                  }
-                  
-                  
-                  return JSON.stringify(total);
-                  
-                  
-                  
-                  
-                  
-                  
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  // format long lines shorter
-                  var jsonData = JSON.parse(value);
-                  var lld = [];
-                  for (var el = 0; el < jsonData.length; el++) {
-                  row = {};
-                  row["pid"] = jsonData[el].pid;
-                  row["comm"] = jsonData[el].comm.replace(/[#\/\.:_()-]/g,'');
-                  row["exec"] = jsonData[el].comm;
-                  row["server"] = '{$HOST.HOST}';
-                  row["hostid"] = '{$HOST.ID}';
-                  lld.push(row);
-                  }
-                  return JSON.stringify(lld);
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  // avoid duplicate process names by adding number
-                  var data = JSON.parse(value);
-                  
-                  // Step 1: Count occurrences of each host
-                  var hostOccurrences = {};
-                  for (var i = 0; i < data.length; i++) {
-                      var comm = data[i].comm;
-                      if (hostOccurrences[comm] === undefined) {
-                          hostOccurrences[comm] = 1;
-                      } else {
-                          hostOccurrences[comm]++;
-                      }
-                  }
-                  
-                  // Step 2: Modify comm names only if duplicates exist
-                  var hostCount = {};  // Dictionary to track occurrences
-                  for (var i = 0; i < data.length; i++) {
-                      var comm = data[i].comm;
-                  
-                      if (hostOccurrences[comm] > 1) {
-                          // If first occurrence, add "1"
-                          if (hostCount[comm] === undefined) {
-                              hostCount[comm] = 1;
-                              data[i].comm = comm + " 1";
-                          } else {
-                              hostCount[comm]++;
-                              data[i].comm = comm + " " + hostCount[comm];
-                          }
-                      }
-                  }
-                  
-                  // Print output (Duktape doesn't have console.log, use print)
-                  return JSON.stringify(data, null, 2);
-                  
-          master_item:
-            key: 'proc.get[,,,process]'
-        - uuid: 9a368b3cad6b4edd9ffa7eaa7a14e522
-          name: 'systemd deps'
-          type: DEPENDENT
-          key: systemd.deps
-          delay: '0'
-          value_type: TEXT
-          trends: '0'
-          status: DISABLED
-          preprocessing:
-            - type: JSONPATH
-              parameters:
-                - '$..[?(@.ppid == "1")]'
           master_item:
             key: 'proc.get[,,,process]'
       discovery_rules:
