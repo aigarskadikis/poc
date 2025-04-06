@@ -3,16 +3,62 @@ zabbix_export:
   template_groups:
     - uuid: bc222ed8fc494eb5851b7f65b54af37e
       name: pidmon
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
   host_groups:
     - uuid: 7f382af7c7b84f3cbafc386c3cd40e59
       name: PrID
   templates:
     - uuid: 43c25f57edaa409b8624e6657d7b7281
-      template: ppid
-      name: ppid
+      template: 'pid mon'
+      name: 'pid mon'
       groups:
         - name: pidmon
       items:
+        - uuid: ce6951aecef449bcb835ad44362222e7
+          name: cmdline.list
+          type: DEPENDENT
+          key: cmdline.list
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  var lines = JSON.parse(value);
+                  var output = '';
+                  for (i = 0; i < lines.length; i++) {
+                  output = output + lines[i].cmdline.replace(/\s+$/, '').replace(/ \[[^\]]+\]$/, '');
+                  if (i !== lines.length) output = output + '\n';
+                  }
+                  
+                  return output;
+          master_item:
+            key: 'proc.get[,,,process]'
+          tags:
+            - tag: ppid
+        - uuid: 6bf0832ab68749258f05a95eb7ef8369
+          name: element.clount.of.process
+          type: DEPENDENT
+          key: element.clount.of.process
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.length()
+          master_item:
+            key: process.path.translated
+          tags:
+            - tag: ppid
+          triggers:
+            - uuid: 6ba20c8da1554484ae616d6d14221768
+              expression: 'last(/pid mon/element.clount.of.process) > ( {$SCH:delay} - 20 )'
+              name: 'process monitoring has reached'
+              event_name: 'process monitoring has reached {$SCH:delay} elements'
+              priority: DISASTER
+              manual_close: 'YES'
         - uuid: a4becf905f2d486e840a730cd6c9c3e5
           name: 'process.get raw'
           key: 'proc.get[,,,process]'
@@ -37,22 +83,7 @@ zabbix_export:
               error_handler_params: '[]'
             - type: JSONPATH
               parameters:
-                - '$..[?(!(@.[''name''] == ''sssd_be''))]'
-              error_handler: CUSTOM_VALUE
-              error_handler_params: '[]'
-            - type: JSONPATH
-              parameters:
-                - '$..[?(!(@.[''name''] == ''agetty''))]'
-              error_handler: CUSTOM_VALUE
-              error_handler_params: '[]'
-            - type: JSONPATH
-              parameters:
-                - '$..[?(!(@.[''name''] == ''droplet-agent''))]'
-              error_handler: CUSTOM_VALUE
-              error_handler_params: '[]'
-            - type: JSONPATH
-              parameters:
-                - '$..[?(!(@.[''name''] == ''run-parts''))]'
+                - '$..[?(!(@.[''name''] =~ ''^{$COMM:ignore}$''))]'
               error_handler: CUSTOM_VALUE
               error_handler_params: '[]'
             - type: JAVASCRIPT
@@ -416,9 +447,9 @@ zabbix_export:
             - tag: ppid
       discovery_rules:
         - uuid: 9fcdf4e126314dd3a6d8e7d922c33c81
-          name: pidpr
+          name: pid
           type: DEPENDENT
-          key: pidpr
+          key: pid
           delay: '0'
           lifetime: 1h
           host_prototypes:
@@ -432,7 +463,7 @@ zabbix_export:
               group_prototypes:
                 - name: 'PIDs/{#SERVER}'
               templates:
-                - name: 'ppid PIDs lvl1'
+                - name: 'proc pid mon individual'
               macros:
                 - macro: '{$ITS.TIME}'
                   value: '{#ITS.TIME}'
@@ -455,27 +486,478 @@ zabbix_export:
               path: '$.[''pid'']'
             - lld_macro: '{#SERVER}'
               path: '$.[''server'']'
-    - uuid: e8135f83d8284b44baec7c07709359ec
-      template: 'ppid PIDs lvl1'
-      name: 'ppid PIDs lvl1'
+      macros:
+        - macro: '{$COMM:ignore}'
+          value: (auditd|dhclient|dbus-daemon|lsmd|rpcbind|polkitd|systemd-journald|systemd-logind|systemd-udevd|agent|updater|sssd_nss|NetworkManager|atd|chronyd|crond|dtprobed|dtprobed|gssproxy|irqbalance|iscsid|rsyslogd|sedispatch|smartd|sshd|sssd|run-parts|sssd_be|agetty|droplet-agent|dbus-broker-launch|tuned|aardvark-dns|.sd-pam.|bash|tmux|screen|slirp4netns|dbus-broker|catatonit)
+    - uuid: e8cbfbb36854405a8f3d254cbe605447
+      template: 'proc pid mon individual'
+      name: 'proc pid mon individual'
       templates:
-        - name: 'proc pid mon'
+        - name: 'unsupported items'
       groups:
-        - name: pidmon
+        - name: Templates/Modules
       items:
-        - uuid: 5d728c1939c941c6b9fd1b2eb1e2e011
-          name: cmdline
-          key: 'vfs.file.contents[/proc/{$PID}/cmdline]'
-          delay: '0;{$ITS.TIME}'
-          history: '0'
-          value_type: CHAR
-          trends: '0'
-          inventory_link: NAME
+        - uuid: 7929935e6f2f4362b4b8cb7df9453652
+          name: 'pid cancelled_write_bytes'
+          type: DEPENDENT
+          key: cancelled_write_bytes
+          delay: '0'
+          units: B
           preprocessing:
-            - type: DISCARD_UNCHANGED_HEARTBEAT
+            - type: REGEX
               parameters:
-                - 1d
+                - 'cancelled_write_bytes: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/io]'
+        - uuid: 8710d1d31cde473aa8b946021a1b38bc
+          name: 'pid rchar'
+          type: DEPENDENT
+          key: rchar
+          delay: '0'
+          units: '!char'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'rchar: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/io]'
+        - uuid: 9c282bdbffa84ee1aea08cdb8cc5ad75
+          name: 'pid read bytes'
+          type: DEPENDENT
+          key: read_bytes
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'read_bytes: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/io]'
+        - uuid: a591a639e25542f4975ccd77365940bb
+          name: 'pid rss anon'
+          type: DEPENDENT
+          key: RssAnon
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'RssAnon:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
+        - uuid: 6c84aee327cc411c869580ab7c6e7db1
+          name: 'pid rss file'
+          type: DEPENDENT
+          key: RssFile
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'RssFile:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
+        - uuid: c1405fe3dc6d4d8590bcf1629dbf521a
+          name: 'pid rss shmem'
+          type: DEPENDENT
+          key: RssShmem
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'RssShmem:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
+        - uuid: 698a00a7db6746a6aa893276b0297b46
+          name: 'pid system time'
+          type: DEPENDENT
+          key: stime
+          delay: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - \S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/stat]'
+        - uuid: e0eeb757b95f45e38b341dbd9fb3ce22
+          name: 'pid syscr'
+          type: DEPENDENT
+          key: syscr
+          delay: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'syscr: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/io]'
+        - uuid: 6cf035edb75e4a7986c51b8781b60f7d
+          name: 'pid syscw'
+          type: DEPENDENT
+          key: syscw
+          delay: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'syscw: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/io]'
+        - uuid: b72d683723d246678828ac514953d880
+          name: 'pid user and system time'
+          type: DEPENDENT
+          key: user.system.time
+          delay: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - \S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+(\S+)
+                - '\1 \2'
+            - type: JAVASCRIPT
+              parameters:
+                - 'return parseInt(value.match(/^[0-9]+/)[0]) + parseInt(value.match(/[0-9]+$/)[0]);'
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/stat]'
+        - uuid: 2e849e8618db4f939c463f5cccab061e
+          name: 'pid user time'
+          type: DEPENDENT
+          key: utime
+          delay: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - \S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/stat]'
+        - uuid: b893545960af4fbbb9d5b1e5d089f4e6
+          name: 'proc pid io'
+          key: 'vfs.file.contents[/proc/{$PID}/io]'
+          delay: '{$UPD};{$ITS.TIME}'
+          history: '0'
+          value_type: LOG
+          trends: '0'
           timeout: 1s
+        - uuid: 732ae64ed780446f988b009795266e31
+          name: 'proc pid status'
+          key: 'vfs.file.contents[/proc/{$PID}/status]'
+          delay: '{$UPD};{$ITS.TIME}'
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+          tags:
+            - tag: raw
+        - uuid: e4df4c2538314abd8f82917301c7ccaa
+          name: 'proc pid stat'
+          key: 'vfs.file.contents[/proc/{$PID}/stat]'
+          delay: '{$UPD};{$ITS.TIME}'
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+        - uuid: b45ded4febb1401687ca61e11f6de13a
+          name: children
+          key: 'vfs.file.contents[/proc/{$PID}/task/{$PID}/children]'
+          delay: '{$UPD};{$ITS.TIME}'
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+        - uuid: 10a14e06f90041d8b37e9e76574ff93f
+          name: 'pid vm data'
+          type: DEPENDENT
+          key: VmData
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'VmData:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
+        - uuid: 9fe4244f70bd403a91df14789e64e4b5
+          name: 'pid vm swap'
+          type: DEPENDENT
+          key: VmSwap
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'VmSwap:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
+        - uuid: 0007822b325d48b499e204d91199bfca
+          name: 'pid wchar'
+          type: DEPENDENT
+          key: wchar
+          delay: '0'
+          units: '!char'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'wchar: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/io]'
+        - uuid: 0dd90e02d9e4480796a7de40236d6660
+          name: 'pid write bytes'
+          type: DEPENDENT
+          key: write_bytes
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'write_bytes: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/io]'
       macros:
         - macro: '{$UPD}'
           value: '0'
+      dashboards:
+        - uuid: ad3c41ed2f3244e2b41514c64f056029
+          name: pid
+          pages:
+            - widgets:
+                - type: svggraph
+                  name: CPU
+                  width: '24'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: 43A047
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '2'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'pid system time*'
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.color
+                      value: FFD54F
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: 'pid user time*'
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '4'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: or.0.color
+                      value: 0080FF
+                    - type: STRING
+                      name: or.0.items.0
+                      value: user_usec
+                    - type: STRING
+                      name: reference
+                      value: UDITR
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: Disk
+                  x: '24'
+                  width: '24'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'pid write bytes*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.color
+                      value: FFD54F
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: 'pid read bytes*'
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: WZUKX
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: Memory
+                  x: '48'
+                  width: '24'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'pid rss anon*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.color
+                      value: FFD54F
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: 'pid rss file*'
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.2.color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: ds.2.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.2.items.0
+                      value: 'pid rss shmem*'
+                    - type: INTEGER
+                      name: ds.2.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.3.color
+                      value: 524BBC
+                    - type: INTEGER
+                      name: ds.3.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.3.items.0
+                      value: 'pid vm data*'
+                    - type: INTEGER
+                      name: ds.3.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.4.color
+                      value: BF00FF
+                    - type: INTEGER
+                      name: ds.4.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.4.items.0
+                      value: 'pid vm swap*'
+                    - type: INTEGER
+                      name: ds.4.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: WWMJS
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
