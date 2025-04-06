@@ -488,7 +488,7 @@ zabbix_export:
               path: '$.[''server'']'
       macros:
         - macro: '{$COMM:ignore}'
-          value: (auditd|dhclient|dbus-daemon|lsmd|rpcbind|polkitd|systemd-journald|systemd-logind|systemd-udevd|agent|updater|sssd_nss|NetworkManager|atd|chronyd|crond|dtprobed|dtprobed|gssproxy|irqbalance|iscsid|rsyslogd|sedispatch|smartd|sshd|sssd|run-parts|sssd_be|agetty|droplet-agent|dbus-broker-launch|tuned|aardvark-dns|.sd-pam.|bash|tmux|screen|slirp4netns|dbus-broker|catatonit)
+          value: (auditd|dhclient|dbus-daemon|lsmd|rpcbind|polkitd|systemd-journald|systemd-logind|systemd-udevd|agent|updater|sssd_nss|NetworkManager|atd|chronyd|crond|dtprobed|dtprobed|gssproxy|irqbalance|iscsid|rsyslogd|sedispatch|smartd|sshd|sssd|run-parts|sssd_be|agetty|droplet-agent|dbus-broker-launch|tuned|aardvark-dns|.sd-pam.|bash|tmux|screen|slirp4netns|dbus-broker|catatonit|sssd_kcm)
     - uuid: e8cbfbb36854405a8f3d254cbe605447
       template: 'proc pid mon individual'
       name: 'proc pid mon individual'
@@ -513,12 +513,26 @@ zabbix_export:
                 - ''
           master_item:
             key: 'vfs.file.contents[/proc/{$PID}/io]'
+        - uuid: 19ab8d58f4cb415aacd1280802dc6afd
+          name: 'pid nonvoluntary ctxt switches'
+          type: DEPENDENT
+          key: nonvoluntary.ctxt.switches
+          delay: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'nonvoluntary_ctxt_switches:\s+(\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
         - uuid: 8710d1d31cde473aa8b946021a1b38bc
           name: 'pid rchar'
           type: DEPENDENT
           key: rchar
           delay: '0'
-          units: '!char'
           preprocessing:
             - type: REGEX
               parameters:
@@ -638,6 +652,18 @@ zabbix_export:
                 - ''
           master_item:
             key: 'vfs.file.contents[/proc/{$PID}/io]'
+        - uuid: a7780afafd4e479694f8923cad46842c
+          name: 'pid threads'
+          type: DEPENDENT
+          key: threads
+          delay: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'Threads:\s+(\d+)'
+                - \1
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
         - uuid: b72d683723d246678828ac514953d880
           name: 'pid user and system time'
           type: DEPENDENT
@@ -734,6 +760,21 @@ zabbix_export:
             - type: MULTIPLIER
               parameters:
                 - '1024'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
+        - uuid: 32e8dbf5ebf447bda43a7d417892b9a1
+          name: 'pid voluntary ctxt switches'
+          type: DEPENDENT
+          key: voluntary.ctxt.switches
+          delay: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'voluntary_ctxt_switches:\s+(\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
           master_item:
             key: 'vfs.file.contents[/proc/{$PID}/status]'
         - uuid: 0007822b325d48b499e204d91199bfca
