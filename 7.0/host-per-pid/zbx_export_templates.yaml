@@ -30,6 +30,11 @@ zabbix_export:
                 - '$..[?(@.["ppid"] > 0)]'
               error_handler: CUSTOM_VALUE
               error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''cmdline''] =~ ''digitalocean''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JAVASCRIPT
               parameters:
                 - |
@@ -40,7 +45,7 @@ zabbix_export:
                     row["pid"] = lines[i].pid;
                     row["ppid"] = lines[i].ppid;
                     row["name"] = lines[i].name;
-                    row["cmdline"] = lines[i].cmdline;
+                    row["cmdline"] = lines[i].cmdline.replace(/\s+$/, '').replace(/ \[[^\]]+\]$/, '');
                     lld.push(row);
                   }
                   
@@ -82,6 +87,8 @@ zabbix_export:
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
                 - 1d
+          tags:
+            - tag: ppid
         - uuid: ce04e585829147b5a1a3687835c3ffb9
           name: 'process path debug'
           type: DEPENDENT
@@ -162,6 +169,8 @@ zabbix_export:
                   
           master_item:
             key: 'proc.get[,,,process]'
+          tags:
+            - tag: ppid
         - uuid: 0cb4520bbae54ab4a2ae48acad9a9878
           name: 'process path translated'
           type: DEPENDENT
@@ -383,6 +392,8 @@ zabbix_export:
                   
           master_item:
             key: 'proc.get[,,,process]'
+          tags:
+            - tag: ppid
       discovery_rules:
         - uuid: 9fcdf4e126314dd3a6d8e7d922c33c81
           name: pidpr
