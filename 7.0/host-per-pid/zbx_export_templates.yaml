@@ -14,7 +14,7 @@ zabbix_export:
         - name: pidmon
       items:
         - uuid: a4becf905f2d486e840a730cd6c9c3e5
-          name: process
+          name: 'process.get raw'
           key: 'proc.get[,,,process]'
           delay: '{$SCH:delay}'
           value_type: LOG
@@ -22,7 +22,14 @@ zabbix_export:
           preprocessing:
             - type: JSONPATH
               parameters:
+                - '$..[?(!(@.[''ppid''] == 2))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
                 - '$..[?(@.["ppid"] > 0)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JAVASCRIPT
               parameters:
                 - |
@@ -184,12 +191,20 @@ zabbix_export:
                   // special formating rule
                    if (lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)) {
                       row["host"] = 'pod ' + lines[i].cmdline.replace(/\s+$/, '').match(/pidfile....(.*)...exit.dir/)[1];
-                  } else if (lines[i].cmdline.match(/postgres: \S+ \S+ [0-9.]+/)) {
-                      row["host"] = lines[i].cmdline.replace(/\s+$/, '').match(/(postgres: \S+ \S+ [0-9.]+)/)[1].replace(/[^a-zA-Z0-9\. ]/g, '');
-                  } else {
+                  }
+                  else if (lines[i].cmdline.match(/postgres: \S+ \S+ [0-9.]+/)) {
+                    row["host"] = lines[i].cmdline.replace(/\s+$/, '').match(/(postgres: \S+ \S+ [0-9.]+)/)[1].replace(/[^a-zA-Z0-9\. ]/g, '');
+                  }
+                  else if (lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)) {
+                    row["host"] = lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)[1];
+                  }
+                  else if (lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)) {
+                    row["host"] = lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)[1].replace(/ .container/g, ' container');
+                    
+                  }
+                  else {
                       row["host"] = lines[i].cmdline.replace(/\s+$/, '').replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
                   }
-                  
                   
                     lld.push(row);
                   }
