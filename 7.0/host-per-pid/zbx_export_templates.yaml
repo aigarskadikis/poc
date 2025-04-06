@@ -197,6 +197,9 @@ zabbix_export:
                   }
                   else if (lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)) {
                     row["host"] = lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)[1];
+                    if (row["host"] === '88196354b55d3ecf124ef5473b853cba51132d0cebc2d1649be1bc9d0e7c2179') row["host"] = 'z70prx.riga';
+                    if (row["host"] === 'c28b8221161141ae41ff0a23352717193d8099c91d2c3b98a97fe2600aaf3f2d') row["host"] = 'z70prx.riga.cloud';
+                    if (row["host"] === 'cc027a87e89021eec9bb8f84b835a9cef3b77cf97465a8b672d45fe72cdd7a19') row["host"] = 'ps3netsrv';
                   }
                   else if (lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)) {
                     row["host"] = lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)[1].replace(/ .container/g, ' container');
