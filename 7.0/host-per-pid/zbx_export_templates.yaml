@@ -35,6 +35,26 @@ zabbix_export:
                 - '$..[?(!(@.[''cmdline''] =~ ''digitalocean''))]'
               error_handler: CUSTOM_VALUE
               error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''name''] == ''sssd_be''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''name''] == ''agetty''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''name''] == ''droplet-agent''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''name''] == ''run-parts''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JAVASCRIPT
               parameters:
                 - |
