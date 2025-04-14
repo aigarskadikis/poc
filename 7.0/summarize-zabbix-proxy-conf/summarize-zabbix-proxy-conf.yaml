@@ -108,7 +108,7 @@ zabbix_export:
           master_item:
             key: 'vfs.file.contents["/etc/zabbix/zabbix_server.conf",]'
           tags:
-            - tag: conf
+            - tag: raw
               value: zabbixproxy
         - uuid: 31cf248627c94f10ad2c3bc04aa00dcd
           name: zabbix_server.conf
@@ -119,7 +119,7 @@ zabbix_export:
           value_type: LOG
           trends: '0'
           tags:
-            - tag: conf
+            - tag: raw
               value: zabbixproxy
       discovery_rules:
         - uuid: 998812a61463454fbdd0af35f75aa669
