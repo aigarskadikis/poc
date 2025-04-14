@@ -41,7 +41,6 @@ zabbix_export:
           type: ZABBIX_ACTIVE
           key: 'vfs.file.contents["/etc/zabbix/zabbix_proxy.conf",]'
           delay: 1h
-          history: '0'
           value_type: LOG
           trends: '0'
           tags:
@@ -78,13 +77,14 @@ zabbix_export:
           lld_macro_paths:
             - lld_macro: '{#SETTING}'
               path: '$.[''setting'']'
-    - uuid: 4c7fd73e09cc4eeebb29bdd2266e8bf8
+    - uuid: 6816772f78e24c048d3346fd8d140838
       template: 'summarize zabbix_proxy.conf pod'
       name: 'summarize zabbix_proxy.conf pod'
+      description: 'zabbix_sender -z 127.0.0.1 -s "{HOST.HOST}" -k base64.zabbix_proxy.conf -o $(base64 -w0 /etc/zabbix/zabbix_proxy.conf)'
       groups:
         - name: Templates/Modules
       items:
-        - uuid: 89223d9e596a44a48b0ed902e1415fc4
+        - uuid: dd53dba7497a4af5a0afc9ee1bb7a6e8
           name: 'Active lines'
           type: DEPENDENT
           key: active.lines
@@ -106,30 +106,38 @@ zabbix_export:
                   }
                   return JSON.stringify(data);
           master_item:
-            key: 'vfs.file.contents["/etc/zabbix/zabbix_proxy.conf",]'
+            key: 'cat.sh["/etc/zabbix/zabbix_proxy.conf"]'
           tags:
             - tag: raw
               value: zabbixproxy
-        - uuid: 22ce565bf16e42d1bf6db307ce937e55
+        - uuid: d6a45e4776f34a9992e2d9f6ac219178
           name: base64.zabbix_proxy.conf
           type: TRAP
           key: base64.zabbix_proxy.conf
           delay: '0'
           value_type: LOG
           trends: '0'
-        - uuid: bdf1ae71ed0e4e2e9f66e7f15028b1fd
+        - uuid: 07f757f78f5a4194a3a0ec3c70cd70ec
           name: 'cat zabbix_proxy.conf'
-          type: EXTERNAL
-          key: 'cat.sh[/etc/zabbix/zabbix_proxy.conf]'
-          delay: 1d
+          type: DEPENDENT
+          key: 'cat.sh["/etc/zabbix/zabbix_proxy.conf"]'
+          delay: '0'
           value_type: LOG
           trends: '0'
-        - uuid: b5a59cf6129541aa9f188f91fceb61d6
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return String.fromCharCode.apply(this,[].slice.call(atob(value)));'
+          master_item:
+            key: base64.zabbix_proxy.conf
+          tags:
+            - tag: raw
+              value: zabbixproxy
+        - uuid: b3dddf8ec7424ab29272625716487ea2
           name: 'Create task'
           type: CALCULATED
           key: create.task
-          delay: 5m
-          history: 90d
+          delay: 1h
           value_type: LOG
           trends: '0'
           params: '1'
@@ -188,30 +196,14 @@ zabbix_export:
                       'scriptid': scriptid,
                       'result': result
                   });
-        - uuid: 78b1867f6403447f84370225e47be3bc
-          name: zabbix_proxy.conf
-          type: DEPENDENT
-          key: 'vfs.file.contents["/etc/zabbix/zabbix_proxy.conf",]'
-          delay: '0'
-          value_type: LOG
-          trends: '0'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - 'var buffer = atob(value); return String.fromCharCode.apply(this, [].slice.call(buffer));'
-          master_item:
-            key: base64.zabbix_proxy.conf
-          tags:
-            - tag: raw
-              value: zabbixproxy
       discovery_rules:
-        - uuid: 4570afd9ee9b48d681556969e2710b03
+        - uuid: 5f19399538884770a8e6aa0d397d2c93
           name: conf
           type: DEPENDENT
           key: conf
           delay: '0'
           item_prototypes:
-            - uuid: 854e3c7f675a4d6e8f151878df8a5178
+            - uuid: 854533cd166f4248941ab5f8401b5c4d
               name: '{#SETTING}'
               type: DEPENDENT
               key: 'setting[{#SETTING}]'
@@ -275,7 +267,6 @@ zabbix_export:
           type: ZABBIX_ACTIVE
           key: 'vfs.file.contents["/etc/zabbix/zabbix_server.conf",]'
           delay: 1h
-          history: '0'
           value_type: LOG
           trends: '0'
           tags:
