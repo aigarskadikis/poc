@@ -76,6 +76,7 @@ for (i in ItemList) {
     if (parseInt(ItemList[i].state) === 1 && ItemList[i].error !== '') {
         var row = {};
         row["name"] = ItemList[i].name;
+        row["itemid"] = ItemList[i].itemid;
         row["error"] = ItemList[i].error;
         row["hostid"] = ItemList[i].hostid;
         row["host"] = hostName;
@@ -120,12 +121,12 @@ for (l in LLDList) {
 }
 
 
-// Unsupported items by count
-var counts = {}; var unsupportedItemsCount = []; var i;
+// Unsupported items by counts
+var countsU = {}; var unsupportedItemsCount = []; var i;
 // Count occurrences
-for (i = 0; i < unsupportedItems.length; i++) { var id = unsupportedItems[i].hostid; if (counts[id]) { counts[id]++ } else { counts[id] = 1 } }
+for (i = 0; i < unsupportedItems.length; i++) { var id = unsupportedItems[i].hostid; if (countsU[id]) { countsU[id]++ } else { countsU[id] = 1 } }
 // Convert to desired output format
-for (var id in counts) { unsupportedItemsCount.push({ "hostid": id, "count": String(counts[id]) }); }
+for (var id in countsU) { unsupportedItemsCount.push({ "hostid": id, "count": String(countsU[id]) }); }
 
 // add host origin to unsupported items
 var unsupportedItemsWithHost = [];
@@ -152,43 +153,39 @@ for (var i = 0; i < unsupportedItemsWithHost.length; i++) { delete unsupportedIt
 
 
 
-// Disabled items by count
-var counts = {}; var disabledItemsCount = []; var i;
+// Disabled items by counts
+var countsD = {}; var disabledItemsCount = []; var i;
 
 // Count occurrences by hostid+name combination
 for (i = 0; i < disabledItems.length; i++) {
     var hostid = disabledItems[i].hostid;
     var name = disabledItems[i].name;
     var key = hostid + "|" + name;
-    if (counts[key]) { counts[key].count += 1; } else { counts[key] = { hostid: hostid, name: name, count: 1 }; }
+    if (countsD[key]) { countsD[key].count += 1; } else { countsD[key] = { hostid: hostid, name: name, count: 1 }; }
 }
 
 // Convert to disabledItemsCount array
-for (var key in counts) {
-    var entry = counts[key];
+for (var key in countsD) {
+    var entry = countsD[key];
     disabledItemsCount.push({
         hostid: entry.hostid,
         name: entry.name,
-        count: String(entry.count) });
+        count: String(entry.count)
+    });
 }
 
 var disabledItemsWithHost = [];
 for (u in disabledItemsCount) {
-    for (h in hostList) {
-        if (hostList[h].hostid === disabledItemsCount[u].hostid) {
-            var row = {};
-            row["host"] = hostList[h].name;
-            row["sort"] = disabledItemsCount[u].count;
-            row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + disabledItemsCount[u].count + '</a>';
-            break;
-        }
-    }
+    var row = {};
+    row["host"] = disabledItemsCount[u].name;
+    row["sort"] = disabledItemsCount[u].count;
+    row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + disabledItemsCount[u].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[1][tag]=&filter_tags[1][operator]=0&filter_tags[1][value]=&filter_state=-1&filter_status=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + disabledItemsCount[u].count + '</a>';
     disabledItemsWithHost.push(row);
 }
 
 
 // Sort by count descending
-disabledItemsCount.sort(function (a, b) { return Number(b.count) - Number(a.count); });
+disabledItemsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
 
 // delete "sort" column
 for (var i = 0; i < disabledItemsWithHost.length; i++) { delete disabledItemsWithHost[i].sort; }
@@ -227,20 +224,12 @@ for (u in unsupportedLLDsCount) {
         }
     }
     unsupportedLLDsWithHost.push(row);
-
 }
 
 // sort by column "sort" with biggest numbers on top
-unsupportedLLDsWithHost.sort(function (a, b) {
-    return Number(b.sort) - Number(a.sort);
-});
-
+unsupportedLLDsWithHost.sort(function (a, b) {    return Number(b.sort) - Number(a.sort);});
 // delete "sort" column
-for (var i = 0; i < unsupportedLLDsWithHost.length; i++) {
-    delete unsupportedLLDsWithHost[i].sort;
-}
-
-
+for (var i = 0; i < unsupportedLLDsWithHost.length; i++) {    delete unsupportedLLDsWithHost[i].sort;}
 
 
 
@@ -333,9 +322,13 @@ for (i in interfaceList) {
 //     'unsupportedLLDs': unsupportedLLDs,
 
 return JSON.stringify({
+    'disabledItemsCount': disabledItemsCount,
+    'unsupportedItemsCount': unsupportedItemsCount,
     'disabledItemsWithHost': disabledItemsWithHost,
     'unsupportedLLDsWithHost': unsupportedLLDsWithHost,
     'unsupportedItemsWithHost': unsupportedItemsWithHost,
+    'unsupportedItems': unsupportedItems,
+    'disabledItems': disabledItems,
     'passiveNotWorking': passiveNotWorking,
     'proxyList': proxyList,
     'onlyActiveHostList': onlyActiveHostList,
