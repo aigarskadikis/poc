@@ -13,8 +13,10 @@ req.addHeader('Authorization: Bearer ' + token);
 // zabbix agent active (type:7) item list from a real host object
 Zabbix.Log(params.loglevel, "Zabbix API, fetch item.get");
 var ItemList = JSON.parse(req.post(url,
-    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["name","hostid","state","status","error","type","flags"],"monitored":1},"id":1}'
+    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["name","hostid","state","status","error","type","flags"]},"id":1}'
 )).result;
+// ,"monitored":1
+
 
 Zabbix.Log(params.loglevel, "Zabbix API, fetch discoveryrule.get");
 var LLDList = JSON.parse(req.post(url,
@@ -53,9 +55,6 @@ for (i in ItemList) {
         }
     }
 
-    //Zabbix.Log(4,"Zabbix API, prepare itemid: " + toString(ItemList[i].itemid));
-
-
     // active item list
     if (parseInt(ItemList[i].type) === 7) {
         var row = {};
@@ -69,7 +68,7 @@ for (i in ItemList) {
         var row = {};
         row["hostid"] = ItemList[i].hostid;
         row["itemid"] = ItemList[i].itemid;
-        row["host"] = hostName;
+        row["name"] = hostName;
         disabledItems.push(row);
     }
 
@@ -100,6 +99,8 @@ for (i = 0; i < activeItemList.length; i++) {
     }
 }
 
+
+Zabbix.Log(params.loglevel, "Zabbix API, unsupported LLDs");
 unsupportedLLDs = [];
 for (l in LLDList) {
     if (parseInt(LLDList[l].state) === 1 && LLDList[l].error !== '') {
@@ -119,23 +120,12 @@ for (l in LLDList) {
 }
 
 
-// unsupported items by count
-var counts = {};
-var unsupportedItemsCount = [];
-var i;
+// Unsupported items by count
+var counts = {}; var unsupportedItemsCount = []; var i;
 // Count occurrences
-for (i = 0; i < unsupportedItems.length; i++) {
-    var id = unsupportedItems[i].hostid;
-    if (counts[id]) {
-        counts[id]++;
-    } else {
-        counts[id] = 1;
-    }
-}
+for (i = 0; i < unsupportedItems.length; i++) { var id = unsupportedItems[i].hostid; if (counts[id]) { counts[id]++ } else { counts[id] = 1 } }
 // Convert to desired output format
-for (var id in counts) {
-    unsupportedItemsCount.push({ "hostid": id, "count": String(counts[id]) });
-}
+for (var id in counts) { unsupportedItemsCount.push({ "hostid": id, "count": String(counts[id]) }); }
 
 // add host origin to unsupported items
 var unsupportedItemsWithHost = [];
@@ -150,21 +140,58 @@ for (u in unsupportedItemsCount) {
         }
     }
     unsupportedItemsWithHost.push(row);
-
 }
 
 // sort by column "sort" with biggest numbers on top
-unsupportedItemsWithHost.sort(function (a, b) {
-    return Number(b.sort) - Number(a.sort);
-});
+unsupportedItemsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
 
 // delete "sort" column
-for (var i = 0; i < unsupportedItemsWithHost.length; i++) {
-    delete unsupportedItemsWithHost[i].sort;
+for (var i = 0; i < unsupportedItemsWithHost.length; i++) { delete unsupportedItemsWithHost[i].sort; }
+
+
+
+
+
+// Disabled items by count
+var counts = {}; var disabledItemsCount = []; var i;
+
+// Count occurrences by hostid+name combination
+for (i = 0; i < disabledItems.length; i++) {
+    var hostid = disabledItems[i].hostid;
+    var name = disabledItems[i].name;
+    var key = hostid + "|" + name;
+    if (counts[key]) { counts[key].count += 1; } else { counts[key] = { hostid: hostid, name: name, count: 1 }; }
+}
+
+// Convert to disabledItemsCount array
+for (var key in counts) {
+    var entry = counts[key];
+    disabledItemsCount.push({
+        hostid: entry.hostid,
+        name: entry.name,
+        count: String(entry.count) });
+}
+
+var disabledItemsWithHost = [];
+for (u in disabledItemsCount) {
+    for (h in hostList) {
+        if (hostList[h].hostid === disabledItemsCount[u].hostid) {
+            var row = {};
+            row["host"] = hostList[h].name;
+            row["sort"] = disabledItemsCount[u].count;
+            row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + disabledItemsCount[u].count + '</a>';
+            break;
+        }
+    }
+    disabledItemsWithHost.push(row);
 }
 
 
+// Sort by count descending
+disabledItemsCount.sort(function (a, b) { return Number(b.count) - Number(a.count); });
 
+// delete "sort" column
+for (var i = 0; i < disabledItemsWithHost.length; i++) { delete disabledItemsWithHost[i].sort; }
 
 
 
@@ -212,11 +239,6 @@ unsupportedLLDsWithHost.sort(function (a, b) {
 for (var i = 0; i < unsupportedLLDsWithHost.length; i++) {
     delete unsupportedLLDsWithHost[i].sort;
 }
-
-
-
-
-
 
 
 
@@ -311,6 +333,7 @@ for (i in interfaceList) {
 //     'unsupportedLLDs': unsupportedLLDs,
 
 return JSON.stringify({
+    'disabledItemsWithHost': disabledItemsWithHost,
     'unsupportedLLDsWithHost': unsupportedLLDsWithHost,
     'unsupportedItemsWithHost': unsupportedItemsWithHost,
     'passiveNotWorking': passiveNotWorking,
