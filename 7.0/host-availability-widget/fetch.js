@@ -1,18 +1,91 @@
 // gather interface, host status
 
-token = '{$Z_API_SESSIONID}';
-url = '{$ZABBIX.URL}' + '/api_jsonrpc.php';
+var params = JSON.parse(value);
+// token = '{$Z_API_SESSIONID}';
+// url = '{$ZABBIX.URL}' + '/api_jsonrpc.php';
+token = params.token;
+url = params.url + '/api_jsonrpc.php';
 
 var req = new HttpRequest();
 req.addHeader('Content-Type: application/json');
 req.addHeader('Authorization: Bearer ' + token);
 
 // zabbix agent active (type:7) item list from a real host object
+Zabbix.Log(params.loglevel, "Zabbix API, fetch item.get");
 var ItemList = JSON.parse(req.post(url,
-    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["name","hostid","state","error","type"],"monitored":1},"id":1}'
+    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["name","hostid","state","status","error","type","flags"],"monitored":1},"id":1}'
 )).result;
 
+Zabbix.Log(params.loglevel, "Zabbix API, fetch discoveryrule.get");
+var LLDList = JSON.parse(req.post(url,
+    '{"jsonrpc":"2.0","method":"discoveryrule.get","params":{"output":["name","hostid","state","status","error","type"],"monitored":1},"id":1}'
+)).result;
 
+// get list of interfaces
+Zabbix.Log(params.loglevel, "Zabbix API, fetch hostinterface.get");
+var interfaceList = JSON.parse(req.post(url,
+    '{"jsonrpc":"2.0","method":"hostinterface.get","params":{"output":["errors_from","disable_until","dns","main","error","available","useip","hostid","type","port","ip"]},"id": 1}'
+)).result;
+
+// get list of hosts
+Zabbix.Log(params.loglevel, "Zabbix API, fetch host.get");
+var hostList = JSON.parse(req.post(url,
+    '{"jsonrpc":"2.0","method":"host.get","params":{"output":["host","name","hostid","status","proxyid","active_available"]},"id": 1}'
+)).result;
+
+// get list of proxies
+Zabbix.Log(params.loglevel, "Zabbix API, fetch proxy.get");
+var proxyList = JSON.parse(req.post(url,
+    '{"jsonrpc":"2.0","method":"proxy.get","params":{"output":["name","proxyid"]},"id": 1}'
+)).result;
+
+Zabbix.Log(params.loglevel, "Zabbix API, prepare unsup, disabled, active utens");
+var activeItemList = [];
+var disabledItems = [];
+var unsupportedItems = [];
+var hostName = '';
+for (i in ItemList) {
+    // locate host origin the item belongs
+    for (h in hostList) {
+        if (hostList[h].hostid === ItemList[i].hostid) {
+            hostName = hostList[h].name;
+            break;
+        }
+    }
+
+    //Zabbix.Log(4,"Zabbix API, prepare itemid: " + toString(ItemList[i].itemid));
+
+
+    // active item list
+    if (parseInt(ItemList[i].type) === 7) {
+        var row = {};
+        row["hostid"] = ItemList[i].hostid;
+        row["itemid"] = ItemList[i].itemid;
+        activeItemList.push(row);
+    }
+
+    // disabled items
+    if (parseInt(ItemList[i].status) === 1) {
+        var row = {};
+        row["hostid"] = ItemList[i].hostid;
+        row["itemid"] = ItemList[i].itemid;
+        row["host"] = hostName;
+        disabledItems.push(row);
+    }
+
+    // unsupported items
+    if (parseInt(ItemList[i].state) === 1 && ItemList[i].error !== '') {
+        var row = {};
+        row["name"] = ItemList[i].name;
+        row["error"] = ItemList[i].error;
+        row["hostid"] = ItemList[i].hostid;
+        row["host"] = hostName;
+        unsupportedItems.push(row);
+    }
+
+}
+
+Zabbix.Log(params.loglevel, "Zabbix API, prepare ended");
 
 
 // unique hostid's with active checks
@@ -27,51 +100,125 @@ for (i = 0; i < activeItemList.length; i++) {
     }
 }
 
-// get list of interfaces
-var interfaceList = JSON.parse(req.post(url,
-    '{"jsonrpc":"2.0","method":"hostinterface.get","params":{"output":["errors_from","disable_until","dns","main","error","available","useip","hostid","type","port","ip"]},"id": 1}'
-)).result;
-
-// get list of hosts
-var hostList = JSON.parse(req.post(url,
-    '{"jsonrpc":"2.0","method":"host.get","params":{"output":["host","name","hostid","status","proxyid","active_available"]},"id": 1}'
-)).result;
-
-// get list of proxies
-var proxyList = JSON.parse(req.post(url,
-    '{"jsonrpc":"2.0","method":"proxy.get","params":{"output":["name","proxyid"]},"id": 1}'
-)).result;
-
-
-// only "Zabbix agent (active)" items
-activeItemList = [];
-for (i in ItemList) {
-    if (parseInt(ItemList[i].type) === 7) {
+unsupportedLLDs = [];
+for (l in LLDList) {
+    if (parseInt(LLDList[l].state) === 1 && LLDList[l].error !== '') {
         var row = {};
-        row["hostid"] = ItemList[i].hostid;
-        row["itemid"] = ItemList[i].itemid;
-        activeItemList.push(row);
-    }
-}
-
-// individual unsupported items
-unsupportedItems = [];
-for (i in ItemList) {
-    if (parseInt(ItemList[i].state) !== 0 && ItemList[i].error !== '') {
-        var row = {};
-        row["name"] = ItemList[i].name;
-        row["error"] = ItemList[i].error;
-
+        row["name"] = LLDList[l].name;
+        row["error"] = LLDList[l].error;
+        row["hostid"] = LLDList[l].hostid;
         // locate human readable host name
         for (h in hostList) {
-            if (hostList[h].hostid === ItemList[i].hostid) {
+            if (hostList[h].hostid === LLDList[l].hostid) {
                 row["host"] = hostList[h].name;
                 break;
             }
         }
-        unsupportedItems.push(row);
+        unsupportedLLDs.push(row);
     }
 }
+
+
+// unsupported items by count
+var counts = {};
+var unsupportedItemsCount = [];
+var i;
+// Count occurrences
+for (i = 0; i < unsupportedItems.length; i++) {
+    var id = unsupportedItems[i].hostid;
+    if (counts[id]) {
+        counts[id]++;
+    } else {
+        counts[id] = 1;
+    }
+}
+// Convert to desired output format
+for (var id in counts) {
+    unsupportedItemsCount.push({ "hostid": id, "count": String(counts[id]) });
+}
+
+// add host origin to unsupported items
+var unsupportedItemsWithHost = [];
+for (u in unsupportedItemsCount) {
+    for (h in hostList) {
+        if (hostList[h].hostid === unsupportedItemsCount[u].hostid) {
+            var row = {};
+            row["host"] = hostList[h].name;
+            row["sort"] = unsupportedItemsCount[u].count;
+            row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + unsupportedItemsCount[u].count + '</a>';
+            break;
+        }
+    }
+    unsupportedItemsWithHost.push(row);
+
+}
+
+// sort by column "sort" with biggest numbers on top
+unsupportedItemsWithHost.sort(function (a, b) {
+    return Number(b.sort) - Number(a.sort);
+});
+
+// delete "sort" column
+for (var i = 0; i < unsupportedItemsWithHost.length; i++) {
+    delete unsupportedItemsWithHost[i].sort;
+}
+
+
+
+
+
+
+
+// unsupported LLDs by count
+var counts = {};
+var unsupportedLLDsCount = [];
+var i;
+// Count occurrences
+for (i = 0; i < unsupportedLLDs.length; i++) {
+    var id = unsupportedLLDs[i].hostid;
+    if (counts[id]) {
+        counts[id]++;
+    } else {
+        counts[id] = 1;
+    }
+}
+// Convert to desired output format
+for (var id in counts) {
+    unsupportedLLDsCount.push({ "hostid": id, "count": String(counts[id]) });
+}
+
+// add host origin to unsupported items
+var unsupportedLLDsWithHost = [];
+for (u in unsupportedLLDsCount) {
+    for (h in hostList) {
+        if (hostList[h].hostid === unsupportedLLDsCount[u].hostid) {
+            var row = {};
+            row["host"] = hostList[h].name;
+            row["sort"] = unsupportedLLDsCount[u].count;
+            row["count"] = '<a href=\'{$ZABBIX.URL}/host_discovery.php?context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_delay=&filter_lifetime_type=-1&filter_enabled_lifetime_type=-1&filter_snmp_oid=&filter_state=1&filter_set=1\' target=\'_blank\'>' + unsupportedLLDsCount[u].count + '</a>';
+            break;
+        }
+    }
+    unsupportedLLDsWithHost.push(row);
+
+}
+
+// sort by column "sort" with biggest numbers on top
+unsupportedLLDsWithHost.sort(function (a, b) {
+    return Number(b.sort) - Number(a.sort);
+});
+
+// delete "sort" column
+for (var i = 0; i < unsupportedLLDsWithHost.length; i++) {
+    delete unsupportedLLDsWithHost[i].sort;
+}
+
+
+
+
+
+
+
 
 
 
@@ -161,8 +308,11 @@ for (i in interfaceList) {
 }
 
 // return debug info
+//     'unsupportedLLDs': unsupportedLLDs,
+
 return JSON.stringify({
-    'unsupportedItems': unsupportedItems,
+    'unsupportedLLDsWithHost': unsupportedLLDsWithHost,
+    'unsupportedItemsWithHost': unsupportedItemsWithHost,
     'passiveNotWorking': passiveNotWorking,
     'proxyList': proxyList,
     'onlyActiveHostList': onlyActiveHostList,
