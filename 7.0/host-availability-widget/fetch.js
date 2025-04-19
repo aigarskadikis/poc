@@ -8,9 +8,12 @@ req.addHeader('Content-Type: application/json');
 req.addHeader('Authorization: Bearer ' + token);
 
 // zabbix agent active (type:7) item list from a real host object
-var activeItemList = JSON.parse(req.post(url,
-    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["hostid"],"monitored":1,"filter":{"type":7}},"id":1}'
+var ItemList = JSON.parse(req.post(url,
+    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["name","hostid","state","error","type"],"monitored":1},"id":1}'
 )).result;
+
+
+
 
 // unique hostid's with active checks
 var uniqueHostIds = {};
@@ -29,7 +32,6 @@ var interfaceList = JSON.parse(req.post(url,
     '{"jsonrpc":"2.0","method":"hostinterface.get","params":{"output":["errors_from","disable_until","dns","main","error","available","useip","hostid","type","port","ip"]},"id": 1}'
 )).result;
 
-
 // get list of hosts
 var hostList = JSON.parse(req.post(url,
     '{"jsonrpc":"2.0","method":"host.get","params":{"output":["host","name","hostid","status","proxyid","active_available"]},"id": 1}'
@@ -39,6 +41,38 @@ var hostList = JSON.parse(req.post(url,
 var proxyList = JSON.parse(req.post(url,
     '{"jsonrpc":"2.0","method":"proxy.get","params":{"output":["name","proxyid"]},"id": 1}'
 )).result;
+
+
+// only "Zabbix agent (active)" items
+activeItemList = [];
+for (i in ItemList) {
+    if (parseInt(ItemList[i].type) === 7) {
+        var row = {};
+        row["hostid"] = ItemList[i].hostid;
+        row["itemid"] = ItemList[i].itemid;
+        activeItemList.push(row);
+    }
+}
+
+// individual unsupported items
+unsupportedItems = [];
+for (i in ItemList) {
+    if (parseInt(ItemList[i].state) !== 0 && ItemList[i].error !== '') {
+        var row = {};
+        row["name"] = ItemList[i].name;
+        row["error"] = ItemList[i].error;
+
+        // locate human readable host name
+        for (h in hostList) {
+            if (hostList[h].hostid === ItemList[i].hostid) {
+                row["host"] = hostList[h].name;
+                break;
+            }
+        }
+        unsupportedItems.push(row);
+    }
+}
+
 
 
 // iterate through host objects which hosts "Zabbix agent (active)" items
@@ -128,6 +162,7 @@ for (i in interfaceList) {
 
 // return debug info
 return JSON.stringify({
+    'unsupportedItems': unsupportedItems,
     'passiveNotWorking': passiveNotWorking,
     'proxyList': proxyList,
     'onlyActiveHostList': onlyActiveHostList,
