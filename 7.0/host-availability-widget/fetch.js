@@ -46,41 +46,48 @@ var activeItemList = [];
 var disabledItems = [];
 var unsupportedItems = [];
 var hostName = '';
+var hostStatus = 9;
 for (i in ItemList) {
     // locate host origin the item belongs
     for (h in hostList) {
         if (hostList[h].hostid === ItemList[i].hostid) {
             hostName = hostList[h].name;
+            hostStatus = hostList[h].status;
             break;
         }
     }
 
-    // active item list
-    if (parseInt(ItemList[i].type) === 7) {
-        var row = {};
-        row["hostid"] = ItemList[i].hostid;
-        row["itemid"] = ItemList[i].itemid;
-        activeItemList.push(row);
-    }
+    // if host is enabled
+    if (parseInt(hostStatus) === 0) {
 
-    // disabled items
-    if (parseInt(ItemList[i].status) === 1) {
-        var row = {};
-        row["hostid"] = ItemList[i].hostid;
-        row["itemid"] = ItemList[i].itemid;
-        row["name"] = hostName;
-        disabledItems.push(row);
-    }
+        // active item list
+        if (parseInt(ItemList[i].type) === 7) {
+            var row = {};
+            row["hostid"] = ItemList[i].hostid;
+            row["itemid"] = ItemList[i].itemid;
+            activeItemList.push(row);
+        }
 
-    // unsupported items
-    if (parseInt(ItemList[i].state) === 1 && ItemList[i].error !== '') {
-        var row = {};
-        row["name"] = ItemList[i].name;
-        row["itemid"] = ItemList[i].itemid;
-        row["error"] = ItemList[i].error;
-        row["hostid"] = ItemList[i].hostid;
-        row["host"] = hostName;
-        unsupportedItems.push(row);
+        // disabled items
+        if (parseInt(ItemList[i].status) === 1) {
+            var row = {};
+            row["hostid"] = ItemList[i].hostid;
+            row["itemid"] = ItemList[i].itemid;
+            row["name"] = hostName;
+            disabledItems.push(row);
+        }
+
+        // unsupported and enabled items
+        if (parseInt(ItemList[i].state) === 1 && ItemList[i].error !== '' && parseInt(ItemList[i].status) === 0) {
+            var row = {};
+            row["name"] = ItemList[i].name;
+            row["itemid"] = ItemList[i].itemid;
+            row["error"] = ItemList[i].error;
+            row["hostid"] = ItemList[i].hostid;
+            row["host"] = hostName;
+            unsupportedItems.push(row);
+        }
+
     }
 
 }
@@ -227,9 +234,9 @@ for (u in unsupportedLLDsCount) {
 }
 
 // sort by column "sort" with biggest numbers on top
-unsupportedLLDsWithHost.sort(function (a, b) {    return Number(b.sort) - Number(a.sort);});
+unsupportedLLDsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
 // delete "sort" column
-for (var i = 0; i < unsupportedLLDsWithHost.length; i++) {    delete unsupportedLLDsWithHost[i].sort;}
+for (var i = 0; i < unsupportedLLDsWithHost.length; i++) { delete unsupportedLLDsWithHost[i].sort; }
 
 
 
