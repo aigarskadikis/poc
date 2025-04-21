@@ -226,7 +226,7 @@ for (u in allItemsCount) {
         var row = {};
         row["host"] = host.name;
         row["sort"] = allItemsCount[u].count;
-        row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=-1&filter_status=0&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + allItemsCount[u].count + '</a>';
+        row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + host.hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=-1&filter_status=0&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + allItemsCount[u].count + '</a>';
         itemsAreRunningWithHost.push(row);
     }
 }
@@ -282,11 +282,12 @@ for (u in unsupportedLLDsCount) {
     var item = unsupportedLLDsCount[u];
     var host = hostMap[item.hostid];
     if (host) {
+        var row = {};
         row["host"] = host.name;
         row["sort"] = unsupportedLLDsCount[u].count;
-        row["count"] = '<a href=\'{$ZABBIX.URL}/host_discovery.php?context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_delay=&filter_lifetime_type=-1&filter_enabled_lifetime_type=-1&filter_snmp_oid=&filter_state=1&filter_set=1\' target=\'_blank\'>' + unsupportedLLDsCount[u].count + '</a>';
+        row["count"] = '<a href=\'{$ZABBIX.URL}/host_discovery.php?context=host&filter_hostids[]=' + host.hostid + '&filter_name=&filter_key=&filter_type=-1&filter_delay=&filter_lifetime_type=-1&filter_enabled_lifetime_type=-1&filter_snmp_oid=&filter_state=1&filter_set=1\' target=\'_blank\'>' + unsupportedLLDsCount[u].count + '</a>';
+        unsupportedLLDsWithHost.push(row);
     }
-    unsupportedLLDsWithHost.push(row);
 }
 // sort by column "sort" with biggest numbers on top
 unsupportedLLDsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
@@ -301,9 +302,6 @@ Zabbix.Log(params.loglevel, "Zabbix API, extract unavailable and unknown ZBX act
 var activeUnavailable2 = [];
 var activeUnknown0 = [];
 for (a in onlyActiveHostList) {
-
-
-
 
 
     for (h in hostList) {
