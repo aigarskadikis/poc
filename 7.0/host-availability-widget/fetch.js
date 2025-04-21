@@ -39,6 +39,12 @@ var hostList = JSON.parse(req.post(url,
     '{"jsonrpc":"2.0","method":"host.get","params":{"output":["host","name","hostid","status","proxyid","active_available"]},"id": 1}'
 )).result;
 
+// get list of triggers
+Zabbix.Log(params.loglevel, "Zabbix API, fetch trigger.get");
+var triggerList = JSON.parse(req.post(url,
+    '{"jsonrpc":"2.0","method":"trigger.get","params":{"output":["triggerid","description","status","error","hosts"],"selectHosts":["name"]},"id":1}'
+)).result;
+
 // get list of proxies
 Zabbix.Log(params.loglevel, "Zabbix API, fetch proxy.get");
 var proxyList = JSON.parse(req.post(url,
@@ -46,7 +52,6 @@ var proxyList = JSON.parse(req.post(url,
 )).result;
 
 // API fetching completed
-
 var calculationStarts = Date.now() / 1000;
 
 // build a map for fast hostid lookup
@@ -66,6 +71,50 @@ for (var p in proxyList) {
 }
 
 
+// triggers with errors
+Zabbix.Log(params.loglevel, "Zabbix API, amount of corrupted triggers per host");
+var triggersWithErrors = [];
+for (t in triggerList) {
+    // there is an error, and trigger is not disabled
+    if (triggerList[t].error !== '' && parseInt(triggerList[t].status) === 0) {
+        var row = triggerList[t];
+        row["name"] = triggerList[t].hosts[0].name;
+        row["hostid"] = triggerList[t].hosts[0].hostid;
+        delete triggerList[t].hosts;
+        delete triggerList[t].status;
+        delete triggerList[t].triggerid;
+        triggersWithErrors.push(row);
+    }
+}
+// corrupted triggers by count
+var countsT = {}; var triggersWithErrorsCount = []; var i;
+// Count occurrences by hostid+name combination
+for (i = 0; i < triggersWithErrors.length; i++) {
+    var hostid = triggersWithErrors[i].hostid;
+    var name = triggersWithErrors[i].name;
+    var key = hostid + "|" + name;
+    if (countsT[key]) { countsT[key].count += 1; } else { countsT[key] = { hostid: hostid, name: name, count: 1 }; }
+}
+// Convert to triggersWithErrorsCount array
+for (var key in countsT) {
+    var entry = countsT[key];
+    triggersWithErrorsCount.push({ hostid: entry.hostid, name: entry.name, count: String(entry.count) });
+}
+var triggersWithErrorsWithHost = [];
+for (u in triggersWithErrorsCount) {
+    var row = {};
+    row["host"] = triggersWithErrorsCount[u].name;
+    row["sort"] = triggersWithErrorsCount[u].count;
+    row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=trigger.list&context=host&filter_hostids[]=' + triggersWithErrorsCount[u].hostid + '&filter_name=&filter_state=1&filter_value=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_inherited=-1&filter_discovered=-1&filter_dependent=-1&filter_set=1\' target=\'_blank\'>' + triggersWithErrorsCount[u].count + '</a>';
+    triggersWithErrorsWithHost.push(row);
+}
+// Sort by count descending
+triggersWithErrorsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
+// delete "sort" column
+for (var i = 0; i < triggersWithErrorsWithHost.length; i++) { delete triggersWithErrorsWithHost[i].sort; }
+
+
+
 // extract disabled hosts
 var disabledHosts = [];
 for (d in hostList) {
@@ -73,11 +122,7 @@ for (d in hostList) {
         var host = hostList[d];
         var proxy = proxyMap[host.proxyid];
         var row = {};
-        if (proxy) {
-            row["proxy"] = proxy.name;
-        } else {
-            row["proxy"] = '';
-        }
+        if (proxy) { row["proxy"] = proxy.name; } else { row["proxy"] = ''; }
         row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[d].hostid + '\' target=\'_blank\'>' + hostList[d].name + '</a>';
         disabledHosts.push(row);
     }
@@ -391,9 +436,12 @@ Zabbix.Log(params.loglevel, "Zabbix API, end and return");
 Zabbix.Log(3, "Zabbix API, stats ended");
 
 var scriptEnded = Date.now() / 1000;
-
+//
 
 return JSON.stringify({
+    'triggersWithErrorsWithHost': triggersWithErrorsWithHost,
+    'triggersWithErrors': triggersWithErrors,
+    'triggerList': triggerList,
     'timeAPIfetching': (calculationStarts - scriptStarts),
     'timeAggregate': (scriptEnded - calculationStarts),
     'timeTotal': (scriptEnded - scriptStarts),
