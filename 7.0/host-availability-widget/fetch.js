@@ -78,7 +78,7 @@ for (d in hostList) {
         } else {
             row["proxy"] = '';
         }
-        row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+        row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[d].hostid + '\' target=\'_blank\'>' + hostList[d].name + '</a>';
         disabledHosts.push(row);
     }
 }
@@ -194,11 +194,13 @@ for (u in unsupportedItemsCount) {
     var item = unsupportedItemsCount[u];
     var host = hostMap[item.hostid];
     if (host) {
+        var row = {};
         row["host"] = host.name;
         row["sort"] = unsupportedItemsCount[u].count;
-        row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + unsupportedItemsCount[u].count + '</a>';
+        row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + host.hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + unsupportedItemsCount[u].count + '</a>';
+        unsupportedItemsWithHost.push(row);
     }
-    unsupportedItemsWithHost.push(row);
+
 }
 // sort by column "sort" with biggest numbers on top
 unsupportedItemsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
@@ -221,11 +223,12 @@ for (u in allItemsCount) {
     var item = allItemsCount[u];
     var host = hostMap[item.hostid];
     if (host) {
+        var row = {};
         row["host"] = host.name;
         row["sort"] = allItemsCount[u].count;
         row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=-1&filter_status=0&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + allItemsCount[u].count + '</a>';
+        itemsAreRunningWithHost.push(row);
     }
-    itemsAreRunningWithHost.push(row);
 }
 // sort by column "sort" with biggest numbers on top
 itemsAreRunningWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
