@@ -15,6 +15,7 @@ zabbix_export:
           type: DEPENDENT
           key: ActiveUnavailable
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -28,6 +29,7 @@ zabbix_export:
           type: DEPENDENT
           key: ActiveUnknown
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -36,17 +38,35 @@ zabbix_export:
                 - $.activeUnknown0
           master_item:
             key: fetch
+        - uuid: e89834411fdd4ad49ec48d598478960c
+          name: disabledHosts
+          type: DEPENDENT
+          key: disabledHosts
+          delay: '0'
+          history: '{$DBG}'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.disabledHosts
+          master_item:
+            key: fetch
         - uuid: f74b63fe2c8e45c288136f549f0ce199
           name: disabledItems
           type: DEPENDENT
           key: disabledItems
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
             - type: JSONPATH
               parameters:
                 - $.disabledItems
+            - type: JSONPATH
+              parameters:
+                - '$.[0:{$RECORDS}]'
           master_item:
             key: fetch
         - uuid: 5eaf509a12b44f09945e2c635e9b34db
@@ -54,6 +74,7 @@ zabbix_export:
           type: DEPENDENT
           key: disabledItemsCount
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -67,6 +88,7 @@ zabbix_export:
           type: DEPENDENT
           key: disabledItemsWithHost
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -168,11 +190,15 @@ zabbix_export:
           name: Fetch
           type: SCRIPT
           key: fetch
-          delay: 1h
+          delay: '{$UPD}'
           value_type: LOG
           trends: '0'
           params: |
             // gather interface, host status
+            
+            var scriptStarts = Date.now() / 1000;
+            Zabbix.Log(3, "Zabbix API, stats started: " + toString(scriptStarts));
+            
             
             var params = JSON.parse(value);
             // token = '{$Z_API_SESSIONID}';
@@ -215,55 +241,104 @@ zabbix_export:
                 '{"jsonrpc":"2.0","method":"proxy.get","params":{"output":["name","proxyid"]},"id": 1}'
             )).result;
             
+            // API fetching completed
+            
+            var calculationStarts = Date.now() / 1000;
+            
+            // build a map for fast hostid lookup
+            Zabbix.Log(params.loglevel, "Zabbix API, build a map for fast hostid lookup");
+            var hostMap = {};
+            for (var h in hostList) {
+                var host = hostList[h];
+                hostMap[host.hostid] = host;  // map hostid to the entire host object
+            }
+            
+            // build a map for fast proxyid lookup
+            Zabbix.Log(params.loglevel, "Zabbix API, build a map for fast proxyid lookup");
+            var proxyMap = {};
+            for (var p in proxyList) {
+                var proxy = proxyList[p];
+                proxyMap[proxy.proxyid] = proxy;  // map proxyid to the entire host object
+            }
+            
+            
+            // extract disabled hosts
+            var disabledHosts = [];
+            for (d in hostList) {
+                if (parseInt(hostList[d].status) === 1) {
+                    var host = hostList[d];
+                    var proxy = proxyMap[host.proxyid];
+                    var row = {};
+                    if (proxy) {
+                        row["proxy"] = proxy.name;
+                    } else {
+                        row["proxy"] = '';
+                    }
+                    row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+                    disabledHosts.push(row);
+                }
+            }
+            
+            
+            
             Zabbix.Log(params.loglevel, "Zabbix API, prepare unsup, disabled, active utens");
             var activeItemList = [];
             var disabledItems = [];
+            var itemsAreRunning = [];
             var unsupportedItems = [];
             var hostName = '';
             var hostStatus = 9;
             for (i in ItemList) {
                 // locate host origin the item belongs
-                for (h in hostList) {
-                    if (hostList[h].hostid === ItemList[i].hostid) {
-                        hostName = hostList[h].name;
-                        hostStatus = hostList[h].status;
-                        break;
+                var item = ItemList[i];
+                var host = hostMap[item.hostid];
+            
+                if (host) {
+                    var hostName = host.name;
+                    var hostStatus = host.status;
+            
+            
+                    // if host is enabled and host is not a template
+                    if (parseInt(hostStatus) === 0) {
+            
+                        // active ZBX item list
+                        if (parseInt(ItemList[i].type) === 7) {
+                            var row = {};
+                            row["hostid"] = ItemList[i].hostid;
+                            row["itemid"] = ItemList[i].itemid;
+                            activeItemList.push(row);
+                        }
+            
+                        // disabled items on the top of enabled host
+                        if (parseInt(ItemList[i].status) === 1) {
+                            var row = {};
+                            row["hostid"] = ItemList[i].hostid;
+                            row["itemid"] = ItemList[i].itemid;
+                            row["name"] = hostName;
+                            disabledItems.push(row);
+                        }
+            
+                        // items which are running (activated, not disabled) and item is not a prototype
+                        if (parseInt(ItemList[i].status) === 0 && (parseInt(ItemList[i].flags) === 0 || parseInt(ItemList[i].flags) === 4)) {
+                            var row = {};
+                            row["hostid"] = ItemList[i].hostid;
+                            row["itemid"] = ItemList[i].itemid;
+                            row["name"] = hostName;
+                            itemsAreRunning.push(row);
+                        }
+            
+                        // unsupported and enabled items
+                        if (parseInt(ItemList[i].state) === 1 && ItemList[i].error !== '' && parseInt(ItemList[i].status) === 0) {
+                            var row = {};
+                            row["name"] = ItemList[i].name;
+                            row["itemid"] = ItemList[i].itemid;
+                            row["error"] = ItemList[i].error;
+                            row["hostid"] = ItemList[i].hostid;
+                            row["host"] = hostName;
+                            unsupportedItems.push(row);
+                        }
                     }
                 }
-            
-                // if host is enabled
-                if (parseInt(hostStatus) === 0) {
-            
-                    // active item list
-                    if (parseInt(ItemList[i].type) === 7) {
-                        var row = {};
-                        row["hostid"] = ItemList[i].hostid;
-                        row["itemid"] = ItemList[i].itemid;
-                        activeItemList.push(row);
-                    }
-            
-                    // disabled items
-                    if (parseInt(ItemList[i].status) === 1) {
-                        var row = {};
-                        row["hostid"] = ItemList[i].hostid;
-                        row["itemid"] = ItemList[i].itemid;
-                        row["name"] = hostName;
-                        disabledItems.push(row);
-                    }
-            
-                    // unsupported and enabled items
-                    if (parseInt(ItemList[i].state) === 1 && ItemList[i].error !== '' && parseInt(ItemList[i].status) === 0) {
-                        var row = {};
-                        row["name"] = ItemList[i].name;
-                        row["itemid"] = ItemList[i].itemid;
-                        row["error"] = ItemList[i].error;
-                        row["hostid"] = ItemList[i].hostid;
-                        row["host"] = hostName;
-                        unsupportedItems.push(row);
-                    }
-            
-                }
-            
             }
             
             Zabbix.Log(params.loglevel, "Zabbix API, prepare ended");
@@ -303,12 +378,12 @@ zabbix_export:
             
             
             // Unsupported items by counts
+            Zabbix.Log(params.loglevel, "Zabbix API, Unsupported items by counts");
             var countsU = {}; var unsupportedItemsCount = []; var i;
             // Count occurrences
             for (i = 0; i < unsupportedItems.length; i++) { var id = unsupportedItems[i].hostid; if (countsU[id]) { countsU[id]++ } else { countsU[id] = 1 } }
             // Convert to desired output format
             for (var id in countsU) { unsupportedItemsCount.push({ "hostid": id, "count": String(countsU[id]) }); }
-            
             // add host origin to unsupported items
             var unsupportedItemsWithHost = [];
             for (u in unsupportedItemsCount) {
@@ -323,20 +398,45 @@ zabbix_export:
                 }
                 unsupportedItemsWithHost.push(row);
             }
-            
             // sort by column "sort" with biggest numbers on top
             unsupportedItemsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
-            
             // delete "sort" column
             for (var i = 0; i < unsupportedItemsWithHost.length; i++) { delete unsupportedItemsWithHost[i].sort; }
             
             
             
+            // All items by counts
+            Zabbix.Log(params.loglevel, "Zabbix API, All items by counts");
+            var countsA = {}; var allItemsCount = []; var i;
+            // Count occurrences
+            for (i = 0; i < itemsAreRunning.length; i++) { var id = itemsAreRunning[i].hostid; if (countsA[id]) { countsA[id]++ } else { countsA[id] = 1 } }
+            // Convert to desired output format
+            for (var id in countsA) { allItemsCount.push({ "hostid": id, "count": String(countsA[id]) }); }
+            // add host origin to all items
+            var itemsAreRunningWithHost = [];
+            for (u in allItemsCount) {
+                for (h in hostList) {
+                    if (hostList[h].hostid === allItemsCount[u].hostid) {
+                        var row = {};
+                        row["host"] = hostList[h].name;
+                        row["sort"] = allItemsCount[u].count;
+                        row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=-1&filter_status=0&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + allItemsCount[u].count + '</a>';
+                        break;
+                    }
+                }
+                itemsAreRunningWithHost.push(row);
+            }
+            // sort by column "sort" with biggest numbers on top
+            itemsAreRunningWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
+            // delete "sort" column
+            for (var i = 0; i < itemsAreRunningWithHost.length; i++) { delete itemsAreRunningWithHost[i].sort; }
+            
+            
             
             
             // Disabled items by counts
+            Zabbix.Log(params.loglevel, "Zabbix API, Disabled items by counts");
             var countsD = {}; var disabledItemsCount = []; var i;
-            
             // Count occurrences by hostid+name combination
             for (i = 0; i < disabledItems.length; i++) {
                 var hostid = disabledItems[i].hostid;
@@ -344,17 +444,11 @@ zabbix_export:
                 var key = hostid + "|" + name;
                 if (countsD[key]) { countsD[key].count += 1; } else { countsD[key] = { hostid: hostid, name: name, count: 1 }; }
             }
-            
             // Convert to disabledItemsCount array
             for (var key in countsD) {
                 var entry = countsD[key];
-                disabledItemsCount.push({
-                    hostid: entry.hostid,
-                    name: entry.name,
-                    count: String(entry.count)
-                });
+                disabledItemsCount.push({ hostid: entry.hostid, name: entry.name, count: String(entry.count) });
             }
-            
             var disabledItemsWithHost = [];
             for (u in disabledItemsCount) {
                 var row = {};
@@ -363,11 +457,8 @@ zabbix_export:
                 row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + disabledItemsCount[u].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[1][tag]=&filter_tags[1][operator]=0&filter_tags[1][value]=&filter_state=-1&filter_status=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + disabledItemsCount[u].count + '</a>';
                 disabledItemsWithHost.push(row);
             }
-            
-            
             // Sort by count descending
             disabledItemsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
-            
             // delete "sort" column
             for (var i = 0; i < disabledItemsWithHost.length; i++) { delete disabledItemsWithHost[i].sort; }
             
@@ -375,23 +466,11 @@ zabbix_export:
             
             
             // unsupported LLDs by count
-            var counts = {};
-            var unsupportedLLDsCount = [];
-            var i;
+            var counts = {}; var unsupportedLLDsCount = []; var i;
             // Count occurrences
-            for (i = 0; i < unsupportedLLDs.length; i++) {
-                var id = unsupportedLLDs[i].hostid;
-                if (counts[id]) {
-                    counts[id]++;
-                } else {
-                    counts[id] = 1;
-                }
-            }
+            for (i = 0; i < unsupportedLLDs.length; i++) { var id = unsupportedLLDs[i].hostid; if (counts[id]) { counts[id]++; } else { counts[id] = 1; } }
             // Convert to desired output format
-            for (var id in counts) {
-                unsupportedLLDsCount.push({ "hostid": id, "count": String(counts[id]) });
-            }
-            
+            for (var id in counts) { unsupportedLLDsCount.push({ "hostid": id, "count": String(counts[id]) }); }
             // add host origin to unsupported items
             var unsupportedLLDsWithHost = [];
             for (u in unsupportedLLDsCount) {
@@ -406,7 +485,6 @@ zabbix_export:
                 }
                 unsupportedLLDsWithHost.push(row);
             }
-            
             // sort by column "sort" with biggest numbers on top
             unsupportedLLDsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
             // delete "sort" column
@@ -415,6 +493,8 @@ zabbix_export:
             
             
             // iterate through host objects which hosts "Zabbix agent (active)" items
+            Zabbix.Log(params.loglevel, "Zabbix API, extract unavailable and unknown ZBX active checks");
+            
             var activeUnavailable2 = [];
             var activeUnknown0 = [];
             for (a in onlyActiveHostList) {
@@ -435,21 +515,22 @@ zabbix_export:
                     if (parseInt(hostList[h].active_available) === 2 && parseInt(hostList[h].hostid) === parseInt(onlyActiveHostList[a])) {
                         var row = {};
                         row["proxy"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=proxy.list&filter_name=' + proxyName + '&filter_operating_mode=-1&filter_version=-1&filter_set=1\' target=\'_blank\'>' + proxyName + '</a>';
-                        row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+                        row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + hostList[h].name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + hostList[h].name + '</a>';
                         activeUnavailable2.push(row);
                     }
                     if (parseInt(hostList[h].active_available) === 0 && parseInt(hostList[h].hostid) === parseInt(onlyActiveHostList[a])) {
                         var row = {};
                         row["proxy"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=proxy.list&filter_name=' + proxyName + '&filter_operating_mode=-1&filter_version=-1&filter_set=1\' target=\'_blank\'>' + proxyName + '</a>';
-                        row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+                        row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + hostList[h].name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + hostList[h].name + '</a>';
                         activeUnknown0.push(row);
                     }
                 }
             }
             
             // output will be an array
+            Zabbix.Log(params.loglevel, "Zabbix API, passive ZBX, SNMP, JMX interfaces");
             var passiveNotWorking = [];
-            
+            var passiveNotUsed = [];
             // take one full itemid containing all characteristics like key_, units, name
             for (i in interfaceList) {
                 // merge interface table with host table by using "hostid" as mapping field
@@ -465,8 +546,6 @@ zabbix_export:
                         parseInt(interfaceList[i].available) !== 1
                     ) {
                         var row = {};
-                        row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
-                        row["error"] = interfaceList[i].error;
             
                         // locate passive checks
                         if (parseInt(interfaceList[i].useip) === 1) {
@@ -490,19 +569,42 @@ zabbix_export:
                                 row["proxy"] = '';
                             }
                         }
+                        row["error"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + hostList[h].name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + interfaceList[i].error + '</a>';
             
-                        // map the host list with proxy (if there is even a proxy)
-                        passiveNotWorking.push(row);
             
+                        if (interfaceList[i].error !== '') {
+                            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+                            passiveNotWorking.push(row);
+                        } else {
+                            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+                            passiveNotUsed.push(row);
+                        }
                     }
                 }
             
             }
             
+            // for not used interfaces delete column "error"
+            for (var i = 0; i < passiveNotUsed.length; i++) { delete passiveNotUsed[i].error; }
+            
+            
             // return debug info
             //     'unsupportedLLDs': unsupportedLLDs,
+            //     'disabledHostList': disabledHostList,
+            Zabbix.Log(params.loglevel, "Zabbix API, end and return");
+            
+            Zabbix.Log(3, "Zabbix API, stats ended");
+            
+            var scriptEnded = Date.now() / 1000;
+            
             
             return JSON.stringify({
+                'timeAPIfetching': (calculationStarts - scriptStarts),
+                'timeAggregate': (scriptEnded - calculationStarts),
+                'timeTotal': (scriptEnded - scriptStarts),
+                'disabledHosts': disabledHosts,
+                'itemsAreRunningWithHost': itemsAreRunningWithHost,
+                'passiveNotUsed': passiveNotUsed,
                 'disabledItemsCount': disabledItemsCount,
                 'unsupportedItemsCount': unsupportedItemsCount,
                 'disabledItemsWithHost': disabledItemsWithHost,
@@ -519,11 +621,189 @@ zabbix_export:
           timeout: 5m
           parameters:
             - name: loglevel
-              value: '3'
+              value: '{$DEBUG.LEVEL}'
             - name: token
               value: '{$Z_API_SESSIONID}'
             - name: url
               value: '{$ZABBIX.URL}'
+        - uuid: e061f7d1b06d4828b841837ed20fc51a
+          name: disabledHostsHTML
+          type: DEPENDENT
+          key: 'HTML[disabledHosts]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: disabledHosts
+        - uuid: 9d6c2032368d47d2a065a3ee0f40ee0c
+          name: itemsAreRunningWithHostHTML
+          type: DEPENDENT
+          key: 'HTML[itemsAreRunningWithHost]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: itemsAreRunningWithHost
         - uuid: 8e0e27d8a35f42b9bfd1f84cef468817
           name: JMXNotWorkingHTML
           type: DEPENDENT
@@ -702,6 +982,95 @@ zabbix_export:
                   return getHtmlGroupedByColumn(json_array);
           master_item:
             key: type2
+        - uuid: b22c4daf7442495892356718f335cdcf
+          name: passiveNotUsedHTML
+          type: DEPENDENT
+          key: 'HTML[ZBXnotUsed]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: passiveNotUsed
         - uuid: 46866c579ad247deb6c63affaaef24e0
           name: ZBXNotWorkingHTML
           type: DEPENDENT
@@ -791,11 +1160,43 @@ zabbix_export:
                   return getHtmlGroupedByColumn(json_array);
           master_item:
             key: type1
+        - uuid: 23d932a188254330b6305709e6811147
+          name: itemsAreRunningWithHost
+          type: DEPENDENT
+          key: itemsAreRunningWithHost
+          delay: '0'
+          history: '{$DBG}'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.itemsAreRunningWithHost
+            - type: JSONPATH
+              parameters:
+                - '$.[0:{$RECORDS}]'
+          master_item:
+            key: fetch
+        - uuid: 37457fe46f0b4ffbba61d80bb109bea0
+          name: passiveNotUsed
+          type: DEPENDENT
+          key: passiveNotUsed
+          delay: '0'
+          history: '{$DBG}'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.passiveNotUsed
+          master_item:
+            key: fetch
         - uuid: 09942bc4641e486f872594c175a9b1f4
           name: PassiveNotWorking
           type: DEPENDENT
           key: PassiveNotWorking
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -804,11 +1205,57 @@ zabbix_export:
                 - $.passiveNotWorking
           master_item:
             key: fetch
+        - uuid: 07c9feba0b81428d9594635838a44385
+          name: timeAggregate
+          type: DEPENDENT
+          key: timeAggregate
+          delay: '0'
+          history: '{$DBG}'
+          value_type: FLOAT
+          trends: '0'
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.timeAggregate
+          master_item:
+            key: fetch
+        - uuid: 462f8d5ec1bc42c1ac4e21e30b2718e6
+          name: timeAPIfetching
+          type: DEPENDENT
+          key: timeAPIfetching
+          delay: '0'
+          history: '{$DBG}'
+          value_type: FLOAT
+          trends: '0'
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.timeAPIfetching
+          master_item:
+            key: fetch
+        - uuid: ba6e1bbc32594f9ba5bfe55e84a790dc
+          name: timeTotal
+          type: DEPENDENT
+          key: timeTotal
+          delay: '0'
+          history: '{$DBG}'
+          value_type: FLOAT
+          trends: '0'
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.timeTotal
+          master_item:
+            key: fetch
         - uuid: 70f5450aba11478abb3f7b770128d3b0
           name: 'ZBX not working'
           type: DEPENDENT
           key: type1
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -825,6 +1272,7 @@ zabbix_export:
           type: DEPENDENT
           key: type2
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -841,6 +1289,7 @@ zabbix_export:
           type: DEPENDENT
           key: type4
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -1035,12 +1484,16 @@ zabbix_export:
           type: DEPENDENT
           key: unsupportedItems
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
             - type: JSONPATH
               parameters:
                 - $.unsupportedItems
+            - type: JSONPATH
+              parameters:
+                - '$.[0:{$RECORDS}]'
           master_item:
             key: fetch
         - uuid: e256add543e0418b9d4a9779f4b19c75
@@ -1048,6 +1501,7 @@ zabbix_export:
           type: DEPENDENT
           key: unsupportedItemsCount
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -1061,6 +1515,7 @@ zabbix_export:
           type: DEPENDENT
           key: unsupportedItemsWithHost
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -1163,6 +1618,7 @@ zabbix_export:
           type: DEPENDENT
           key: unsupportedLLDsWithHost
           delay: '0'
+          history: '{$DBG}'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -1267,18 +1723,360 @@ zabbix_export:
           value: 'border:1px gray dotted'
         - macro: '{$CSS:table.th}'
           value: 'border:1px gray dotted;font-weight:bold'
+        - macro: '{$DBG}'
+          value: 1d
+        - macro: '{$DEBUG.LEVEL}'
+          value: '4'
         - macro: '{$RECORDS}'
-          value: '50'
+          value: '99'
+        - macro: '{$UPD}'
+          value: 1m
       dashboards:
         - uuid: c100b83607c344b888273653b13e8da4
           name: Summary
           display_period: '3600'
           auto_start: 'NO'
           pages:
-            - name: 'Zabbix agent (active) checks'
+            - name: 'Interfaces: ZBX'
               widgets:
                 - type: itemhistory
-                  name: Unavailable
+                  name: 'Zabbix agent passive checks is not available'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML[ZBX]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'Unavailable Zabbix agent (active) checks'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: ZWNBS
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: SNMP
+              widgets:
+                - type: itemhistory
+                  name: 'SNMP interface is not working'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML[SNMP]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'Unavailable Zabbix agent (active) checks'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: VCPQJ
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: JXM
+              widgets:
+                - type: itemhistory
+                  name: 'JMX interface is not working'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML[JMX]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'JMX interface not working'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: SNBKA
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: 'not used'
+              widgets:
+                - type: itemhistory
+                  name: 'interface is registred, but not giving green feedback'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML[ZBXnotUsed]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'passive interfaces not in use'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: KVPOZ
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: 'items: unsupported'
+              widgets:
+                - type: itemhistory
+                  name: 'unsupported items'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: unsupportedItemsWithHostHTML
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'unsupported items'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: CQVQG
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: LLDs
+              widgets:
+                - type: itemhistory
+                  name: 'unsupported LLDs'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: unsupportedLLDsWithHostHTML
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'unsupported LLDs'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: MNBCZ
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: disabled
+              widgets:
+                - type: itemhistory
+                  name: 'disabled items'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: disabledItemsWithHostHTML
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'disabled items'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: DBXEV
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: enabled
+              widgets:
+                - type: itemhistory
+                  name: 'most enabled items'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML[itemsAreRunningWithHost]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'most enabled items'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: TNILN
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: 'hosts: active'
+              widgets:
+                - type: itemhistory
+                  name: 'Not available'
                   width: '36'
                   height: '64'
                   fields:
@@ -1358,10 +2156,10 @@ zabbix_export:
                     - type: STRING
                       name: time_period.to
                       value: now
-            - name: 'unsupported items'
+            - name: disabled
               widgets:
                 - type: itemhistory
-                  name: 'unsupported items'
+                  name: 'disabled hosts'
                   width: '72'
                   height: '64'
                   fields:
@@ -1372,229 +2170,19 @@ zabbix_export:
                       name: columns.0.itemid
                       value:
                         host: 'Host availability widget Zabbix API'
-                        key: unsupportedItemsWithHostHTML
+                        key: 'HTML[disabledHosts]'
                     - type: INTEGER
                       name: columns.0.monospace_font
                       value: '1'
                     - type: STRING
                       name: columns.0.name
-                      value: 'unsupported items'
+                      value: 'disabled hosts'
                     - type: INTEGER
                       name: layout
                       value: '1'
                     - type: STRING
                       name: reference
-                      value: CQVQG
-                    - type: INTEGER
-                      name: show_column_header
-                      value: '0'
-                    - type: INTEGER
-                      name: show_lines
-                      value: '1'
-                    - type: INTEGER
-                      name: sortorder
-                      value: '1'
-                    - type: STRING
-                      name: time_period.from
-                      value: now-1y
-                    - type: STRING
-                      name: time_period.to
-                      value: now
-            - name: 'unsupported LLDs'
-              widgets:
-                - type: itemhistory
-                  name: 'unsupported LLDs'
-                  width: '72'
-                  height: '64'
-                  fields:
-                    - type: INTEGER
-                      name: columns.0.display
-                      value: '4'
-                    - type: ITEM
-                      name: columns.0.itemid
-                      value:
-                        host: 'Host availability widget Zabbix API'
-                        key: unsupportedLLDsWithHostHTML
-                    - type: INTEGER
-                      name: columns.0.monospace_font
-                      value: '1'
-                    - type: STRING
-                      name: columns.0.name
-                      value: 'unsupported LLDs'
-                    - type: INTEGER
-                      name: layout
-                      value: '1'
-                    - type: STRING
-                      name: reference
-                      value: MNBCZ
-                    - type: INTEGER
-                      name: show_column_header
-                      value: '0'
-                    - type: INTEGER
-                      name: show_lines
-                      value: '1'
-                    - type: INTEGER
-                      name: sortorder
-                      value: '1'
-                    - type: STRING
-                      name: time_period.from
-                      value: now-1y
-                    - type: STRING
-                      name: time_period.to
-                      value: now
-            - name: 'ZBX interface not working'
-              widgets:
-                - type: itemhistory
-                  name: 'ZBX interface not working'
-                  width: '72'
-                  height: '64'
-                  fields:
-                    - type: INTEGER
-                      name: columns.0.display
-                      value: '4'
-                    - type: ITEM
-                      name: columns.0.itemid
-                      value:
-                        host: 'Host availability widget Zabbix API'
-                        key: 'HTML[ZBX]'
-                    - type: INTEGER
-                      name: columns.0.monospace_font
-                      value: '1'
-                    - type: STRING
-                      name: columns.0.name
-                      value: 'Unavailable Zabbix agent (active) checks'
-                    - type: INTEGER
-                      name: layout
-                      value: '1'
-                    - type: STRING
-                      name: reference
-                      value: ZWNBS
-                    - type: INTEGER
-                      name: show_column_header
-                      value: '0'
-                    - type: INTEGER
-                      name: show_lines
-                      value: '1'
-                    - type: INTEGER
-                      name: sortorder
-                      value: '1'
-                    - type: STRING
-                      name: time_period.from
-                      value: now-1y
-                    - type: STRING
-                      name: time_period.to
-                      value: now
-            - name: 'SNMP interface not working'
-              widgets:
-                - type: itemhistory
-                  name: 'SNMP interface not working'
-                  width: '72'
-                  height: '64'
-                  fields:
-                    - type: INTEGER
-                      name: columns.0.display
-                      value: '4'
-                    - type: ITEM
-                      name: columns.0.itemid
-                      value:
-                        host: 'Host availability widget Zabbix API'
-                        key: 'HTML[SNMP]'
-                    - type: INTEGER
-                      name: columns.0.monospace_font
-                      value: '1'
-                    - type: STRING
-                      name: columns.0.name
-                      value: 'Unavailable Zabbix agent (active) checks'
-                    - type: INTEGER
-                      name: layout
-                      value: '1'
-                    - type: STRING
-                      name: reference
-                      value: VCPQJ
-                    - type: INTEGER
-                      name: show_column_header
-                      value: '0'
-                    - type: INTEGER
-                      name: show_lines
-                      value: '1'
-                    - type: INTEGER
-                      name: sortorder
-                      value: '1'
-                    - type: STRING
-                      name: time_period.from
-                      value: now-1y
-                    - type: STRING
-                      name: time_period.to
-                      value: now
-            - name: 'JXM interface not working'
-              widgets:
-                - type: itemhistory
-                  name: 'JMX interface not working'
-                  width: '72'
-                  height: '64'
-                  fields:
-                    - type: INTEGER
-                      name: columns.0.display
-                      value: '4'
-                    - type: ITEM
-                      name: columns.0.itemid
-                      value:
-                        host: 'Host availability widget Zabbix API'
-                        key: 'HTML[JMX]'
-                    - type: INTEGER
-                      name: columns.0.monospace_font
-                      value: '1'
-                    - type: STRING
-                      name: columns.0.name
-                      value: 'JMX interface not working'
-                    - type: INTEGER
-                      name: layout
-                      value: '1'
-                    - type: STRING
-                      name: reference
-                      value: SNBKA
-                    - type: INTEGER
-                      name: show_column_header
-                      value: '0'
-                    - type: INTEGER
-                      name: show_lines
-                      value: '1'
-                    - type: INTEGER
-                      name: sortorder
-                      value: '1'
-                    - type: STRING
-                      name: time_period.from
-                      value: now-1y
-                    - type: STRING
-                      name: time_period.to
-                      value: now
-            - name: 'disabled items'
-              widgets:
-                - type: itemhistory
-                  name: 'disabled items'
-                  width: '72'
-                  height: '64'
-                  fields:
-                    - type: INTEGER
-                      name: columns.0.display
-                      value: '4'
-                    - type: ITEM
-                      name: columns.0.itemid
-                      value:
-                        host: 'Host availability widget Zabbix API'
-                        key: disabledItemsWithHostHTML
-                    - type: INTEGER
-                      name: columns.0.monospace_font
-                      value: '1'
-                    - type: STRING
-                      name: columns.0.name
-                      value: 'disabled items'
-                    - type: INTEGER
-                      name: layout
-                      value: '1'
-                    - type: STRING
-                      name: reference
-                      value: DBXEV
+                      value: XXQQR
                     - type: INTEGER
                       name: show_column_header
                       value: '0'

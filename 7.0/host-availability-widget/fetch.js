@@ -1,5 +1,9 @@
 // gather interface, host status
 
+var scriptStarts = Date.now() / 1000;
+Zabbix.Log(3, "Zabbix API, stats started: " + toString(scriptStarts));
+
+
 var params = JSON.parse(value);
 // token = '{$Z_API_SESSIONID}';
 // url = '{$ZABBIX.URL}' + '/api_jsonrpc.php';
@@ -41,55 +45,104 @@ var proxyList = JSON.parse(req.post(url,
     '{"jsonrpc":"2.0","method":"proxy.get","params":{"output":["name","proxyid"]},"id": 1}'
 )).result;
 
+// API fetching completed
+
+var calculationStarts = Date.now() / 1000;
+
+// build a map for fast hostid lookup
+Zabbix.Log(params.loglevel, "Zabbix API, build a map for fast hostid lookup");
+var hostMap = {};
+for (var h in hostList) {
+    var host = hostList[h];
+    hostMap[host.hostid] = host;  // map hostid to the entire host object
+}
+
+// build a map for fast proxyid lookup
+Zabbix.Log(params.loglevel, "Zabbix API, build a map for fast proxyid lookup");
+var proxyMap = {};
+for (var p in proxyList) {
+    var proxy = proxyList[p];
+    proxyMap[proxy.proxyid] = proxy;  // map proxyid to the entire host object
+}
+
+
+// extract disabled hosts
+var disabledHosts = [];
+for (d in hostList) {
+    if (parseInt(hostList[d].status) === 1) {
+        var host = hostList[d];
+        var proxy = proxyMap[host.proxyid];
+        var row = {};
+        if (proxy) {
+            row["proxy"] = proxy.name;
+        } else {
+            row["proxy"] = '';
+        }
+        row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+        disabledHosts.push(row);
+    }
+}
+
+
+
 Zabbix.Log(params.loglevel, "Zabbix API, prepare unsup, disabled, active utens");
 var activeItemList = [];
 var disabledItems = [];
+var itemsAreRunning = [];
 var unsupportedItems = [];
 var hostName = '';
 var hostStatus = 9;
 for (i in ItemList) {
     // locate host origin the item belongs
-    for (h in hostList) {
-        if (hostList[h].hostid === ItemList[i].hostid) {
-            hostName = hostList[h].name;
-            hostStatus = hostList[h].status;
-            break;
+    var item = ItemList[i];
+    var host = hostMap[item.hostid];
+
+    if (host) {
+        var hostName = host.name;
+        var hostStatus = host.status;
+
+
+        // if host is enabled and host is not a template
+        if (parseInt(hostStatus) === 0) {
+
+            // active ZBX item list
+            if (parseInt(ItemList[i].type) === 7) {
+                var row = {};
+                row["hostid"] = ItemList[i].hostid;
+                row["itemid"] = ItemList[i].itemid;
+                activeItemList.push(row);
+            }
+
+            // disabled items on the top of enabled host
+            if (parseInt(ItemList[i].status) === 1) {
+                var row = {};
+                row["hostid"] = ItemList[i].hostid;
+                row["itemid"] = ItemList[i].itemid;
+                row["name"] = hostName;
+                disabledItems.push(row);
+            }
+
+            // items which are running (activated, not disabled) and item is not a prototype
+            if (parseInt(ItemList[i].status) === 0 && (parseInt(ItemList[i].flags) === 0 || parseInt(ItemList[i].flags) === 4)) {
+                var row = {};
+                row["hostid"] = ItemList[i].hostid;
+                row["itemid"] = ItemList[i].itemid;
+                row["name"] = hostName;
+                itemsAreRunning.push(row);
+            }
+
+            // unsupported and enabled items
+            if (parseInt(ItemList[i].state) === 1 && ItemList[i].error !== '' && parseInt(ItemList[i].status) === 0) {
+                var row = {};
+                row["name"] = ItemList[i].name;
+                row["itemid"] = ItemList[i].itemid;
+                row["error"] = ItemList[i].error;
+                row["hostid"] = ItemList[i].hostid;
+                row["host"] = hostName;
+                unsupportedItems.push(row);
+            }
         }
     }
-
-    // if host is enabled
-    if (parseInt(hostStatus) === 0) {
-
-        // active item list
-        if (parseInt(ItemList[i].type) === 7) {
-            var row = {};
-            row["hostid"] = ItemList[i].hostid;
-            row["itemid"] = ItemList[i].itemid;
-            activeItemList.push(row);
-        }
-
-        // disabled items
-        if (parseInt(ItemList[i].status) === 1) {
-            var row = {};
-            row["hostid"] = ItemList[i].hostid;
-            row["itemid"] = ItemList[i].itemid;
-            row["name"] = hostName;
-            disabledItems.push(row);
-        }
-
-        // unsupported and enabled items
-        if (parseInt(ItemList[i].state) === 1 && ItemList[i].error !== '' && parseInt(ItemList[i].status) === 0) {
-            var row = {};
-            row["name"] = ItemList[i].name;
-            row["itemid"] = ItemList[i].itemid;
-            row["error"] = ItemList[i].error;
-            row["hostid"] = ItemList[i].hostid;
-            row["host"] = hostName;
-            unsupportedItems.push(row);
-        }
-
-    }
-
 }
 
 Zabbix.Log(params.loglevel, "Zabbix API, prepare ended");
@@ -129,12 +182,12 @@ for (l in LLDList) {
 
 
 // Unsupported items by counts
+Zabbix.Log(params.loglevel, "Zabbix API, Unsupported items by counts");
 var countsU = {}; var unsupportedItemsCount = []; var i;
 // Count occurrences
 for (i = 0; i < unsupportedItems.length; i++) { var id = unsupportedItems[i].hostid; if (countsU[id]) { countsU[id]++ } else { countsU[id] = 1 } }
 // Convert to desired output format
 for (var id in countsU) { unsupportedItemsCount.push({ "hostid": id, "count": String(countsU[id]) }); }
-
 // add host origin to unsupported items
 var unsupportedItemsWithHost = [];
 for (u in unsupportedItemsCount) {
@@ -149,20 +202,45 @@ for (u in unsupportedItemsCount) {
     }
     unsupportedItemsWithHost.push(row);
 }
-
 // sort by column "sort" with biggest numbers on top
 unsupportedItemsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
-
 // delete "sort" column
 for (var i = 0; i < unsupportedItemsWithHost.length; i++) { delete unsupportedItemsWithHost[i].sort; }
 
 
 
+// All items by counts
+Zabbix.Log(params.loglevel, "Zabbix API, All items by counts");
+var countsA = {}; var allItemsCount = []; var i;
+// Count occurrences
+for (i = 0; i < itemsAreRunning.length; i++) { var id = itemsAreRunning[i].hostid; if (countsA[id]) { countsA[id]++ } else { countsA[id] = 1 } }
+// Convert to desired output format
+for (var id in countsA) { allItemsCount.push({ "hostid": id, "count": String(countsA[id]) }); }
+// add host origin to all items
+var itemsAreRunningWithHost = [];
+for (u in allItemsCount) {
+    for (h in hostList) {
+        if (hostList[h].hostid === allItemsCount[u].hostid) {
+            var row = {};
+            row["host"] = hostList[h].name;
+            row["sort"] = allItemsCount[u].count;
+            row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=-1&filter_status=0&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + allItemsCount[u].count + '</a>';
+            break;
+        }
+    }
+    itemsAreRunningWithHost.push(row);
+}
+// sort by column "sort" with biggest numbers on top
+itemsAreRunningWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
+// delete "sort" column
+for (var i = 0; i < itemsAreRunningWithHost.length; i++) { delete itemsAreRunningWithHost[i].sort; }
+
+
 
 
 // Disabled items by counts
+Zabbix.Log(params.loglevel, "Zabbix API, Disabled items by counts");
 var countsD = {}; var disabledItemsCount = []; var i;
-
 // Count occurrences by hostid+name combination
 for (i = 0; i < disabledItems.length; i++) {
     var hostid = disabledItems[i].hostid;
@@ -170,17 +248,11 @@ for (i = 0; i < disabledItems.length; i++) {
     var key = hostid + "|" + name;
     if (countsD[key]) { countsD[key].count += 1; } else { countsD[key] = { hostid: hostid, name: name, count: 1 }; }
 }
-
 // Convert to disabledItemsCount array
 for (var key in countsD) {
     var entry = countsD[key];
-    disabledItemsCount.push({
-        hostid: entry.hostid,
-        name: entry.name,
-        count: String(entry.count)
-    });
+    disabledItemsCount.push({ hostid: entry.hostid, name: entry.name, count: String(entry.count) });
 }
-
 var disabledItemsWithHost = [];
 for (u in disabledItemsCount) {
     var row = {};
@@ -189,11 +261,8 @@ for (u in disabledItemsCount) {
     row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + disabledItemsCount[u].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[1][tag]=&filter_tags[1][operator]=0&filter_tags[1][value]=&filter_state=-1&filter_status=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + disabledItemsCount[u].count + '</a>';
     disabledItemsWithHost.push(row);
 }
-
-
 // Sort by count descending
 disabledItemsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
-
 // delete "sort" column
 for (var i = 0; i < disabledItemsWithHost.length; i++) { delete disabledItemsWithHost[i].sort; }
 
@@ -201,23 +270,11 @@ for (var i = 0; i < disabledItemsWithHost.length; i++) { delete disabledItemsWit
 
 
 // unsupported LLDs by count
-var counts = {};
-var unsupportedLLDsCount = [];
-var i;
+var counts = {}; var unsupportedLLDsCount = []; var i;
 // Count occurrences
-for (i = 0; i < unsupportedLLDs.length; i++) {
-    var id = unsupportedLLDs[i].hostid;
-    if (counts[id]) {
-        counts[id]++;
-    } else {
-        counts[id] = 1;
-    }
-}
+for (i = 0; i < unsupportedLLDs.length; i++) { var id = unsupportedLLDs[i].hostid; if (counts[id]) { counts[id]++; } else { counts[id] = 1; } }
 // Convert to desired output format
-for (var id in counts) {
-    unsupportedLLDsCount.push({ "hostid": id, "count": String(counts[id]) });
-}
-
+for (var id in counts) { unsupportedLLDsCount.push({ "hostid": id, "count": String(counts[id]) }); }
 // add host origin to unsupported items
 var unsupportedLLDsWithHost = [];
 for (u in unsupportedLLDsCount) {
@@ -232,7 +289,6 @@ for (u in unsupportedLLDsCount) {
     }
     unsupportedLLDsWithHost.push(row);
 }
-
 // sort by column "sort" with biggest numbers on top
 unsupportedLLDsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.sort); });
 // delete "sort" column
@@ -241,6 +297,8 @@ for (var i = 0; i < unsupportedLLDsWithHost.length; i++) { delete unsupportedLLD
 
 
 // iterate through host objects which hosts "Zabbix agent (active)" items
+Zabbix.Log(params.loglevel, "Zabbix API, extract unavailable and unknown ZBX active checks");
+
 var activeUnavailable2 = [];
 var activeUnknown0 = [];
 for (a in onlyActiveHostList) {
@@ -261,21 +319,22 @@ for (a in onlyActiveHostList) {
         if (parseInt(hostList[h].active_available) === 2 && parseInt(hostList[h].hostid) === parseInt(onlyActiveHostList[a])) {
             var row = {};
             row["proxy"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=proxy.list&filter_name=' + proxyName + '&filter_operating_mode=-1&filter_version=-1&filter_set=1\' target=\'_blank\'>' + proxyName + '</a>';
-            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + hostList[h].name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + hostList[h].name + '</a>';
             activeUnavailable2.push(row);
         }
         if (parseInt(hostList[h].active_available) === 0 && parseInt(hostList[h].hostid) === parseInt(onlyActiveHostList[a])) {
             var row = {};
             row["proxy"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=proxy.list&filter_name=' + proxyName + '&filter_operating_mode=-1&filter_version=-1&filter_set=1\' target=\'_blank\'>' + proxyName + '</a>';
-            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + hostList[h].name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + hostList[h].name + '</a>';
             activeUnknown0.push(row);
         }
     }
 }
 
 // output will be an array
+Zabbix.Log(params.loglevel, "Zabbix API, passive ZBX, SNMP, JMX interfaces");
 var passiveNotWorking = [];
-
+var passiveNotUsed = [];
 // take one full itemid containing all characteristics like key_, units, name
 for (i in interfaceList) {
     // merge interface table with host table by using "hostid" as mapping field
@@ -291,8 +350,6 @@ for (i in interfaceList) {
             parseInt(interfaceList[i].available) !== 1
         ) {
             var row = {};
-            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
-            row["error"] = interfaceList[i].error;
 
             // locate passive checks
             if (parseInt(interfaceList[i].useip) === 1) {
@@ -316,19 +373,42 @@ for (i in interfaceList) {
                     row["proxy"] = '';
                 }
             }
+            row["error"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + hostList[h].name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + interfaceList[i].error + '</a>';
 
-            // map the host list with proxy (if there is even a proxy)
-            passiveNotWorking.push(row);
 
+            if (interfaceList[i].error !== '') {
+                row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+                passiveNotWorking.push(row);
+            } else {
+                row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.edit&hostid=' + hostList[h].hostid + '\' target=\'_blank\'>' + hostList[h].name + '</a>';
+                passiveNotUsed.push(row);
+            }
         }
     }
 
 }
 
+// for not used interfaces delete column "error"
+for (var i = 0; i < passiveNotUsed.length; i++) { delete passiveNotUsed[i].error; }
+
+
 // return debug info
 //     'unsupportedLLDs': unsupportedLLDs,
+//     'disabledHostList': disabledHostList,
+Zabbix.Log(params.loglevel, "Zabbix API, end and return");
+
+Zabbix.Log(3, "Zabbix API, stats ended");
+
+var scriptEnded = Date.now() / 1000;
+
 
 return JSON.stringify({
+    'timeAPIfetching': (calculationStarts - scriptStarts),
+    'timeAggregate': (scriptEnded - calculationStarts),
+    'timeTotal': (scriptEnded - scriptStarts),
+    'disabledHosts': disabledHosts,
+    'itemsAreRunningWithHost': itemsAreRunningWithHost,
+    'passiveNotUsed': passiveNotUsed,
     'disabledItemsCount': disabledItemsCount,
     'unsupportedItemsCount': unsupportedItemsCount,
     'disabledItemsWithHost': disabledItemsWithHost,
