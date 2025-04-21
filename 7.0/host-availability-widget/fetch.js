@@ -170,11 +170,10 @@ for (l in LLDList) {
         row["error"] = LLDList[l].error;
         row["hostid"] = LLDList[l].hostid;
         // locate human readable host name
-        for (h in hostList) {
-            if (hostList[h].hostid === LLDList[l].hostid) {
-                row["host"] = hostList[h].name;
-                break;
-            }
+        var item = LLDList[l];
+        var host = hostMap[item.hostid];
+        if (host) {
+            row["host"] = host.name;
         }
         unsupportedLLDs.push(row);
     }
@@ -191,14 +190,13 @@ for (var id in countsU) { unsupportedItemsCount.push({ "hostid": id, "count": St
 // add host origin to unsupported items
 var unsupportedItemsWithHost = [];
 for (u in unsupportedItemsCount) {
-    for (h in hostList) {
-        if (hostList[h].hostid === unsupportedItemsCount[u].hostid) {
-            var row = {};
-            row["host"] = hostList[h].name;
-            row["sort"] = unsupportedItemsCount[u].count;
-            row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + unsupportedItemsCount[u].count + '</a>';
-            break;
-        }
+
+    var item = unsupportedItemsCount[u];
+    var host = hostMap[item.hostid];
+    if (host) {
+        row["host"] = host.name;
+        row["sort"] = unsupportedItemsCount[u].count;
+        row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + unsupportedItemsCount[u].count + '</a>';
     }
     unsupportedItemsWithHost.push(row);
 }
@@ -219,14 +217,13 @@ for (var id in countsA) { allItemsCount.push({ "hostid": id, "count": String(cou
 // add host origin to all items
 var itemsAreRunningWithHost = [];
 for (u in allItemsCount) {
-    for (h in hostList) {
-        if (hostList[h].hostid === allItemsCount[u].hostid) {
-            var row = {};
-            row["host"] = hostList[h].name;
-            row["sort"] = allItemsCount[u].count;
-            row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=-1&filter_status=0&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + allItemsCount[u].count + '</a>';
-            break;
-        }
+
+    var item = allItemsCount[u];
+    var host = hostMap[item.hostid];
+    if (host) {
+        row["host"] = host.name;
+        row["sort"] = allItemsCount[u].count;
+        row["count"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_state=-1&filter_status=0&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + allItemsCount[u].count + '</a>';
     }
     itemsAreRunningWithHost.push(row);
 }
@@ -278,14 +275,13 @@ for (var id in counts) { unsupportedLLDsCount.push({ "hostid": id, "count": Stri
 // add host origin to unsupported items
 var unsupportedLLDsWithHost = [];
 for (u in unsupportedLLDsCount) {
-    for (h in hostList) {
-        if (hostList[h].hostid === unsupportedLLDsCount[u].hostid) {
-            var row = {};
-            row["host"] = hostList[h].name;
-            row["sort"] = unsupportedLLDsCount[u].count;
-            row["count"] = '<a href=\'{$ZABBIX.URL}/host_discovery.php?context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_delay=&filter_lifetime_type=-1&filter_enabled_lifetime_type=-1&filter_snmp_oid=&filter_state=1&filter_set=1\' target=\'_blank\'>' + unsupportedLLDsCount[u].count + '</a>';
-            break;
-        }
+
+    var item = unsupportedLLDsCount[u];
+    var host = hostMap[item.hostid];
+    if (host) {
+        row["host"] = host.name;
+        row["sort"] = unsupportedLLDsCount[u].count;
+        row["count"] = '<a href=\'{$ZABBIX.URL}/host_discovery.php?context=host&filter_hostids[]=' + hostList[h].hostid + '&filter_name=&filter_key=&filter_type=-1&filter_delay=&filter_lifetime_type=-1&filter_enabled_lifetime_type=-1&filter_snmp_oid=&filter_state=1&filter_set=1\' target=\'_blank\'>' + unsupportedLLDsCount[u].count + '</a>';
     }
     unsupportedLLDsWithHost.push(row);
 }
@@ -302,16 +298,21 @@ Zabbix.Log(params.loglevel, "Zabbix API, extract unavailable and unknown ZBX act
 var activeUnavailable2 = [];
 var activeUnknown0 = [];
 for (a in onlyActiveHostList) {
+
+
+
+
+
     for (h in hostList) {
 
         // find proxy name
         var proxyName = '';
         if (parseInt(hostList[h].hostid) === parseInt(onlyActiveHostList[a])) {
-            for (p in proxyList) {
-                if (proxyList[p].proxyid === hostList[h].proxyid) {
-                    proxyName = proxyList[p].name;
-                }
-            }
+
+            var host = hostList[h];
+            var proxy = proxyMap[host.proxyid];
+            if (proxy) { proxyName = proxy.name; } else { proxyName = ''; }
+
         }
 
 
