@@ -997,6 +997,95 @@ zabbix_export:
                   return getHtmlGroupedByColumn(json_array);
           master_item:
             key: type4
+        - uuid: 4f656c6fb6f841c2baf91e0ad55fd140
+          name: ratioItemKeyNotWorking100
+          type: DEPENDENT
+          key: 'HTML[ratioItemKeyNotWorking100]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: ratioItemKeyNotWorking100
         - uuid: 9cc6a4457a574da784c823ee8483f518
           name: ratioItemKeyWorkingHTML
           type: DEPENDENT
@@ -1487,6 +1576,26 @@ zabbix_export:
                 - $.passiveNotWorking
           master_item:
             key: fetch
+        - uuid: 14de698229554857872d49c7305168e5
+          name: ratioItemKeyNotWorking100
+          type: DEPENDENT
+          key: ratioItemKeyNotWorking100
+          delay: '0'
+          history: '{$DBG}'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.ratioItemKeyWorking
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''ratio bad''] == 100)]'
+            - type: JSONPATH
+              parameters:
+                - '$.[0:{$RECORDS}]'
+          master_item:
+            key: fetch
         - uuid: a8ee8e19c1594a66b76c35fab9056886
           name: ratioItemKeyWorking
           type: DEPENDENT
@@ -1501,7 +1610,7 @@ zabbix_export:
                 - $.ratioItemKeyWorking
             - type: JSONPATH
               parameters:
-                - '$..[?(@.[''ratio bad''] > 0)]'
+                - '$..[?(@.[''ratio bad''] > 0 && @.[''ratio bad''] < 100)]'
             - type: JSONPATH
               parameters:
                 - '$.[0:{$RECORDS}]'
@@ -2474,6 +2583,48 @@ zabbix_export:
                     - type: STRING
                       name: reference
                       value: DBXEV
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: disaster
+              widgets:
+                - type: itemhistory
+                  name: '100% items with this item key not working at all'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML[ratioItemKeyNotWorking100]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: '100% items not working'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: BMYJT
                     - type: INTEGER
                       name: show_column_header
                       value: '0'
