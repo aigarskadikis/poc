@@ -1,5 +1,46 @@
 // gather interface, host status
 
+function calculateBadPercent(data) {
+    var counts = {};
+    var badCounts = {};
+
+    // Count total and bad occurrences for each key_
+    for (var i = 0; i < data.length; i++) {
+        var key = data[i]["key_"];
+        var state = data[i]["state"];
+
+        if (!counts[key]) {
+            counts[key] = 0;
+            badCounts[key] = 0;
+        }
+
+        counts[key]++;
+        if (state === "1") {
+            badCounts[key]++;
+        }
+    }
+
+    // Calculate bad percentage and count for each key_
+    var result = [];
+    for (var k in counts) {
+        var total = counts[k];
+        var bad = badCounts[k];
+        var percent = (bad / total) * 100;
+        result.push({
+            "key_": k,
+            "bad": percent.toFixed(2),
+            "count": total
+        });
+    }
+
+    // Sort descending by bad percentage
+    result.sort(function (a, b) {
+        return parseFloat(b.count) - parseFloat(a.count);
+    });
+
+    return result;
+}
+
 var scriptStarts = Date.now() / 1000;
 Zabbix.Log(3, "Zabbix API, stats started: " + toString(scriptStarts));
 
@@ -17,7 +58,7 @@ req.addHeader('Authorization: Bearer ' + token);
 // zabbix agent active (type:7) item list from a real host object
 Zabbix.Log(params.loglevel, "Zabbix API, fetch item.get");
 var ItemList = JSON.parse(req.post(url,
-    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["name","hostid","state","status","error","type","flags"]},"id":1}'
+    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["name","hostid","state","status","error","type","flags","key_"]},"id":1}'
 )).result;
 // ,"monitored":1
 
@@ -135,6 +176,7 @@ var activeItemList = [];
 var disabledItems = [];
 var itemsAreRunning = [];
 var unsupportedItems = [];
+var ratioItemKeyWorking = [];
 var hostName = '';
 var hostStatus = 9;
 for (i in ItemList) {
@@ -174,6 +216,15 @@ for (i in ItemList) {
                 row["itemid"] = ItemList[i].itemid;
                 row["name"] = hostName;
                 itemsAreRunning.push(row);
+
+                // statistics about a item keys
+                var row = {};
+                row["key_"] = ItemList[i].key_;
+                row["state"] = ItemList[i].state;
+                row["name"] = hostName;
+                ratioItemKeyWorking.push(row);
+
+
             }
 
             // unsupported and enabled items
@@ -436,7 +487,20 @@ Zabbix.Log(params.loglevel, "Zabbix API, end and return");
 Zabbix.Log(3, "Zabbix API, stats ended");
 
 var scriptEnded = Date.now() / 1000;
-//
+
+
+
+var visitItemRatio = [];
+var BadPercentItems = calculateBadPercent(ratioItemKeyWorking);
+for (b in BadPercentItems) {
+        var row = {};
+        row["ratio bad"] = BadPercentItems[b].bad;
+        row["count"] = BadPercentItems[b].count;
+        row["key"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_name=&filter_key=' + BadPercentItems[b].key_ + '&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags%5B0%5D%5Btag%5D=&filter_tags%5B0%5D%5Boperator%5D=0&filter_tags%5B0%5D%5Bvalue%5D=&filter_state=-1&filter_status=-1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + BadPercentItems[b].key_ + '</a>';
+        visitItemRatio.push(row);
+}
+
+
 
 return JSON.stringify({
     'triggersWithErrorsWithHost': triggersWithErrorsWithHost,
@@ -445,6 +509,7 @@ return JSON.stringify({
     'timeAPIfetching': (calculationStarts - scriptStarts),
     'timeAggregate': (scriptEnded - calculationStarts),
     'timeTotal': (scriptEnded - scriptStarts),
+    'ratioItemKeyWorking': visitItemRatio,
     'disabledHosts': disabledHosts,
     'itemsAreRunningWithHost': itemsAreRunningWithHost,
     'passiveNotUsed': passiveNotUsed,

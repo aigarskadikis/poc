@@ -196,6 +196,47 @@ zabbix_export:
           params: |
             // gather interface, host status
             
+            function calculateBadPercent(data) {
+                var counts = {};
+                var badCounts = {};
+            
+                // Count total and bad occurrences for each key_
+                for (var i = 0; i < data.length; i++) {
+                    var key = data[i]["key_"];
+                    var state = data[i]["state"];
+            
+                    if (!counts[key]) {
+                        counts[key] = 0;
+                        badCounts[key] = 0;
+                    }
+            
+                    counts[key]++;
+                    if (state === "1") {
+                        badCounts[key]++;
+                    }
+                }
+            
+                // Calculate bad percentage and count for each key_
+                var result = [];
+                for (var k in counts) {
+                    var total = counts[k];
+                    var bad = badCounts[k];
+                    var percent = (bad / total) * 100;
+                    result.push({
+                        "key_": k,
+                        "bad": percent.toFixed(2),
+                        "count": total
+                    });
+                }
+            
+                // Sort descending by bad percentage
+                result.sort(function (a, b) {
+                    return parseFloat(b.count) - parseFloat(a.count);
+                });
+            
+                return result;
+            }
+            
             var scriptStarts = Date.now() / 1000;
             Zabbix.Log(3, "Zabbix API, stats started: " + toString(scriptStarts));
             
@@ -213,7 +254,7 @@ zabbix_export:
             // zabbix agent active (type:7) item list from a real host object
             Zabbix.Log(params.loglevel, "Zabbix API, fetch item.get");
             var ItemList = JSON.parse(req.post(url,
-                '{"jsonrpc":"2.0","method":"item.get","params":{"output":["name","hostid","state","status","error","type","flags"]},"id":1}'
+                '{"jsonrpc":"2.0","method":"item.get","params":{"output":["name","hostid","state","status","error","type","flags","key_"]},"id":1}'
             )).result;
             // ,"monitored":1
             
@@ -331,6 +372,7 @@ zabbix_export:
             var disabledItems = [];
             var itemsAreRunning = [];
             var unsupportedItems = [];
+            var ratioItemKeyWorking = [];
             var hostName = '';
             var hostStatus = 9;
             for (i in ItemList) {
@@ -370,6 +412,15 @@ zabbix_export:
                             row["itemid"] = ItemList[i].itemid;
                             row["name"] = hostName;
                             itemsAreRunning.push(row);
+            
+                            // statistics about a item keys
+                            var row = {};
+                            row["key_"] = ItemList[i].key_;
+                            row["state"] = ItemList[i].state;
+                            row["name"] = hostName;
+                            ratioItemKeyWorking.push(row);
+            
+            
                         }
             
                         // unsupported and enabled items
@@ -632,7 +683,20 @@ zabbix_export:
             Zabbix.Log(3, "Zabbix API, stats ended");
             
             var scriptEnded = Date.now() / 1000;
-            //
+            
+            
+            
+            var visitItemRatio = [];
+            var BadPercentItems = calculateBadPercent(ratioItemKeyWorking);
+            for (b in BadPercentItems) {
+                    var row = {};
+                    row["ratio bad"] = BadPercentItems[b].bad;
+                    row["count"] = BadPercentItems[b].count;
+                    row["key"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=item.list&context=host&filter_name=&filter_key=' + BadPercentItems[b].key_ + '&filter_type=-1&filter_value_type=-1&filter_history=&filter_trends=&filter_delay=&filter_evaltype=0&filter_tags%5B0%5D%5Btag%5D=&filter_tags%5B0%5D%5Boperator%5D=0&filter_tags%5B0%5D%5Bvalue%5D=&filter_state=-1&filter_status=-1&filter_with_triggers=-1&filter_inherited=-1&filter_discovered=-1&filter_set=1\' target=\'_blank\'>' + BadPercentItems[b].key_ + '</a>';
+                    visitItemRatio.push(row);
+            }
+            
+            
             
             return JSON.stringify({
                 'triggersWithErrorsWithHost': triggersWithErrorsWithHost,
@@ -641,6 +705,7 @@ zabbix_export:
                 'timeAPIfetching': (calculationStarts - scriptStarts),
                 'timeAggregate': (scriptEnded - calculationStarts),
                 'timeTotal': (scriptEnded - scriptStarts),
+                'ratioItemKeyWorking': visitItemRatio,
                 'disabledHosts': disabledHosts,
                 'itemsAreRunningWithHost': itemsAreRunningWithHost,
                 'passiveNotUsed': passiveNotUsed,
@@ -932,6 +997,95 @@ zabbix_export:
                   return getHtmlGroupedByColumn(json_array);
           master_item:
             key: type4
+        - uuid: 9cc6a4457a574da784c823ee8483f518
+          name: ratioItemKeyWorkingHTML
+          type: DEPENDENT
+          key: 'HTML[ratioItemKeyWorking]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: ratioItemKeyWorking
         - uuid: 5fcf14bf86af466d927fac5f5ec6a4e4
           name: SNMPNotWorkingHTML
           type: DEPENDENT
@@ -1331,6 +1485,26 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - $.passiveNotWorking
+          master_item:
+            key: fetch
+        - uuid: a8ee8e19c1594a66b76c35fab9056886
+          name: ratioItemKeyWorking
+          type: DEPENDENT
+          key: ratioItemKeyWorking
+          delay: '0'
+          history: '{$DBG}'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.ratioItemKeyWorking
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''ratio bad''] > 0)]'
+            - type: JSONPATH
+              parameters:
+                - '$.[0:{$RECORDS}]'
           master_item:
             key: fetch
         - uuid: 07c9feba0b81428d9594635838a44385
@@ -1889,7 +2063,7 @@ zabbix_export:
         - macro: '{$RECORDS}'
           value: '99'
         - macro: '{$UPD}'
-          value: 12s
+          value: 1m
       dashboards:
         - uuid: c100b83607c344b888273653b13e8da4
           name: Summary
@@ -2300,6 +2474,48 @@ zabbix_export:
                     - type: STRING
                       name: reference
                       value: DBXEV
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: ratio
+              widgets:
+                - type: itemhistory
+                  name: 'ratio of not working items'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML[ratioItemKeyWorking]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'ratio of not working items'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: EQPUA
                     - type: INTEGER
                       name: show_column_header
                       value: '0'
