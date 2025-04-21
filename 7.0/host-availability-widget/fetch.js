@@ -236,8 +236,6 @@ itemsAreRunningWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.
 for (var i = 0; i < itemsAreRunningWithHost.length; i++) { delete itemsAreRunningWithHost[i].sort; }
 
 
-
-
 // Disabled items by counts
 Zabbix.Log(params.loglevel, "Zabbix API, Disabled items by counts");
 var countsD = {}; var disabledItemsCount = []; var i;
@@ -267,8 +265,6 @@ disabledItemsWithHost.sort(function (a, b) { return Number(b.sort) - Number(a.so
 for (var i = 0; i < disabledItemsWithHost.length; i++) { delete disabledItemsWithHost[i].sort; }
 
 
-
-
 // unsupported LLDs by count
 var counts = {}; var unsupportedLLDsCount = []; var i;
 // Count occurrences
@@ -278,7 +274,6 @@ for (var id in counts) { unsupportedLLDsCount.push({ "hostid": id, "count": Stri
 // add host origin to unsupported items
 var unsupportedLLDsWithHost = [];
 for (u in unsupportedLLDsCount) {
-
     var item = unsupportedLLDsCount[u];
     var host = hostMap[item.hostid];
     if (host) {
@@ -301,33 +296,27 @@ Zabbix.Log(params.loglevel, "Zabbix API, extract unavailable and unknown ZBX act
 
 var activeUnavailable2 = [];
 var activeUnknown0 = [];
+
+// this holds only hostid's which run ZBX active items
 for (a in onlyActiveHostList) {
 
-
-    for (h in hostList) {
-
-        // find proxy name
-        var proxyName = '';
-        if (parseInt(hostList[h].hostid) === parseInt(onlyActiveHostList[a])) {
-
-            var host = hostList[h];
-            var proxy = proxyMap[host.proxyid];
-            if (proxy) { proxyName = proxy.name; } else { proxyName = ''; }
-
-        }
+    // need to map back with host name and proxy
+    var host = hostMap[onlyActiveHostList[a]];
+    if (host) {
+        var proxy = proxyMap[host.proxyid];
+        if (proxy) { proxyName = proxy.name; } else { proxyName = ''; }
 
 
-
-        if (parseInt(hostList[h].active_available) === 2 && parseInt(hostList[h].hostid) === parseInt(onlyActiveHostList[a])) {
+        if (parseInt(host.active_available) === 2 && parseInt(host.hostid) === parseInt(onlyActiveHostList[a])) {
             var row = {};
             row["proxy"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=proxy.list&filter_name=' + proxyName + '&filter_operating_mode=-1&filter_version=-1&filter_set=1\' target=\'_blank\'>' + proxyName + '</a>';
-            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + hostList[h].name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + hostList[h].name + '</a>';
+            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + host.name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + host.name + '</a>';
             activeUnavailable2.push(row);
         }
-        if (parseInt(hostList[h].active_available) === 0 && parseInt(hostList[h].hostid) === parseInt(onlyActiveHostList[a])) {
+        if (parseInt(host.active_available) === 0 && parseInt(host.hostid) === parseInt(onlyActiveHostList[a])) {
             var row = {};
             row["proxy"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=proxy.list&filter_name=' + proxyName + '&filter_operating_mode=-1&filter_version=-1&filter_set=1\' target=\'_blank\'>' + proxyName + '</a>';
-            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + hostList[h].name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + hostList[h].name + '</a>';
+            row["host"] = '<a href=\'{$ZABBIX.URL}/zabbix.php?action=host.list&filter_host=' + host.name + '&filter_dns=&filter_ip=&filter_port=&filter_status=-1&filter_monitored_by=-1&filter_evaltype=0&filter_tags[0][tag]=&filter_tags[0][operator]=0&filter_tags[0][value]=&filter_set=1\' target=\'_blank\'>' + host.name + '</a>';
             activeUnknown0.push(row);
         }
     }
