@@ -1,0 +1,156 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 0b676aad135f4f0598accdb3de70568e
+      template: 'log monitoring based on date'
+      name: 'log monitoring based on date'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 487d4ca01c504292a8d5593bd3714f20
+          name: files.matching.today
+          type: DEPENDENT
+          key: files.matching.today
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.length()
+          master_item:
+            key: 'vfs.dir.get[/var/log/zabbix]'
+          tags:
+            - tag: today
+        - uuid: e18d35df14c94882a892d5bd5eabb315
+          name: 'fetch /var/log/zabbix'
+          key: 'vfs.dir.get[/var/log/zabbix]'
+          delay: 0;h5-11m/15
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var files = JSON.parse(value);
+                  
+                  // what time is it right now
+                  var now = new Date();
+                  
+                  // function required to add zeros on the left side
+                  function padLeft(value, length, char) {
+                      value = String(value);
+                      while (value.length < length) { value = char + value; }
+                      return value;
+                  }
+                  
+                  // define format
+                  var year = now.getFullYear().toString(),
+                      month = padLeft(now.getMonth() + 1, 2, '0'),
+                      date = padLeft(now.getDate(), 2, '0'),
+                      hour = padLeft(now.getHours(), 2, '0'),
+                      minute = padLeft(now.getMinutes(), 2, '0'),
+                      seconds = padLeft(now.getSeconds(), 2, '0');
+                  
+                  // define pattern for filename "zabbix_part_postgres_2025_04_19.log", :
+                  var pattern = 'zabbix_part_postgres_' + year + '_' + month + '_' + date + '.log';
+                  
+                  // iterate through all filenames
+                  var output = [];
+                  for (f in files) {
+                      if (files[f].basename.replace(/_[0-9]{4}\.log$/,'.log') === pattern) {
+                          output.push(files[f]);
+                          break;
+                      }
+                  }
+                  
+                  if (output) {
+                      return JSON.stringify(output);
+                  } else {
+                      return '[]'
+                  }
+          tags:
+            - tag: today
+      discovery_rules:
+        - uuid: ce28307edab749c4986fc37bd989bf87
+          name: today
+          type: DEPENDENT
+          key: today
+          delay: '0'
+          item_prototypes:
+            - uuid: ae28178a92604e58ac7fe60a65f98510
+              name: 'Detect everything is OK'
+              type: DEPENDENT
+              key: 'detect[{#PATHNAME},everything is OK]'
+              delay: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - 'everything is OK'
+                    - '1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: 'vfs.file.contents[{#PATHNAME}]'
+              tags:
+                - tag: today
+              trigger_prototypes:
+                - uuid: 57e417a2f8fe489d8e7cc3fcf6393f09
+                  expression: 'last(/log monitoring based on date/detect[{#PATHNAME},everything is OK])=0'
+                  name: 'not everything is OK'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                  tags:
+                    - tag: today
+            - uuid: 8eb3bf6fd8bd471d9cc64436556e661c
+              name: 'Detect is already compressed'
+              type: DEPENDENT
+              key: 'detect[{#PATHNAME},is already compressed]'
+              delay: '0'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - 'is already compressed'
+                    - '1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: 'vfs.file.contents[{#PATHNAME}]'
+              tags:
+                - tag: today
+              trigger_prototypes:
+                - uuid: 185cc04b046142d1b2137860cd25b778
+                  expression: 'last(/log monitoring based on date/detect[{#PATHNAME},is already compressed])=0'
+                  name: 'is already compressed is not detected'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                  tags:
+                    - tag: today
+            - uuid: c146e3b8063e476ea39da85a7f3c180f
+              name: 'contents of {#PATHNAME}'
+              key: 'vfs.file.contents[{#PATHNAME}]'
+              value_type: TEXT
+              trends: '0'
+              tags:
+                - tag: today
+            - uuid: 8b893da9b0244663972fb89e41377428
+              name: 'size of {#PATHNAME}'
+              key: 'vfs.file.size[{#PATHNAME}]'
+              trends: '0'
+              units: B
+              tags:
+                - tag: today
+              trigger_prototypes:
+                - uuid: 44f520ea5c7b43f398f58d66f8ccf1c1
+                  expression: 'last(/log monitoring based on date/vfs.file.size[{#PATHNAME}])>15M'
+                  name: 'File size is bigger than 15M'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                  tags:
+                    - tag: today
+          master_item:
+            key: 'vfs.dir.get[/var/log/zabbix]'
+          lld_macro_paths:
+            - lld_macro: '{#PATHNAME}'
+              path: '$.[''pathname'']'
