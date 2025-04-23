@@ -730,6 +730,936 @@ zabbix_export:
               value: '{$Z_API_SESSIONID}'
             - name: url
               value: '{$ZABBIX.URL}'
+        - uuid: 3b8fc416e0fc4c53a8e4b7ab6c61201f
+          name: 'Not available, Agent (active)'
+          type: DEPENDENT
+          key: 'HTML["Not available, Agent (active)"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: ActiveUnavailable
+        - uuid: 46866c579ad247deb6c63affaaef24e0
+          name: 'Not available, Agent (passive)'
+          type: DEPENDENT
+          key: 'HTML["Not available, Agent (passive)"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: type1
+        - uuid: 1f90105007a4407ea0baebcc2d5522c0
+          name: 'Not available, IPMI'
+          type: DEPENDENT
+          key: 'HTML["Not available, IPMI"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: type3
+        - uuid: 8e0e27d8a35f42b9bfd1f84cef468817
+          name: 'Not available, JMX'
+          type: DEPENDENT
+          key: 'HTML["Not available, JMX"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: type4
+        - uuid: 5fcf14bf86af466d927fac5f5ec6a4e4
+          name: 'Not available, SNMP'
+          type: DEPENDENT
+          key: 'HTML["Not available, SNMP"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: type2
+        - uuid: da61f288959649138010ee739636b75a
+          name: 'Unknown, Agent (active)'
+          type: DEPENDENT
+          key: 'HTML["Unknown, Agent (active)"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: ActiveUnknown
+        - uuid: b22c4daf7442495892356718f335cdcf
+          name: 'Unknown, Agent (passive)'
+          type: DEPENDENT
+          key: 'HTML["Unknown, Agent (passive)"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.type == 1)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // delete column "type"
+                  var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: passiveNotUsed
+        - uuid: 7c5583a84fa44badae9d55f2f0ec9b9f
+          name: 'Unknown, IPMI'
+          type: DEPENDENT
+          key: 'HTML["Unknown, IPMI"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.type == 3)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // delete column "type"
+                  var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: passiveNotUsed
+        - uuid: d57480e142fe48ea94e4356e5357a3ea
+          name: 'Unknown, JMX'
+          type: DEPENDENT
+          key: 'HTML["Unknown, JMX"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.type == 4)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // delete column "type"
+                  var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: passiveNotUsed
+        - uuid: c75f283bb91f42d0830b4ffa399ec2ab
+          name: 'Unknown, SNMP'
+          type: DEPENDENT
+          key: 'HTML["Unknown, SNMP"]'
+          delay: '0'
+          history: 90d
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.type == 2)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // delete column "type"
+                  var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  var json_array = JSON.parse(value);
+                  
+                  function getValues(obj) {
+                      var result = [];
+                  
+                      for (i in obj) {
+                          result.push(obj[i]);
+                      }
+                  
+                      return result;
+                  }
+                  
+                  function getHtmlGroupedByColumn(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table style=\'{$CSS:table}\'>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(getValues(row));
+                      }
+                  
+                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
+                      for (i in rows) {
+                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
+                      }
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  function getHtmlGroupedByRow(data) {
+                      var header = [];
+                      var rows = [];
+                      var html = '<table>';
+                  
+                      for (i in data) {
+                          var row = [];
+                  
+                          for (k in data[i]) {
+                              header[k] = k;
+                              row[k] = data[i][k];
+                          }
+                  
+                          rows.push(row);
+                      }
+                  
+                      html += '<tr><td></td>';
+                      var header_array = getValues(header);
+                      for (i = 0; i < header_array.length; i++) {
+                          html += '<th>' + (i + 1) + '</th>';
+                      }
+                      html += '</tr>';
+                  
+                      for (i in header) {
+                          html += '<tr><th>' + i + '</th>';
+                          for (j in rows) {
+                              html += '<td>' + rows[j][i] + '</td>';
+                          }
+                          html += '</tr>';
+                      }
+                  
+                      html += '</table>';
+                  
+                      return html;
+                  }
+                  
+                  return getHtmlGroupedByColumn(json_array);
+          master_item:
+            key: passiveNotUsed
         - uuid: e061f7d1b06d4828b841837ed20fc51a
           name: disabledHostsHTML
           type: DEPENDENT
@@ -908,95 +1838,6 @@ zabbix_export:
                   return getHtmlGroupedByColumn(json_array);
           master_item:
             key: itemsAreRunningWithHost
-        - uuid: 8e0e27d8a35f42b9bfd1f84cef468817
-          name: JMXNotWorkingHTML
-          type: DEPENDENT
-          key: 'HTML[JMX]'
-          delay: '0'
-          history: 90d
-          value_type: LOG
-          trends: '0'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  
-                  var json_array = JSON.parse(value);
-                  
-                  function getValues(obj) {
-                      var result = [];
-                  
-                      for (i in obj) {
-                          result.push(obj[i]);
-                      }
-                  
-                      return result;
-                  }
-                  
-                  function getHtmlGroupedByColumn(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table style=\'{$CSS:table}\'>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(getValues(row));
-                      }
-                  
-                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
-                      for (i in rows) {
-                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
-                      }
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  function getHtmlGroupedByRow(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(row);
-                      }
-                  
-                      html += '<tr><td></td>';
-                      var header_array = getValues(header);
-                      for (i = 0; i < header_array.length; i++) {
-                          html += '<th>' + (i + 1) + '</th>';
-                      }
-                      html += '</tr>';
-                  
-                      for (i in header) {
-                          html += '<tr><th>' + i + '</th>';
-                          for (j in rows) {
-                              html += '<td>' + rows[j][i] + '</td>';
-                          }
-                          html += '</tr>';
-                      }
-                  
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  return getHtmlGroupedByColumn(json_array);
-          master_item:
-            key: type4
         - uuid: 4f656c6fb6f841c2baf91e0ad55fd140
           name: ratioItemKeyNotWorking100
           type: DEPENDENT
@@ -1175,95 +2016,6 @@ zabbix_export:
                   return getHtmlGroupedByColumn(json_array);
           master_item:
             key: ratioItemKeyWorking
-        - uuid: 5fcf14bf86af466d927fac5f5ec6a4e4
-          name: SNMPNotWorkingHTML
-          type: DEPENDENT
-          key: 'HTML[SNMP]'
-          delay: '0'
-          history: 90d
-          value_type: LOG
-          trends: '0'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  
-                  var json_array = JSON.parse(value);
-                  
-                  function getValues(obj) {
-                      var result = [];
-                  
-                      for (i in obj) {
-                          result.push(obj[i]);
-                      }
-                  
-                      return result;
-                  }
-                  
-                  function getHtmlGroupedByColumn(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table style=\'{$CSS:table}\'>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(getValues(row));
-                      }
-                  
-                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
-                      for (i in rows) {
-                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
-                      }
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  function getHtmlGroupedByRow(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(row);
-                      }
-                  
-                      html += '<tr><td></td>';
-                      var header_array = getValues(header);
-                      for (i = 0; i < header_array.length; i++) {
-                          html += '<th>' + (i + 1) + '</th>';
-                      }
-                      html += '</tr>';
-                  
-                      for (i in header) {
-                          html += '<tr><th>' + i + '</th>';
-                          for (j in rows) {
-                              html += '<td>' + rows[j][i] + '</td>';
-                          }
-                          html += '</tr>';
-                      }
-                  
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  return getHtmlGroupedByColumn(json_array);
-          master_item:
-            key: type2
         - uuid: 00580c45707d4a9ebf1c2c91fa5c5d37
           name: triggersWithErrorsWithHostHTML
           type: DEPENDENT
@@ -1353,184 +2105,6 @@ zabbix_export:
                   return getHtmlGroupedByColumn(json_array);
           master_item:
             key: triggersWithErrorsWithHost
-        - uuid: b22c4daf7442495892356718f335cdcf
-          name: passiveNotUsedHTML
-          type: DEPENDENT
-          key: 'HTML[ZBXnotUsed]'
-          delay: '0'
-          history: 90d
-          value_type: LOG
-          trends: '0'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  
-                  var json_array = JSON.parse(value);
-                  
-                  function getValues(obj) {
-                      var result = [];
-                  
-                      for (i in obj) {
-                          result.push(obj[i]);
-                      }
-                  
-                      return result;
-                  }
-                  
-                  function getHtmlGroupedByColumn(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table style=\'{$CSS:table}\'>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(getValues(row));
-                      }
-                  
-                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
-                      for (i in rows) {
-                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
-                      }
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  function getHtmlGroupedByRow(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(row);
-                      }
-                  
-                      html += '<tr><td></td>';
-                      var header_array = getValues(header);
-                      for (i = 0; i < header_array.length; i++) {
-                          html += '<th>' + (i + 1) + '</th>';
-                      }
-                      html += '</tr>';
-                  
-                      for (i in header) {
-                          html += '<tr><th>' + i + '</th>';
-                          for (j in rows) {
-                              html += '<td>' + rows[j][i] + '</td>';
-                          }
-                          html += '</tr>';
-                      }
-                  
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  return getHtmlGroupedByColumn(json_array);
-          master_item:
-            key: passiveNotUsed
-        - uuid: 46866c579ad247deb6c63affaaef24e0
-          name: ZBXNotWorkingHTML
-          type: DEPENDENT
-          key: 'HTML[ZBX]'
-          delay: '0'
-          history: 90d
-          value_type: LOG
-          trends: '0'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  
-                  var json_array = JSON.parse(value);
-                  
-                  function getValues(obj) {
-                      var result = [];
-                  
-                      for (i in obj) {
-                          result.push(obj[i]);
-                      }
-                  
-                      return result;
-                  }
-                  
-                  function getHtmlGroupedByColumn(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table style=\'{$CSS:table}\'>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(getValues(row));
-                      }
-                  
-                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
-                      for (i in rows) {
-                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
-                      }
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  function getHtmlGroupedByRow(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(row);
-                      }
-                  
-                      html += '<tr><td></td>';
-                      var header_array = getValues(header);
-                      for (i = 0; i < header_array.length; i++) {
-                          html += '<th>' + (i + 1) + '</th>';
-                      }
-                      html += '</tr>';
-                  
-                      for (i in header) {
-                          html += '<tr><th>' + i + '</th>';
-                          for (j in rows) {
-                              html += '<td>' + rows[j][i] + '</td>';
-                          }
-                          html += '</tr>';
-                      }
-                  
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  return getHtmlGroupedByColumn(json_array);
-          master_item:
-            key: type1
         - uuid: 23d932a188254330b6305709e6811147
           name: itemsAreRunningWithHost
           type: DEPENDENT
@@ -1704,9 +2278,13 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - '$..[?(@.type == 1)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JAVASCRIPT
               parameters:
-                - 'var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);'
+                - |
+                  // delete column "type"
+                  var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);
           master_item:
             key: PassiveNotWorking
         - uuid: b80b216d60b649fe90e070415bde5851
@@ -1721,9 +2299,34 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - '$..[?(@.type == 2)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JAVASCRIPT
               parameters:
-                - 'var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);'
+                - |
+                  // delete column "type"
+                  var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);
+          master_item:
+            key: PassiveNotWorking
+        - uuid: b2650aef481949cd9adde2892bf1e3ce
+          name: 'IPMI not working'
+          type: DEPENDENT
+          key: type3
+          delay: '0'
+          history: '{$DBG}'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.type == 3)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // delete column "type"
+                  var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);
           master_item:
             key: PassiveNotWorking
         - uuid: bb7ec05eb3e644b4b71242b09e36173c
@@ -1738,189 +2341,15 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - '$..[?(@.type == 4)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JAVASCRIPT
               parameters:
-                - 'var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);'
+                - |
+                  // delete column "type"
+                  var data = JSON.parse(value); for (var i = 0; i < data.length; i++) {delete data[i].type} return JSON.stringify(data);
           master_item:
             key: PassiveNotWorking
-        - uuid: 3b8fc416e0fc4c53a8e4b7ab6c61201f
-          name: UnavailableHTML
-          type: DEPENDENT
-          key: UnavailableHTML
-          delay: '0'
-          history: 90d
-          value_type: LOG
-          trends: '0'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  
-                  var json_array = JSON.parse(value);
-                  
-                  function getValues(obj) {
-                      var result = [];
-                  
-                      for (i in obj) {
-                          result.push(obj[i]);
-                      }
-                  
-                      return result;
-                  }
-                  
-                  function getHtmlGroupedByColumn(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table style=\'{$CSS:table}\'>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(getValues(row));
-                      }
-                  
-                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
-                      for (i in rows) {
-                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
-                      }
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  function getHtmlGroupedByRow(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(row);
-                      }
-                  
-                      html += '<tr><td></td>';
-                      var header_array = getValues(header);
-                      for (i = 0; i < header_array.length; i++) {
-                          html += '<th>' + (i + 1) + '</th>';
-                      }
-                      html += '</tr>';
-                  
-                      for (i in header) {
-                          html += '<tr><th>' + i + '</th>';
-                          for (j in rows) {
-                              html += '<td>' + rows[j][i] + '</td>';
-                          }
-                          html += '</tr>';
-                      }
-                  
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  return getHtmlGroupedByColumn(json_array);
-          master_item:
-            key: ActiveUnavailable
-        - uuid: da61f288959649138010ee739636b75a
-          name: UnknownHTML
-          type: DEPENDENT
-          key: UnknownHTML
-          delay: '0'
-          history: 90d
-          value_type: LOG
-          trends: '0'
-          preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  
-                  var json_array = JSON.parse(value);
-                  
-                  function getValues(obj) {
-                      var result = [];
-                  
-                      for (i in obj) {
-                          result.push(obj[i]);
-                      }
-                  
-                      return result;
-                  }
-                  
-                  function getHtmlGroupedByColumn(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table style=\'{$CSS:table}\'>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(getValues(row));
-                      }
-                  
-                      html += '<tr><th style=\'border:1px gray dotted;font-weight:bold\'>' + (getValues(header).join('</th><th style=\'border:1px gray dotted;font-weight:bold\'>')) + '</th>';
-                      for (i in rows) {
-                          html += '<tr><td style=\'border:1px gray dotted\'>' + (rows[i].join('</td><td style=\'border:1px gray dotted\'>')) + '</td>';
-                      }
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  function getHtmlGroupedByRow(data) {
-                      var header = [];
-                      var rows = [];
-                      var html = '<table>';
-                  
-                      for (i in data) {
-                          var row = [];
-                  
-                          for (k in data[i]) {
-                              header[k] = k;
-                              row[k] = data[i][k];
-                          }
-                  
-                          rows.push(row);
-                      }
-                  
-                      html += '<tr><td></td>';
-                      var header_array = getValues(header);
-                      for (i = 0; i < header_array.length; i++) {
-                          html += '<th>' + (i + 1) + '</th>';
-                      }
-                      html += '</tr>';
-                  
-                      for (i in header) {
-                          html += '<tr><th>' + i + '</th>';
-                          for (j in rows) {
-                              html += '<td>' + rows[j][i] + '</td>';
-                          }
-                          html += '</tr>';
-                      }
-                  
-                      html += '</table>';
-                  
-                      return html;
-                  }
-                  
-                  return getHtmlGroupedByColumn(json_array);
-          master_item:
-            key: ActiveUnknown
         - uuid: 41ec3536fbde48fa815dfa6c6bd05558
           name: unsupportedItems
           type: DEPENDENT
@@ -2193,7 +2622,7 @@ zabbix_export:
                       name: columns.0.itemid
                       value:
                         host: 'Host availability widget Zabbix API'
-                        key: UnavailableHTML
+                        key: 'HTML["Not available, Agent (active)"]'
                     - type: INTEGER
                       name: columns.0.monospace_font
                       value: '1'
@@ -2234,7 +2663,7 @@ zabbix_export:
                       name: columns.0.itemid
                       value:
                         host: 'Host availability widget Zabbix API'
-                        key: UnknownHTML
+                        key: 'HTML["Unknown, Agent (active)"]'
                     - type: INTEGER
                       name: columns.0.monospace_font
                       value: '1'
@@ -2276,7 +2705,7 @@ zabbix_export:
                       name: columns.0.itemid
                       value:
                         host: 'Host availability widget Zabbix API'
-                        key: 'HTML[ZBX]'
+                        key: 'HTML["Not available, Agent (passive)"]'
                     - type: INTEGER
                       name: columns.0.monospace_font
                       value: '1'
@@ -2318,7 +2747,7 @@ zabbix_export:
                       name: columns.0.itemid
                       value:
                         host: 'Host availability widget Zabbix API'
-                        key: 'HTML[SNMP]'
+                        key: 'HTML["Not available, SNMP"]'
                     - type: INTEGER
                       name: columns.0.monospace_font
                       value: '1'
@@ -2360,7 +2789,7 @@ zabbix_export:
                       name: columns.0.itemid
                       value:
                         host: 'Host availability widget Zabbix API'
-                        key: 'HTML[JMX]'
+                        key: 'HTML["Not available, JMX"]'
                     - type: INTEGER
                       name: columns.0.monospace_font
                       value: '1'
@@ -2388,11 +2817,11 @@ zabbix_export:
                     - type: STRING
                       name: time_period.to
                       value: now
-            - name: 'not used'
+            - name: 'Unknown ZBX SNMP'
               widgets:
                 - type: itemhistory
-                  name: 'interface is registred, but not giving green feedback'
-                  width: '72'
+                  name: ZBX
+                  width: '36'
                   height: '64'
                   fields:
                     - type: INTEGER
@@ -2402,7 +2831,7 @@ zabbix_export:
                       name: columns.0.itemid
                       value:
                         host: 'Host availability widget Zabbix API'
-                        key: 'HTML[ZBXnotUsed]'
+                        key: 'HTML["Unknown, Agent (passive)"]'
                     - type: INTEGER
                       name: columns.0.monospace_font
                       value: '1'
@@ -2415,6 +2844,47 @@ zabbix_export:
                     - type: STRING
                       name: reference
                       value: KVPOZ
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+                - type: itemhistory
+                  name: SNMP
+                  x: '36'
+                  width: '36'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML["Unknown, SNMP"]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: SNMP
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: MTXBS
                     - type: INTEGER
                       name: show_column_header
                       value: '0'
@@ -2499,90 +2969,6 @@ zabbix_export:
                     - type: STRING
                       name: reference
                       value: MNBCZ
-                    - type: INTEGER
-                      name: show_column_header
-                      value: '0'
-                    - type: INTEGER
-                      name: show_lines
-                      value: '1'
-                    - type: INTEGER
-                      name: sortorder
-                      value: '1'
-                    - type: STRING
-                      name: time_period.from
-                      value: now-1y
-                    - type: STRING
-                      name: time_period.to
-                      value: now
-            - name: enabled
-              widgets:
-                - type: itemhistory
-                  name: 'most enabled items'
-                  width: '72'
-                  height: '64'
-                  fields:
-                    - type: INTEGER
-                      name: columns.0.display
-                      value: '4'
-                    - type: ITEM
-                      name: columns.0.itemid
-                      value:
-                        host: 'Host availability widget Zabbix API'
-                        key: 'HTML[itemsAreRunningWithHost]'
-                    - type: INTEGER
-                      name: columns.0.monospace_font
-                      value: '1'
-                    - type: STRING
-                      name: columns.0.name
-                      value: 'most enabled items'
-                    - type: INTEGER
-                      name: layout
-                      value: '1'
-                    - type: STRING
-                      name: reference
-                      value: TNILN
-                    - type: INTEGER
-                      name: show_column_header
-                      value: '0'
-                    - type: INTEGER
-                      name: show_lines
-                      value: '1'
-                    - type: INTEGER
-                      name: sortorder
-                      value: '1'
-                    - type: STRING
-                      name: time_period.from
-                      value: now-1y
-                    - type: STRING
-                      name: time_period.to
-                      value: now
-            - name: disabled
-              widgets:
-                - type: itemhistory
-                  name: 'disabled items'
-                  width: '72'
-                  height: '64'
-                  fields:
-                    - type: INTEGER
-                      name: columns.0.display
-                      value: '4'
-                    - type: ITEM
-                      name: columns.0.itemid
-                      value:
-                        host: 'Host availability widget Zabbix API'
-                        key: disabledItemsWithHostHTML
-                    - type: INTEGER
-                      name: columns.0.monospace_font
-                      value: '1'
-                    - type: STRING
-                      name: columns.0.name
-                      value: 'disabled items'
-                    - type: INTEGER
-                      name: layout
-                      value: '1'
-                    - type: STRING
-                      name: reference
-                      value: DBXEV
                     - type: INTEGER
                       name: show_column_header
                       value: '0'
@@ -2724,6 +3110,131 @@ zabbix_export:
                     - type: STRING
                       name: time_period.to
                       value: now
+            - name: 'Unknown JMX IPMI'
+              widgets:
+                - type: itemhistory
+                  name: JMX
+                  width: '36'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML["Unknown, JMX"]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'Unknown, JMX'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: POOLQ
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+                - type: itemhistory
+                  name: IPMI
+                  x: '36'
+                  width: '36'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML["Unknown, IPMI"]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'Unknown IPMI'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: PZMJU
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: disabled
+              widgets:
+                - type: itemhistory
+                  name: 'disabled items'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: disabledItemsWithHostHTML
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'disabled items'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: DBXEV
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
             - name: 'disabled hosts'
               widgets:
                 - type: itemhistory
@@ -2751,6 +3262,48 @@ zabbix_export:
                     - type: STRING
                       name: reference
                       value: XXQQR
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                    - type: INTEGER
+                      name: show_lines
+                      value: '1'
+                    - type: INTEGER
+                      name: sortorder
+                      value: '1'
+                    - type: STRING
+                      name: time_period.from
+                      value: now-1y
+                    - type: STRING
+                      name: time_period.to
+                      value: now
+            - name: enabled
+              widgets:
+                - type: itemhistory
+                  name: 'most enabled items'
+                  width: '72'
+                  height: '64'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '4'
+                    - type: ITEM
+                      name: columns.0.itemid
+                      value:
+                        host: 'Host availability widget Zabbix API'
+                        key: 'HTML[itemsAreRunningWithHost]'
+                    - type: INTEGER
+                      name: columns.0.monospace_font
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.name
+                      value: 'most enabled items'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: TNILN
                     - type: INTEGER
                       name: show_column_header
                       value: '0'
