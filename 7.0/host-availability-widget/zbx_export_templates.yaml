@@ -237,8 +237,6 @@ zabbix_export:
                 return result;
             }
             
-            var scriptStarts = Date.now() / 1000;
-            Zabbix.Log(params.loglevel, "Zabbix API, stats started");
             
             
             var params = JSON.parse(value);
@@ -246,6 +244,9 @@ zabbix_export:
             // url = '{$ZABBIX.URL}' + '/api_jsonrpc.php';
             token = params.token;
             url = params.url + '/api_jsonrpc.php';
+            
+            var scriptStarts = Date.now() / 1000;
+            Zabbix.Log(params.loglevel, "Zabbix API, stats started");
             
             var req = new HttpRequest();
             req.addHeader('Content-Type: application/json');
@@ -2591,7 +2592,7 @@ zabbix_export:
         - macro: '{$RECORDS}'
           value: '99'
         - macro: '{$UPD}'
-          value: 3m
+          value: 1m
       dashboards:
         - uuid: c100b83607c344b888273653b13e8da4
           name: Summary

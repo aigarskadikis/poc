@@ -41,8 +41,6 @@ function calculateBadPercent(data) {
     return result;
 }
 
-var scriptStarts = Date.now() / 1000;
-Zabbix.Log(params.loglevel, "Zabbix API, stats started");
 
 
 var params = JSON.parse(value);
@@ -50,6 +48,9 @@ var params = JSON.parse(value);
 // url = '{$ZABBIX.URL}' + '/api_jsonrpc.php';
 token = params.token;
 url = params.url + '/api_jsonrpc.php';
+
+var scriptStarts = Date.now() / 1000;
+Zabbix.Log(params.loglevel, "Zabbix API, stats started");
 
 var req = new HttpRequest();
 req.addHeader('Content-Type: application/json');
