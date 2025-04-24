@@ -42,7 +42,7 @@ function calculateBadPercent(data) {
 }
 
 var scriptStarts = Date.now() / 1000;
-Zabbix.Log(3, "Zabbix API, stats started: " + toString(scriptStarts));
+Zabbix.Log(params.loglevel, "Zabbix API, stats started");
 
 
 var params = JSON.parse(value);
@@ -478,17 +478,7 @@ for (i in interfaceList) {
 // for not used interfaces delete column "error"
 for (var i = 0; i < passiveNotUsed.length; i++) { delete passiveNotUsed[i].error; }
 
-
-// return debug info
-//     'unsupportedLLDs': unsupportedLLDs,
-//     'disabledHostList': disabledHostList,
-Zabbix.Log(params.loglevel, "Zabbix API, end and return");
-
-Zabbix.Log(3, "Zabbix API, stats ended");
-
 var scriptEnded = Date.now() / 1000;
-
-
 
 var visitItemRatio = [];
 var BadPercentItems = calculateBadPercent(ratioItemKeyWorking);
@@ -500,7 +490,7 @@ for (b in BadPercentItems) {
         visitItemRatio.push(row);
 }
 
-
+Zabbix.Log(params.loglevel, "Zabbix API, end and return");
 
 return JSON.stringify({
     'triggersWithErrorsWithHost': triggersWithErrorsWithHost,
