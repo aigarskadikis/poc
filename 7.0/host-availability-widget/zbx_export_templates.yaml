@@ -2156,9 +2156,13 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - '$..[?(@.[''ratio bad''] == 100)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JSONPATH
               parameters:
                 - '$.[0:{$RECORDS}]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
           master_item:
             key: fetch
         - uuid: a8ee8e19c1594a66b76c35fab9056886
@@ -2176,9 +2180,13 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - '$..[?(@.[''ratio bad''] > 0 && @.[''ratio bad''] < 100)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JSONPATH
               parameters:
                 - '$.[0:{$RECORDS}]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
           master_item:
             key: fetch
         - uuid: 07c9feba0b81428d9594635838a44385
