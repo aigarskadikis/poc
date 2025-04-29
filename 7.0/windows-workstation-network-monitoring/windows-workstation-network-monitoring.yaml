@@ -1,0 +1,316 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: b6dde9c17c81466896c24c0ec1207903
+      template: 'windows workstation network monitoring'
+      name: 'windows workstation network monitoring'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: d357d485e52f41b08fafaefa180d9c0e
+          name: 'Browser data total'
+          type: DEPENDENT
+          key: browser.data.total
+          delay: '0'
+          value_type: FLOAT
+          units: B
+          preprocessing:
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: BytesTotal
+        - uuid: 882410092ef94863a3171788fb8d1242
+          name: 'Browser download'
+          type: DEPENDENT
+          key: browser.download
+          delay: '0'
+          value_type: FLOAT
+          units: B
+          preprocessing:
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: BytesReceived
+        - uuid: 3765c89aebb74c44851ba31f2ade8db6
+          name: 'Browser upload'
+          type: DEPENDENT
+          key: browser.upload
+          delay: '0'
+          value_type: FLOAT
+          units: B
+          preprocessing:
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: BytesSent
+        - uuid: 77a1eb2c53294b8cb3f96959665a08f0
+          name: 'BytesReceived per minute'
+          type: DEPENDENT
+          key: BytesReceived
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: CounterBytesReceived
+        - uuid: 80d18c42f7f44d69a437935f26101ef6
+          name: 'BytesSent per minute'
+          type: DEPENDENT
+          key: BytesSent
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: CounterBytesSent
+        - uuid: a7595a18481b4f50853f8b4475551242
+          name: 'BytesTotal per minute'
+          type: DEPENDENT
+          key: BytesTotal
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: CounterBytesTotal
+        - uuid: f84352cf968246d2ba8b7153d4969644
+          name: CounterBytesReceived
+          type: DEPENDENT
+          key: CounterBytesReceived
+          delay: '0'
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[*].BytesReceivedPersec.sum()'
+          master_item:
+            key: 'wmi.getall[root\cimv2,SELECT * FROM Win32_PerfRawData_Tcpip_NetworkInterface]'
+          tags:
+            - tag: lvl
+              value: '1'
+        - uuid: 18cd95868a2b46989a21b5bf54a760a9
+          name: CounterBytesSent
+          type: DEPENDENT
+          key: CounterBytesSent
+          delay: '0'
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[*].BytesSentPersec.sum()'
+          master_item:
+            key: 'wmi.getall[root\cimv2,SELECT * FROM Win32_PerfRawData_Tcpip_NetworkInterface]'
+          tags:
+            - tag: lvl
+              value: '1'
+        - uuid: e693b474f837440a95af590ac579955e
+          name: CounterBytesTotal
+          type: DEPENDENT
+          key: CounterBytesTotal
+          delay: '0'
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$[*].BytesTotalPersec.sum()'
+          master_item:
+            key: 'wmi.getall[root\cimv2,SELECT * FROM Win32_PerfRawData_Tcpip_NetworkInterface]'
+          tags:
+            - tag: lvl
+              value: '1'
+        - uuid: 7c8de146c3d54051975fbe89bbb0078a
+          name: 'ISP download'
+          type: DEPENDENT
+          key: isp.download
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: BytesReceived
+        - uuid: 63cfc90b6a57420a8723c8b83d3f788a
+          name: 'ISP total'
+          type: DEPENDENT
+          key: isp.total
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: CounterBytesTotal
+        - uuid: 29d4baa6cba54496b858975d4175948d
+          name: 'ISP upload'
+          type: DEPENDENT
+          key: isp.upload
+          delay: '0'
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: CounterBytesSent
+        - uuid: 3b3cb4c954ff42168131980b29f6b621
+          name: 'raw counters'
+          type: ZABBIX_ACTIVE
+          key: 'wmi.getall[root\cimv2,SELECT * FROM Win32_PerfRawData_Tcpip_NetworkInterface]'
+          delay: 0;s51
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+          tags:
+            - tag: lvl
+              value: '0'
+      dashboards:
+        - uuid: e99e18e247924935860041e7d5618ecc
+          name: Network
+          pages:
+            - widgets:
+                - type: svggraph
+                  name: 'traffic per minute'
+                  width: '72'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'BytesReceived per minute'
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: 'BytesSent per minute'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.type
+                      value: '3'
+                    - type: STRING
+                      name: or.0.color
+                      value: 0080FF
+                    - type: STRING
+                      name: or.0.items.0
+                      value: 'BytesReceived per minute'
+                    - type: STRING
+                      name: reference
+                      value: OCKEH
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: item
+                  name: 'total traffic for today'
+                  'y': '4'
+                  width: '18'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: aggregate_function
+                      value: '5'
+                    - type: INTEGER
+                      name: history
+                      value: '1'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'windows workstation network monitoring'
+                        key: BytesTotal
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: STRING
+                      name: time_period.from
+                      value: now/d
+                    - type: STRING
+                      name: time_period.to
+                      value: now/d
+                - type: item
+                  name: 'total traffic for yesterday'
+                  x: '18'
+                  'y': '4'
+                  width: '18'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: aggregate_function
+                      value: '5'
+                    - type: INTEGER
+                      name: history
+                      value: '1'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'windows workstation network monitoring'
+                        key: BytesTotal
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: STRING
+                      name: time_period.from
+                      value: now/d-1d
+                    - type: STRING
+                      name: time_period.to
+                      value: now/d
+                - type: item
+                  name: 'total traffic this month so far'
+                  x: '36'
+                  'y': '4'
+                  width: '18'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: aggregate_function
+                      value: '5'
+                    - type: INTEGER
+                      name: history
+                      value: '1'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'windows workstation network monitoring'
+                        key: BytesTotal
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: STRING
+                      name: time_period.from
+                      value: now/M
+                    - type: STRING
+                      name: time_period.to
+                      value: now/M
