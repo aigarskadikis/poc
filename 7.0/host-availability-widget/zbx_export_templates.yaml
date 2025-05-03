@@ -95,11 +95,13 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - $.disabledItemsWithHost
-              error_handler: DISCARD_VALUE
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JSONPATH
               parameters:
                 - '$.[0:{$RECORDS:disabled.items}]'
-              error_handler: DISCARD_VALUE
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
           master_item:
             key: fetch
         - uuid: c3656befc76a482aabf2cf5af407a233
@@ -2048,39 +2050,6 @@ zabbix_export:
           value_type: LOG
           trends: '0'
           preprocessing:
-            - type: JAVASCRIPT
-              parameters:
-                - |
-                  // sort json
-                  function sortJson(obj) {
-                    if (Object.prototype.toString.call(obj) === '[object Object]') {
-                      var sortedObj = {};
-                      var keys = [];
-                      for (var key in obj) {
-                        if (obj.hasOwnProperty(key)) {
-                          keys.push(key);
-                        }
-                      }
-                      keys.sort();
-                      for (var i = 0; i < keys.length; i++) {
-                        var k = keys[i];
-                        sortedObj[k] = sortJson(obj[k]);
-                      }
-                      return sortedObj;
-                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
-                      var sortedArray = [];
-                      for (var j = 0; j < obj.length; j++) {
-                        sortedArray.push(sortJson(obj[j]));
-                      }
-                      return sortedArray.sort(function (a, b) {
-                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
-                      });
-                    } else {
-                      return obj;
-                    }
-                  }
-                  
-                  return JSON.stringify(sortJson(JSON.parse(value)));
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
                 - 1d
@@ -2405,6 +2374,8 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - $.ratioItemKeyWorking
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JSONPATH
               parameters:
                 - '$..[?(@.[''ratio bad''] == 100)]'
@@ -2412,7 +2383,7 @@ zabbix_export:
               error_handler_params: '[]'
             - type: JSONPATH
               parameters:
-                - '$.[0:{$RECORDS}]'
+                - '$.[0:{$RECORDS:ratioItemKeyWorking}]'
               error_handler: CUSTOM_VALUE
               error_handler_params: '[]'
           master_item:
@@ -2512,9 +2483,13 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - $.triggersWithErrorsWithHost
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JSONPATH
               parameters:
                 - '$.[0:{$RECORDS:trigger.errors}]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
           master_item:
             key: fetch
         - uuid: 70f5450aba11478abb3f7b770128d3b0
@@ -2613,9 +2588,13 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - $.unsupportedItems
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JSONPATH
               parameters:
                 - '$.[0:{$RECORDS}]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
           master_item:
             key: fetch
         - uuid: e256add543e0418b9d4a9779f4b19c75
@@ -2644,9 +2623,13 @@ zabbix_export:
             - type: JSONPATH
               parameters:
                 - $.unsupportedItemsWithHost
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
             - type: JSONPATH
               parameters:
                 - '$.[0:{$RECORDS:unsupported.items}]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
           master_item:
             key: fetch
         - uuid: d34301d7d57f4bb0a5ab873dca5fdcb3
@@ -2894,13 +2877,15 @@ zabbix_export:
         - macro: '{$RECORDS}'
           value: '99'
         - macro: '{$RECORDS:disabled.items}'
-          value: '9'
+          value: '4'
         - macro: '{$RECORDS:enabled}'
-          value: '9'
+          value: '4'
+        - macro: '{$RECORDS:ratioItemKeyWorking}'
+          value: '99'
         - macro: '{$RECORDS:trigger.errors}'
-          value: '9'
+          value: '4'
         - macro: '{$RECORDS:unsupported.items}'
-          value: '9'
+          value: '4'
         - macro: '{$UPD}'
           value: 1m
       dashboards:
