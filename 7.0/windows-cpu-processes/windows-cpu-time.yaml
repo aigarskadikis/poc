@@ -1,0 +1,251 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 2aad5735caa5484aa5764adf696f3568
+      template: 'windows cpu time'
+      name: 'windows cpu time'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 31f2ae5910414c1b8c54b39b2b24ae25
+          name: Name
+          type: DEPENDENT
+          key: Name
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract uniq process names
+                  var input = JSON.parse(value);
+                  var seen = {};
+                  var result = [];
+                  for (var i = 0; i < input.length; i++) {
+                      var name = input[i].Name;
+                      if (!seen[name]) {
+                          seen[name] = true;
+                          result.push({"Name": name});
+                      }
+                  }
+                  return JSON.stringify(result);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: 'wmi.getall[root\cimv2,"SELECT Name, KernelModeTime, UserModeTime FROM Win32_Process"]'
+        - uuid: 30b942272a5640a69c69a3f16535f096
+          name: Total
+          type: DEPENDENT
+          key: Total
+          delay: '0'
+          history: '{$DBG}'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // combine KernelModeTime + UserModeTime
+                  var data = JSON.parse(value);
+                  var out = [];
+                  for (var i = 0; i < data.length; i++) {
+                  var row = {};
+                  row["Name"] = data[i].Name;
+                  var item = data[i];
+                  row["CPUTime"] = Number(item.KernelModeTime) + Number(item.UserModeTime);
+                  out.push(row);
+                  }
+                  return JSON.stringify(out);
+          master_item:
+            key: 'wmi.getall[root\cimv2,"SELECT Name, KernelModeTime, UserModeTime FROM Win32_Process"]'
+        - uuid: 63a44f7fdd6748e893e488582695ce07
+          name: 'All Win32_Process'
+          type: ZABBIX_ACTIVE
+          key: 'wmi.getall[root\cimv2,"SELECT * FROM Win32_Process"]'
+          delay: 1d
+          history: '{$DBG}'
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+        - uuid: f77446b8389f42528af8cf21c3a1488b
+          name: 'KernelModeTime UserModeTime'
+          type: ZABBIX_ACTIVE
+          key: 'wmi.getall[root\cimv2,"SELECT Name, KernelModeTime, UserModeTime FROM Win32_Process"]'
+          delay: '1d;{$UPD}'
+          history: '{$DBG}'
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+      discovery_rules:
+        - uuid: 8bd8b33ae5084ff594f76184e823ffa6
+          name: exe
+          type: DEPENDENT
+          key: exe
+          delay: '0'
+          lifetime_type: DELETE_NEVER
+          lifetime: '0'
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: 62bcb9bd8b1d4107b15f843c51539aff
+              name: '{#NAME}: CPU time'
+              type: DEPENDENT
+              key: 'cpu.time["{#NAME}"]'
+              delay: '0'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''Name''] == ''{#NAME}'')].CPUTime.sum()'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+                - type: MULTIPLIER
+                  parameters:
+                    - '1.0E-7'
+              master_item:
+                key: Total
+              tags:
+                - tag: cpu
+                  value: time
+            - uuid: fba06e99c5f747f3a3eb836dadf5a3e6
+              name: '{#NAME}: previous hour'
+              type: CALCULATED
+              key: 'hourly["{#NAME}"]'
+              delay: 0;m0s38
+              value_type: FLOAT
+              units: s
+              params: 'sum(//cpu.time["{#NAME}"],1h)'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '-1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              tags:
+                - tag: cpu
+                  value: previousHour
+            - uuid: df36683739c24a3fae23e57c73d76061
+              name: '{#NAME}: last 24h'
+              type: CALCULATED
+              key: 'last.day["{#NAME}"]'
+              delay: 5m
+              value_type: FLOAT
+              units: s
+              params: 'sum(//cpu.time["{#NAME}"],1d)'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '-1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              tags:
+                - tag: cpu
+                  value: last24h
+            - uuid: b4433a9adf2d491e9ab531688a6b5d7e
+              name: '{#NAME}: last 60m'
+              type: CALCULATED
+              key: 'last.hour["{#NAME}"]'
+              value_type: FLOAT
+              units: s
+              params: 'sum(//cpu.time["{#NAME}"],1h)'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '-1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              tags:
+                - tag: cpu
+                  value: last60m
+            - uuid: 29ac452bfa9b4cfdbf715f5a54e05c2d
+              name: '{#NAME}: today'
+              type: CALCULATED
+              key: 'today["{#NAME}"]'
+              value_type: FLOAT
+              units: s
+              params: 'sum(//cpu.time["{#NAME}"],1d:now/d+1d)'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '-1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              tags:
+                - tag: cpu
+                  value: today
+            - uuid: a333fd5292e04217bda0292381194885
+              name: '{#NAME}: yesterday'
+              type: CALCULATED
+              key: 'yesterday["{#NAME}"]'
+              delay: 0;h0m0s49
+              value_type: FLOAT
+              units: s
+              params: 'sum(//cpu.time["{#NAME}"],1d)'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '-1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              tags:
+                - tag: cpu
+                  value: yesterday
+          master_item:
+            key: Name
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''Name'']'
+      macros:
+        - macro: '{$DBG}'
+          value: '0'
+        - macro: '{$UPD}'
+          value: s50
