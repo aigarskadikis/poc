@@ -362,7 +362,7 @@ zabbix_export:
           lifetime: '0'
           item_prototypes:
             - uuid: bf9d9ed8771f4325ba69c38168612f79
-              name: '{#TABLE}: size table'
+              name: '{#TABLE}: table size'
               type: DEPENDENT
               key: 'size.of[{#TABLE}]'
               delay: '0'
@@ -380,7 +380,7 @@ zabbix_export:
               path: '$.[''table_name'']'
       macros:
         - macro: '{$CONN.STR}'
-          value: Driver=/usr/lib64/psqlodbcw.so;Server=193.123.33.206;Port=7416;Database=z70;Uid=zabbix;Pwd=zabbix
+          value: Driver=/usr/lib64/psqlodbcw.so;Server=192.168.88.15;Port=5432;Database=zabbix;Uid=zabbix;Pwd=zabbix
       dashboards:
         - uuid: 053574aa8f1046eab24f7b8f77e6d3fa
           name: Sizes
@@ -436,7 +436,4 @@ zabbix_export:
                       value: '5'
                     - type: STRING
                       name: items.0
-                      value: '*: * chunk'
-                    - type: STRING
-                      name: items.1
-                      value: '*: * table'
+                      value: '*: * size'
