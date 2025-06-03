@@ -1,0 +1,320 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 4fa4d45affbd4b248ab7695ac8d7ad99
+      template: 'Zabbix 7.0 DB PostgreSQL TimescaleDB stats'
+      name: 'Zabbix 7.0 DB PostgreSQL TimescaleDB stats'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 5ef2e435f18f41919db01f0708c9a7b9
+          name: 'size of hypertables'
+          type: ODBC
+          key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+          value_type: LOG
+          trends: '0'
+          params: |
+            SELECT
+                h.table_name AS hypertable_name,
+                c.schema_name || '.' || c.table_name AS chunk_name,
+                pg_total_relation_size((c.schema_name || '.' || c.table_name)::regclass) AS size,
+                ds_start.range_start AS clock_start_unix,
+                ds_end.range_end AS clock_end_unix
+            FROM
+                _timescaledb_catalog.chunk c
+            JOIN
+                _timescaledb_catalog.hypertable h ON c.hypertable_id = h.id
+            -- get start constraint
+            JOIN
+                _timescaledb_catalog.chunk_constraint cc_start ON cc_start.chunk_id = c.id
+            JOIN
+                _timescaledb_catalog.dimension_slice ds_start ON cc_start.dimension_slice_id = ds_start.id
+            -- get end constraint
+            JOIN
+                _timescaledb_catalog.chunk_constraint cc_end ON cc_end.chunk_id = c.id
+            JOIN
+                _timescaledb_catalog.dimension_slice ds_end ON cc_end.dimension_slice_id = ds_end.id
+            -- only take slice pairs that look like valid time ranges
+            WHERE
+                ds_start.range_start < ds_end.range_end
+            ORDER BY 2 ASC;
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  
+                  function pad(n) { return n < 10 ? '0' + n : n }
+                  
+                  function formatDate(unix) {
+                  var d = new Date(unix * 1000);
+                  return d.getFullYear()
+                  + '.' + pad(d.getMonth() + 1)
+                  + '.' + pad(d.getDate());
+                  //+ ' ' + pad(d.getHours())
+                  //+ ':' + pad(d.getMinutes())
+                  //+ ':' + pad(d.getSeconds())
+                  }
+                  
+                  var lines = JSON.parse(value);
+                  
+                  var out = [];
+                  for (i = 0; i < lines.length; i++)
+                  {
+                    var row = lines[i];
+                    row["date"] = formatDate(lines[i].clock_start_unix);
+                    row["partSize"] = (lines[i].clock_end_unix - lines[i].clock_start_unix) / 86400 + 'd';
+                    out.push(row);
+                  }
+                  return JSON.stringify(out);
+                  
+        - uuid: 76ab6f1ad0f14c3f8695e8be05be82b6
+          name: 'size of non hypertables'
+          type: ODBC
+          key: 'db.odbc.get["size of non hypertables",,"{$CONN.STR}"]'
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          params: |
+            SELECT table_name, pg_total_relation_size(quote_ident(table_name))
+            FROM information_schema.tables
+            WHERE table_schema = 'public';
+        - uuid: 25891397be484c6cb5ed21d7fcee1d45
+          name: 'uniq dates'
+          type: DEPENDENT
+          key: uniq.dates
+          delay: '0'
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract uniq dates
+                  var input = JSON.parse(value);
+                  var seen = {};
+                  var result = [];
+                  for (var i = 0; i < input.length; i++) {
+                      var name = input[i].date;
+                      if (!seen[name]) {
+                          seen[name] = true;
+                          result.push({"date": name,"partSize":input[i].partSize});
+                      }
+                  }
+                  return JSON.stringify(result);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+          master_item:
+            key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+      discovery_rules:
+        - uuid: 5bb72bd90afc435fae42392bb22b0e3a
+          name: aggr
+          type: DEPENDENT
+          key: aggr
+          delay: '0'
+          lifetime_type: DELETE_IMMEDIATELY
+          lifetime: '0'
+          item_prototypes:
+            - uuid: b3ba15eb62b24872b71a4e6b86654afc
+              name: '{#DATE}: total per {#PARTSIZE}'
+              type: DEPENDENT
+              key: 'day[{#DATE},{#PARTSIZE}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''date''] == ''{#DATE}'' && @.[''partSize''] == ''{#PARTSIZE}'')].size.sum()'
+              master_item:
+                key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+          master_item:
+            key: uniq.dates
+          lld_macro_paths:
+            - lld_macro: '{#DATE}'
+              path: '$.[''date'']'
+            - lld_macro: '{#PARTSIZE}'
+              path: '$.[''partSize'']'
+        - uuid: 135c7d9d50b34eaca2133aa5344f7c22
+          name: bySize
+          type: DEPENDENT
+          key: bySize
+          delay: '0'
+          lifetime_type: DELETE_IMMEDIATELY
+          lifetime: '0'
+          item_prototypes:
+            - uuid: 7c4c3a2c4f5741518ba07e1ee5ca3773
+              name: '{#DATE}: {#TABLE} {#PARTSIZE}'
+              type: DEPENDENT
+              key: 'size[{#PARTSIZE},{#DATE},{#TABLE}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''chunk_name''] == ''{#CHUNK}'')].size.first()'
+              master_item:
+                key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+          master_item:
+            key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+          lld_macro_paths:
+            - lld_macro: '{#CHUNK}'
+              path: '$.[''chunk_name'']'
+            - lld_macro: '{#DATE}'
+              path: '$.[''date'']'
+            - lld_macro: '{#PARTSIZE}'
+              path: '$.[''partSize'']'
+            - lld_macro: '{#START}'
+              path: '$.[''clock_start_unix'']'
+            - lld_macro: '{#TABLE}'
+              path: '$.[''hypertable_name'']'
+        - uuid: 17edeb1f631b4ed8914110da69f04670
+          name: chunk
+          type: DEPENDENT
+          key: chunk
+          delay: '0'
+          lifetime_type: DELETE_IMMEDIATELY
+          lifetime: '0'
+          item_prototypes:
+            - uuid: 7b5bc790992d47c5a87b62358631acf7
+              name: '{#DATE}: {#TABLE} chunk size'
+              type: DEPENDENT
+              key: 'chunk[{#DATE},{#TABLE},{#CHUNK}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''chunk_name''] == ''{#CHUNK}'')].size.first()'
+              master_item:
+                key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+          master_item:
+            key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+          lld_macro_paths:
+            - lld_macro: '{#CHUNK}'
+              path: '$.[''chunk_name'']'
+            - lld_macro: '{#DATE}'
+              path: '$.[''date'']'
+            - lld_macro: '{#START}'
+              path: '$.[''clock_start_unix'']'
+            - lld_macro: '{#TABLE}'
+              path: '$.[''hypertable_name'']'
+        - uuid: 8d9f141be12242788ab40dad3956b324
+          name: table
+          type: DEPENDENT
+          key: table
+          delay: '0'
+          lifetime_type: DELETE_IMMEDIATELY
+          lifetime: '0'
+          item_prototypes:
+            - uuid: bf9d9ed8771f4325ba69c38168612f79
+              name: '{#TABLE}: size table'
+              type: DEPENDENT
+              key: 'size.of[{#TABLE}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''table_name''] == ''{#TABLE}'')].pg_total_relation_size.first()'
+              master_item:
+                key: 'db.odbc.get["size of non hypertables",,"{$CONN.STR}"]'
+          master_item:
+            key: 'db.odbc.get["size of non hypertables",,"{$CONN.STR}"]'
+          lld_macro_paths:
+            - lld_macro: '{#TABLE}'
+              path: '$.[''table_name'']'
+      macros:
+        - macro: '{$CONN.STR}'
+          value: Driver=/usr/lib64/psqlodbcw.so;Server=193.123.33.206;Port=7416;Database=z70;Uid=zabbix;Pwd=zabbix
+      dashboards:
+        - uuid: 053574aa8f1046eab24f7b8f77e6d3fa
+          name: Sizes
+          display_period: '3600'
+          auto_start: 'NO'
+          pages:
+            - widgets:
+                - type: echarts
+                  name: 'Biggest tables'
+                  width: '12'
+                  height: '6'
+                  fields:
+                    - type: INTEGER
+                      name: display_type
+                      value: '10'
+                    - type: STRING
+                      name: items.0
+                      value: '*: * table'
+                - type: echarts
+                  name: 'daily partitions'
+                  x: '12'
+                  width: '36'
+                  height: '6'
+                  fields:
+                    - type: INTEGER
+                      name: display_type
+                      value: '10'
+                    - type: STRING
+                      name: items.0
+                      value: '*: * 1d'
+                - type: echarts
+                  name: '4d chunks'
+                  x: '48'
+                  width: '24'
+                  height: '6'
+                  fields:
+                    - type: INTEGER
+                      name: display_type
+                      value: '10'
+                    - type: STRING
+                      name: items.0
+                      value: '*: * 4d'
+            - name: visual
+              widgets:
+                - type: echarts
+                  name: 'hyper table stats'
+                  width: '72'
+                  height: '10'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: display_type
+                      value: '5'
+                    - type: STRING
+                      name: items.0
+                      value: '*: * chunk'
+                    - type: STRING
+                      name: items.1
+                      value: '*: * table'
