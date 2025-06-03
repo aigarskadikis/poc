@@ -1,0 +1,95 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 26b68cfdf71a486593be5b04a4f4adfa
+      template: 'windows audit Win32_GroupUser'
+      name: 'windows audit Win32_GroupUser'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 6f8ed61498f94d65827f27523456290d
+          name: 'Win32_GroupUser LocalAdministrators'
+          type: DEPENDENT
+          key: LocalAdministrators
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''GroupComponent''] =~ "Administrators")]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var users = JSON.parse(value);
+                  var out = [];
+                  for (i = 0; i < users.length; i++) {
+                     var row = {};
+                     row["object"] = users[i].PartComponent.match(/Name=[\\"]+([^\\"]+)[\\"]+/)[1];
+                     out.push(row);
+                  }
+                  if (out.length > 1) {
+                     return JSON.stringify(out.sort());
+                  } else {
+                     return JSON.stringify(out);
+                  }
+          master_item:
+            key: 'wmi.getall["root\cimv2", "SELECT * FROM Win32_GroupUser"]'
+        - uuid: d5a48ca768f24802a74d8d9794831778
+          name: Win32_GroupUser
+          type: ZABBIX_ACTIVE
+          key: 'wmi.getall["root\cimv2", "SELECT * FROM Win32_GroupUser"]'
+          delay: 6s
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+      discovery_rules:
+        - uuid: ac0588d77ca84d319e7b849430c3c0dc
+          name: detect.admins
+          type: DEPENDENT
+          key: detect.admins
+          delay: '0'
+          item_prototypes:
+            - uuid: f1bb099f0f8e45d6ab0418feedaa8c48
+              name: 'Win32_GroupUser object {#OBJECT}'
+              type: CALCULATED
+              key: 'name[{#OBJECT}]'
+              delay: 12s
+              value_type: CHAR
+              trends: '0'
+              params: '"{#OBJECT}"'
+              preprocessing:
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+            - uuid: 2190afe0c94d49d584c6fca99ff7a8d2
+              name: 'Win32_GroupUser x {#OBJECT}'
+              type: CALCULATED
+              key: 'x[{#OBJECT}]'
+              delay: 12s
+              trends: '0'
+              params: 'count(//LocalAdministrators,1h,"like","\"{#OBJECT}\"")'
+              preprocessing:
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+          trigger_prototypes:
+            - uuid: 6346d6ba952b4ee0a63b21e766264b99
+              expression: |
+                last(/windows audit Win32_GroupUser/x[{#OBJECT}]) > 1
+                and
+                last(/windows audit Win32_GroupUser/x[{#OBJECT}]) < 30
+                and
+                count(/windows audit Win32_GroupUser/LocalAdministrators,1h) > 50
+              name: 'new object {#OBJECT}'
+              event_name: 'User "{?last(//name[{#OBJECT}],#1)}" arrived in local Administrators group'
+              priority: AVERAGE
+              manual_close: 'YES'
+          master_item:
+            key: LocalAdministrators
+          lld_macro_paths:
+            - lld_macro: '{#OBJECT}'
+              path: '$.[''object'']'
