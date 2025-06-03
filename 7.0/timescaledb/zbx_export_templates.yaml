@@ -14,6 +14,7 @@ zabbix_export:
           name: 'size of hypertables'
           type: ODBC
           key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+          history: '0'
           value_type: LOG
           trends: '0'
           params: |
@@ -70,8 +71,11 @@ zabbix_export:
                   }
                   return JSON.stringify(out);
                   
+          tags:
+            - tag: debug
+              value: raw
         - uuid: 76ab6f1ad0f14c3f8695e8be05be82b6
-          name: 'size of non hypertables'
+          name: 'size of tables'
           type: ODBC
           key: 'db.odbc.get["size of non hypertables",,"{$CONN.STR}"]'
           history: '0'
@@ -81,12 +85,124 @@ zabbix_export:
             SELECT table_name, pg_total_relation_size(quote_ident(table_name))
             FROM information_schema.tables
             WHERE table_schema = 'public';
+          tags:
+            - tag: debug
+              value: raw
+        - uuid: 00c6823922dd439885f0b047f24daf04
+          name: 'hyper gate'
+          type: DEPENDENT
+          key: 'gate[hyper]'
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // delete field 'size'
+                  var array = JSON.parse(value);
+                  for (i=0; i<array.length; i++) { delete array[i].size;}
+                  return JSON.stringify(array);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+          tags:
+            - tag: debug
+              value: raw
+        - uuid: 3136bd3a241d4da4b0c21f4a9e049243
+          name: 'table gate'
+          type: DEPENDENT
+          key: 'gate[table]'
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // delete field 'size'
+                  var array = JSON.parse(value);
+                  for (i=0; i<array.length; i++) { delete array[i].pg_total_relation_size;}
+                  return JSON.stringify(array);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: 'db.odbc.get["size of non hypertables",,"{$CONN.STR}"]'
+          tags:
+            - tag: debug
+              value: raw
         - uuid: 25891397be484c6cb5ed21d7fcee1d45
           name: 'uniq dates'
           type: DEPENDENT
           key: uniq.dates
           delay: '0'
-          history: '0'
           value_type: LOG
           trends: '0'
           preprocessing:
@@ -98,10 +214,10 @@ zabbix_export:
                   var seen = {};
                   var result = [];
                   for (var i = 0; i < input.length; i++) {
-                      var name = input[i].date;
+                      var name = input[i].date + ' ' + input[i].partSize;
                       if (!seen[name]) {
                           seen[name] = true;
-                          result.push({"date": name,"partSize":input[i].partSize});
+                          result.push({"date": input[i].date,"partSize":input[i].partSize});
                       }
                   }
                   return JSON.stringify(result);
@@ -137,8 +253,14 @@ zabbix_export:
                     }
                   }
                   return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
           master_item:
             key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+          tags:
+            - tag: debug
+              value: raw
       discovery_rules:
         - uuid: 5bb72bd90afc435fae42392bb22b0e3a
           name: aggr
@@ -159,7 +281,7 @@ zabbix_export:
                   parameters:
                     - '$..[?(@.[''date''] == ''{#DATE}'' && @.[''partSize''] == ''{#PARTSIZE}'')].size.sum()'
               master_item:
-                key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+                key: 'gate[hyper]'
           master_item:
             key: uniq.dates
           lld_macro_paths:
@@ -186,7 +308,7 @@ zabbix_export:
                   parameters:
                     - '$..[?(@.[''chunk_name''] == ''{#CHUNK}'')].size.first()'
               master_item:
-                key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+                key: 'gate[hyper]'
           master_item:
             key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
           lld_macro_paths:
@@ -221,7 +343,7 @@ zabbix_export:
               master_item:
                 key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
           master_item:
-            key: 'db.odbc.get["size of hypertables",,"{$CONN.STR}"]'
+            key: 'gate[hyper]'
           lld_macro_paths:
             - lld_macro: '{#CHUNK}'
               path: '$.[''chunk_name'']'
@@ -252,7 +374,7 @@ zabbix_export:
               master_item:
                 key: 'db.odbc.get["size of non hypertables",,"{$CONN.STR}"]'
           master_item:
-            key: 'db.odbc.get["size of non hypertables",,"{$CONN.STR}"]'
+            key: 'gate[table]'
           lld_macro_paths:
             - lld_macro: '{#TABLE}'
               path: '$.[''table_name'']'
