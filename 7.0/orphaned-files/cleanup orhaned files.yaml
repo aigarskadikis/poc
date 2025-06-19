@@ -1,0 +1,251 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: c42c49d2c14442edbcf6c0446444df31
+      template: 'cleanup orhaned files'
+      name: 'cleanup orhaned files'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: d513c807fea74a29ab5a89c2c86ee53d
+          name: /etc/php-fpm.d/zabbix.conf.rpmnew
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/php-fpm.d/zabbix.conf.rpmnew]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 433b3afc48244537ba5d393b6ce1bbb5
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/php-fpm.d/zabbix.conf.rpmnew])=1'
+              name: 'rm /etc/php-fpm.d/zabbix.conf.rpmnew'
+              priority: DISASTER
+              description: 'cd /etc/php-fpm.d && rm -rf zabbix.conf.rpmnew'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: a847cd9e25ca4cc1928a5b189f9d4e4d
+          name: /etc/php-fpm.d/zabbix.conf.rpmsave
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/php-fpm.d/zabbix.conf.rpmsave]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 3a7bdabdc7fa431ca90e6f444a8ec506
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/php-fpm.d/zabbix.conf.rpmsave])=1'
+              name: 'rm /etc/php-fpm.d/zabbix.conf.rpmsave'
+              priority: DISASTER
+              description: 'cd /etc/php-fpm.d && rm -rf zabbix.conf.rpmsave'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: d725d45251894814a5589844d52dc4d7
+          name: zabbix_agent2.conf.dpkg-dist
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agent2.conf.dpkg-dist]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 28733b9869034f4ba22099abf9674322
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_agent2.conf.dpkg-dist])=1'
+              name: 'rm -rf zabbix_agent2.conf.dpkg-dist'
+              priority: DISASTER
+              description: 'cd /etc/zabbix && rm -rf zabbix_agent2.conf.dpkg-dist'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: 217ddbfd658942afa2950fd78afc17d6
+          name: zabbix_agent2.conf.rpmnew
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agent2.conf.rpmnew]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 8575961cfad94eb791878703f637c175
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_agent2.conf.rpmnew])=1'
+              name: 'rm -rf zabbix_agent2.conf.rpmnew'
+              priority: DISASTER
+              description: 'cd /etc/zabbix && rm -rf zabbix_agent2.conf.rpmnew'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: 9ea312ed5c3746f9bf271f6cc558f415
+          name: plugins.d
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agent2.d/plugins.d,dir]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 78dad43a9fe14fb48ec1744a9d47af0a
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_agent2.d/plugins.d,dir])=1'
+              name: 'rm plugins.d'
+              priority: DISASTER
+              description: 'cd /etc/zabbix/zabbix_agent2.d && rm -rf plugins.d'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: 8ef31bc77989413c9a552979ab2093ab
+          name: /etc/zabbix/zabbix_agent2.d/Server.conf
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agent2.d/Server.conf]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 301c0ad604ba46d5ae11ea13a11c4406
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_agent2.d/Server.conf])=1'
+              name: 'rm /etc/zabbix/zabbix_agent2.d/Server.conf'
+              priority: DISASTER
+              description: 'cd /etc/zabbix/zabbix_agent2.d && rm -rf Server.conf'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: 41a3a591f3f94a85b4ee26b399c61d91
+          name: /etc/zabbix/zabbix_agent2.d/ServerActive.conf
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agent2.d/ServerActive.conf]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 28151ab93a3e49df85bf69af78cb8ed1
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_agent2.d/ServerActive.conf])=1'
+              name: 'rm /etc/zabbix/zabbix_agent2.d/ServerActive.conf'
+              priority: DISASTER
+              description: 'cd /etc/zabbix/zabbix_agent2.d && rm -rf ServerActive.conf'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: 3f2a762e99f942d08b6bb1ada4c21922
+          name: zabbix_agentd.conf.dpkg-dist
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agentd.conf.dpkg-dist]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 06ffdea0697149d3bf78c20c1c8c2f50
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_agentd.conf.dpkg-dist])=1'
+              name: 'rm -rf zabbix_agentd.conf.dpkg-dist'
+              priority: DISASTER
+              description: 'cd /etc/zabbix && rm -rf zabbix_agentd.conf.dpkg-dist'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: 1e0ce3f739aa4dd89e39cac7fceb415d
+          name: zabbix_agent.conf.rpmnew
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agentd.conf.rpmnew]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 881cae7ac3804a52b2ab2e21e0109f9e
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_agentd.conf.rpmnew])=1'
+              name: 'rm -rf zabbix_agentd.conf.rpmnew'
+              priority: DISASTER
+              description: 'cd /etc/zabbix && rm -rf zabbix_agentd.conf.rpmnew'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: b35cd22b1ab74cc09c4a3e47c8d6ecd9
+          name: zabbix_agentd.conf.rpmsave
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_agentd.conf.rpmsave]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 3bdf3098394f42ea8555522defeb24ba
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_agentd.conf.rpmsave])=1'
+              name: 'rm -rf zabbix_agentd.conf.rpmsave'
+              priority: DISASTER
+              description: 'cd /etc/zabbix && rm -rf zabbix_agentd.conf.rpmsave'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: eee13358e734432491ce881a8ffc605a
+          name: zabbix_proxy.conf.rpmnew
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_proxy.conf.rpmnew]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 84d294a9e2094444a37ac31a5e60b4ba
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_proxy.conf.rpmnew])=1'
+              name: 'rm -rf zabbix_proxy.conf.rpmnew'
+              priority: DISASTER
+              description: 'cd /etc/zabbix && rm -rf zabbix_proxy.conf.rpmnew'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: 7dfd54ce8934426ca242429c5e4a8efc
+          name: zabbix_proxy.conf.rpmsave
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/etc/zabbix/zabbix_proxy.conf.rpmsave]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 6343ac9bdc5b42b6ae10eeeaab03cdbc
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/etc/zabbix/zabbix_proxy.conf.rpmsave])=1'
+              name: 'rm -rf zabbix_proxy.conf.rpmsave'
+              priority: DISASTER
+              description: 'cd /etc/zabbix && rm -rf zabbix_proxy.conf.rpmsave'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+        - uuid: 7a4c70874558426097d5c18fbe12d9e3
+          name: /var/lib/zabbix/.bash_history
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.exists[/var/lib/zabbix/.bash_history]'
+          delay: '{$RM}'
+          timeout: 1s
+          triggers:
+            - uuid: 8132543de5b14bee87b669956a617f8c
+              expression: 'last(/cleanup orhaned files/vfs.file.exists[/var/lib/zabbix/.bash_history])=1'
+              name: 'rm -rf /var/lib/zabbix/.bash_history'
+              priority: DISASTER
+              description: 'cd /var/lib/zabbix && rm -rf .bash_history'
+              manual_close: 'YES'
+              tags:
+                - tag: conf
+                  value: maintain
+                - tag: execute
+                  value: description
+      tags:
+        - tag: backup
+      macros:
+        - macro: '{$RM}'
+          value: 1h
