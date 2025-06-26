@@ -29,6 +29,7 @@ zabbix_export:
           type: ZABBIX_ACTIVE
           key: 'system.run["{$TOP.CONSUMERS}"]'
           delay: '0;s19,39,59'
+          history: '0'
           value_type: LOG
           trends: '0'
           description: |
