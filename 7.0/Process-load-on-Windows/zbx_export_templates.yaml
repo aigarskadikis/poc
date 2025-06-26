@@ -1,0 +1,526 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 846977d1dfed4968bc5f8bdb363285bc
+      name: 'Templates/Operating systems'
+  templates:
+    - uuid: 6e98d51ed0a64e1bb3b62ab3ed4bac12
+      template: 'Process load on Windows by Aigars'
+      name: 'Process load on Windows by Aigars'
+      groups:
+        - name: 'Templates/Operating systems'
+      items:
+        - uuid: 638c3437a88b4e05843a39777637098e
+          name: 'Full usage of cpu for process'
+          type: CALCULATED
+          key: full.cpu.usage
+          delay: 10s
+          units: '%'
+          params: 'sum(last_foreach(//cpu.usage[*]))'
+        - uuid: 6f06a786984d470ca9937e92894c9afd
+          name: 'Full usage of memory for processes'
+          type: CALCULATED
+          key: full.mem.usage
+          delay: 10s
+          units: B
+          params: 'sum(last_foreach(//mem.usage[*]))'
+        - uuid: 9a4ed2c328814f29bc9cc3afa2e6a1fb
+          name: 'Top consumer'
+          type: ZABBIX_ACTIVE
+          key: 'system.run["{$TOP.CONSUMERS}"]'
+          delay: '0;s19,39,59'
+          value_type: LOG
+          trends: '0'
+          description: |
+            # Get CPU usage
+            $cpuData = Get-WmiObject Win32_PerfFormattedData_PerfProc_Process |
+            Where-Object { $_.Name -ne "_Total" -and $_.Name -ne "Idle" } |
+            Select-Object @{Name="BaseName"; Expression={($_.Name -split "#")[0]}}, IDProcess, PercentProcessorTime
+            
+            # Get memory usage
+            $memData = Get-WmiObject Win32_Process |
+            Select-Object @{Name="BaseName"; Expression={($_.Name -split "#")[0]}}, ProcessId, @{Name="MemoryBytes";Expression={$_.WorkingSetSize}}
+            
+            # Combine on Process ID
+            $combined = foreach ($cpu in $cpuData) {
+                $mem = $memData | Where-Object { $_.ProcessId -eq $cpu.IDProcess }
+                if ($mem) {
+                    [PSCustomObject]@{
+                        Name = $cpu.BaseName
+                        CPU = $cpu.PercentProcessorTime
+                        MemoryBytes = $mem.MemoryBytes
+                    }
+                }
+            }
+            
+            # Group by process name and sum CPU and memory
+            $aggregated = $combined |
+            Group-Object Name |
+            ForEach-Object {
+                [PSCustomObject]@{
+                    Name = $_.Name
+                    TotalCPU = ($_.Group | Measure-Object CPU -Sum).Sum
+                    TotalMemoryBytes = ($_.Group | Measure-Object MemoryBytes -Sum).Sum
+                }
+            }
+            
+            # Convert top 10 by memory to JSON
+            $aggregated |
+            Sort-Object TotalMemoryBytes -Descending |
+            ConvertTo-Json -Depth 2
+          timeout: 10s
+      discovery_rules:
+        - uuid: 5bdd9f3f86a04433bceac904276e803b
+          name: 'Process discovery'
+          type: DEPENDENT
+          key: process.consumer.discovery
+          delay: '0'
+          enabled_lifetime_type: DISABLE_AFTER
+          enabled_lifetime: 1d
+          item_prototypes:
+            - uuid: d3994a6993e54f67a81c25b1b227071f
+              name: '{#NAME} cpu usage'
+              type: DEPENDENT
+              key: 'cpu.usage[{#NAME}]'
+              delay: '0'
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.Name ==''{#NAME}'')].TotalCPU.first()'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: 'system.run["{$TOP.CONSUMERS}"]'
+              tags:
+                - tag: type
+                  value: consumer
+              trigger_prototypes:
+                - uuid: e12e35f7d1c64a69adff711cabba5449
+                  expression: 'last(/Process load on Windows by Aigars/cpu.usage[{#NAME}])>100'
+                  name: '{#NAME} CPU usage more than 100% ( fully used 1 CPU) (spike)'
+                  priority: WARNING
+                  manual_close: 'YES'
+                  dependencies:
+                    - name: '{#NAME} CPU usage more than 100% ( fully used 1 CPU) for 1 min'
+                      expression: 'min(/Process load on Windows by Aigars/cpu.usage[{#NAME}],1m)>100'
+                  tags:
+                    - tag: process
+                      value: '{#NAME}'
+                - uuid: 634846639a3447c6a96d714dfa6427fa
+                  expression: 'min(/Process load on Windows by Aigars/cpu.usage[{#NAME}],1m)>100'
+                  name: '{#NAME} CPU usage more than 100% ( fully used 1 CPU) for 1 min'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                  dependencies:
+                    - name: '{#NAME} CPU usage more than 100% ( fully used 1 CPU) for 5 min'
+                      expression: 'min(/Process load on Windows by Aigars/cpu.usage[{#NAME}],5m)>100'
+                  tags:
+                    - tag: process
+                      value: '{#NAME}'
+                - uuid: 6e3000a80f914c3489dc71425ff1cf17
+                  expression: 'min(/Process load on Windows by Aigars/cpu.usage[{#NAME}],5m)>100'
+                  name: '{#NAME} CPU usage more than 100% ( fully used 1 CPU) for 5 min'
+                  priority: HIGH
+                  manual_close: 'YES'
+                  tags:
+                    - tag: process
+                      value: '{#NAME}'
+            - uuid: 70be8931823243028e6b890f58fa7683
+              name: '{#NAME} memory usage'
+              type: DEPENDENT
+              key: 'mem.usage[{#NAME}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.Name ==''{#NAME}'')].TotalMemoryBytes.first()'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: 'system.run["{$TOP.CONSUMERS}"]'
+              tags:
+                - tag: type
+                  value: consumer
+              trigger_prototypes:
+                - uuid: 9a93cf0b2c204ffaaa5ad77aa9ce5f40
+                  expression: 'last(/Process load on Windows by Aigars/mem.usage[{#NAME}])>1G'
+                  name: '{#NAME} Memory usage more than 1G  (spike)'
+                  priority: WARNING
+                  manual_close: 'YES'
+                  dependencies:
+                    - name: '{#NAME} Memory usage more than 1G for 1 min'
+                      expression: 'min(/Process load on Windows by Aigars/mem.usage[{#NAME}],1m)>1G'
+                  tags:
+                    - tag: process
+                      value: '{#NAME}'
+                - uuid: b5574cc639954c5f951b0228264ea419
+                  expression: 'min(/Process load on Windows by Aigars/mem.usage[{#NAME}],1m)>1G'
+                  name: '{#NAME} Memory usage more than 1G for 1 min'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+                  dependencies:
+                    - name: '{#NAME} Memory usage more than 1G for 5 min'
+                      expression: 'min(/Process load on Windows by Aigars/mem.usage[{#NAME}],5m)>1G'
+                  tags:
+                    - tag: process
+                      value: '{#NAME}'
+                - uuid: 0c41fd4fd63846a082b5ab1aba87c87d
+                  expression: 'min(/Process load on Windows by Aigars/mem.usage[{#NAME}],5m)>1G'
+                  name: '{#NAME} Memory usage more than 1G for 5 min'
+                  priority: HIGH
+                  manual_close: 'YES'
+                  tags:
+                    - tag: process
+                      value: '{#NAME}'
+          graph_prototypes:
+            - uuid: 33d95fb6b2be4b6e9b9a24db212b57cb
+              name: '{#NAME}: Memory usage avg 1h {?avg(//mem.usage[{#NAME}],1h)} and cpu avg 1h {?avg(//cpu.usage[{#NAME}],1h)}'
+              ymin_type_1: FIXED
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: 'Process load on Windows by Aigars'
+                    key: 'cpu.usage[{#NAME}]'
+                - sortorder: '1'
+                  color: '274482'
+                  yaxisside: RIGHT
+                  calc_fnc: ALL
+                  item:
+                    host: 'Process load on Windows by Aigars'
+                    key: 'mem.usage[{#NAME}]'
+          master_item:
+            key: 'system.run["{$TOP.CONSUMERS}"]'
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: $.Name
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var process = JSON.parse(value);
+                  
+                  process.sort(function (a, b) {
+                  	return a.Name.localeCompare(b.Name);
+                  });
+                  
+                  result = process.map(function (process) {
+                  	return {
+                  		'Name': process.Name
+                  	};
+                  });
+                  
+                  return JSON.stringify(result);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+      macros:
+        - macro: '{$TOP.CONSUMERS}'
+          value: 'powershell -nologo -Command "$cpuData = Get-WmiObject Win32_PerfFormattedData_PerfProc_Process |Where-Object { $_.Name -ne ''_Total'' -and $_.Name -ne ''Idle'' } |Select-Object @{Name=''BaseName''; Expression={($_.Name -split ''#'')[0]}}, IDProcess, PercentProcessorTime;$memData = Get-WmiObject Win32_Process |Select-Object @{Name=''BaseName''; Expression={($_.Name -split ''#'')[0]}}, ProcessId, @{Name=''MemoryBytes'';Expression={$_.WorkingSetSize}};$combined = foreach ($cpu in $cpuData) {$mem = $memData | Where-Object { $_.ProcessId -eq $cpu.IDProcess };if ($mem){[PSCustomObject]@{Name = $cpu.BaseName; CPU = $cpu.PercentProcessorTime;  MemoryBytes = $mem.MemoryBytes}}};$aggregated = $combined |Group-Object Name |ForEach-Object {[PSCustomObject]@{Name = $_.Name; TotalCPU = ($_.Group | Measure-Object CPU -Sum).Sum;TotalMemoryBytes = ($_.Group | Measure-Object MemoryBytes -Sum).Sum;}};$aggregated |Sort-Object TotalMemoryBytes -Descending |ConvertTo-Json -Depth 2"'
+      dashboards:
+        - uuid: 12db018992e8476bb1d1a1b81b0c076d
+          name: consumers
+          display_period: '3600'
+          auto_start: 'NO'
+          pages:
+            - name: Overall
+              widgets:
+                - type: svggraph
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: B71C1C
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'Full usage of cpu for process'
+                    - type: STRING
+                      name: reference
+                      value: SSVSD
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'CPU usage (stacked)'
+                  'y': '5'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '*cpu usage*'
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: QQVOQ
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'Memory usage (stacked)'
+                  'y': '10'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '*memory usage*'
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: KVMBL
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: toptriggers
+                  'y': '15'
+                  width: '72'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: severities.0
+                      value: '0'
+                    - type: INTEGER
+                      name: severities.1
+                      value: '1'
+                    - type: INTEGER
+                      name: severities.2
+                      value: '2'
+                    - type: INTEGER
+                      name: severities.3
+                      value: '3'
+                    - type: INTEGER
+                      name: severities.4
+                      value: '4'
+                    - type: INTEGER
+                      name: severities.5
+                      value: '5'
+                    - type: INTEGER
+                      name: tags.0.operator
+                      value: '4'
+                    - type: STRING
+                      name: tags.0.tag
+                      value: process
+                    - type: STRING
+                      name: tags.0.value
+                      value: ''
+                - type: svggraph
+                  x: '36'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: 7B1FA2
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'Full usage of memory for processes'
+                    - type: STRING
+                      name: reference
+                      value: YXGAQ
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'CPU usage'
+                  x: '36'
+                  'y': '5'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '*cpu usage*'
+                    - type: STRING
+                      name: reference
+                      value: IRCAF
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'Memory usage'
+                  x: '36'
+                  'y': '10'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '*memory usage*'
+                    - type: STRING
+                      name: reference
+                      value: TCJLW
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+            - name: CPU
+              widgets:
+                - type: honeycomb
+                  name: 'CPU usage'
+                  width: '72'
+                  height: '34'
+                  fields:
+                    - type: STRING
+                      name: bg_color
+                      value: C8E6C9
+                    - type: STRING
+                      name: items.0
+                      value: '*cpu usage*'
+                    - type: STRING
+                      name: primary_label
+                      value: '{{ITEM.NAME}.regsub("^\S+",\0)}'
+                    - type: STRING
+                      name: reference
+                      value: UDBCG
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 81C784
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '10'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: 80FF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '30'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FFD54F
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '50'
+                    - type: STRING
+                      name: thresholds.3.color
+                      value: FF465C
+                    - type: STRING
+                      name: thresholds.3.threshold
+                      value: '100'
+                - type: item
+                  'y': '34'
+                  width: '35'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: itemid._reference
+                      value: UDBCG._itemid
+                - type: graph
+                  x: '35'
+                  'y': '34'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: itemid._reference
+                      value: UDBCG._itemid
+                    - type: STRING
+                      name: reference
+                      value: NYLVC
+                    - type: INTEGER
+                      name: source_type
+                      value: '1'
+            - name: Memory
+              widgets:
+                - type: honeycomb
+                  name: 'Memory usage'
+                  width: '72'
+                  height: '33'
+                  fields:
+                    - type: STRING
+                      name: bg_color
+                      value: D1C4E9
+                    - type: STRING
+                      name: items.0
+                      value: '*memory usage*'
+                    - type: STRING
+                      name: primary_label
+                      value: '{{ITEM.NAME}.regsub("^\S+",\0)}'
+                    - type: STRING
+                      name: reference
+                      value: HNXWQ
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 524BBC
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: 100M
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: 0EC9AC
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: 500M
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FFD54F
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: 1G
+                    - type: STRING
+                      name: thresholds.3.color
+                      value: FF465C
+                    - type: STRING
+                      name: thresholds.3.threshold
+                      value: 2G
+                - type: item
+                  'y': '33'
+                  width: '37'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: itemid._reference
+                      value: HNXWQ._itemid
+                - type: graph
+                  x: '37'
+                  'y': '33'
+                  width: '35'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: itemid._reference
+                      value: HNXWQ._itemid
+                    - type: STRING
+                      name: reference
+                      value: OABHZ
+                    - type: INTEGER
+                      name: source_type
+                      value: '1'
+            - name: Graphs
+              widgets:
+                - type: graphprototype
+                  width: '71'
+                  height: '14'
+                  fields:
+                    - type: INTEGER
+                      name: columns
+                      value: '3'
+                    - type: GRAPH_PROTOTYPE
+                      name: graphid.0
+                      value:
+                        host: 'Process load on Windows by Aigars'
+                        name: '{#NAME}: Memory usage avg 1h {?avg(//mem.usage[{#NAME}],1h)} and cpu avg 1h {?avg(//cpu.usage[{#NAME}],1h)}'
+                    - type: STRING
+                      name: reference
+                      value: GUEEU
+                    - type: INTEGER
+                      name: rows
+                      value: '3'
