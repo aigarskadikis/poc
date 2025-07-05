@@ -81,6 +81,14 @@ zabbix_export:
                 - $.length()
           master_item:
             key: system.sw.packages.get.gate
+          triggers:
+            - uuid: 49cf74a29ca04b63b3aa7897fe5553bb
+              expression: 'last(/s39m17 system.sw.packages.get/number.of.packages)=0'
+              name: 'number of installed packages'
+              event_name: 'number of installed packages is {ITEM.VALUE}'
+              priority: HIGH
+              description: 'db_recover -vh /var/lib/rpm'
+              manual_close: 'YES'
         - uuid: ff1ca7f58c4443e08009365967792923
           name: 'Package manager utility'
           type: DEPENDENT
@@ -100,10 +108,16 @@ zabbix_export:
           name: system.sw.packages.get
           type: ZABBIX_ACTIVE
           key: system.sw.packages.get
-          delay: 0;m17s39
+          delay: 0;m3s39
           history: '0'
           value_type: TEXT
           trends: '0'
+          preprocessing:
+            - type: MATCHES_REGEX
+              parameters:
+                - '.{3}'
+              error_handler: CUSTOM_ERROR
+              error_handler_params: 'received string too short'
           timeout: 5s
         - uuid: 1f3ca5af3de0463484edf8e26a08f368
           name: system.sw.packages.get.gate
@@ -171,17 +185,31 @@ zabbix_export:
             key: name.version
           tags:
             - tag: zabbix
-        - uuid: a6065cc5401b491fad4f69b73a43b2d0
-          name: 'All packages with a zabbix name'
+        - uuid: 9bfe5a40cc6a45d08821138448b9b48f
+          name: 'Package name and version'
           type: DEPENDENT
           key: zabbix.packages
           delay: '0'
-          value_type: LOG
+          history: '0'
+          value_type: TEXT
           trends: '0'
           preprocessing:
             - type: JSONPATH
               parameters:
                 - '$..[?(@.[''name''] =~ "zabbix")]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lines = JSON.parse(value);
+                  var out = [];
+                  for (i = 0; i < lines.length; i++)
+                  {
+                    var row = {};
+                    row["name"] = lines[i].name;
+                    row["version"] = lines[i].version;
+                    out.push(row);
+                  }
+                  return JSON.stringify(out);
             - type: JAVASCRIPT
               parameters:
                 - |
@@ -219,9 +247,38 @@ zabbix_export:
               parameters:
                 - 1d
           master_item:
-            key: name.version
-          tags:
-            - tag: zabbix
+            key: system.sw.packages.get.gate
+      discovery_rules:
+        - uuid: df31d6ea8d8e4065ad0da0c0cc42417e
+          name: pack.zbx.lld
+          type: DEPENDENT
+          key: pack.zbx.lld
+          delay: '0'
+          item_prototypes:
+            - uuid: 21701414dbbf4e4395c15d6365293b52
+              name: '{#NAME}'
+              type: CALCULATED
+              key: 'zbx[{#NAME}]'
+              value_type: CHAR
+              trends: '0'
+              params: '"{#VERSION}"'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '\d+\.\d+(?:\.\d+)?'
+                    - \0
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              tags:
+                - tag: zabbixV
+          master_item:
+            key: zabbix.packages
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''name'']'
+            - lld_macro: '{#VERSION}'
+              path: '$.[''version'']'
     - uuid: 9990086220ce4c3e9f48d252e76421e1
       template: 'system.sw.packages.get blank'
       name: 'system.sw.packages.get blank'

@@ -1,0 +1,111 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 7f4e29d631e34fb7ba432f94488a2282
+      template: 'system.sw.packages.get sample'
+      name: 'system.sw.packages.get sample'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 09a20d562f5340d4a3ed47fd5e463bb3
+          name: system.sw.packages.get
+          type: ZABBIX_ACTIVE
+          key: system.sw.packages.get
+          value_type: TEXT
+          trends: '0'
+          timeout: 7s
+        - uuid: 336e834c6ee84ea8bc9cff361deb0afa
+          name: system.sw.packages.get.gate
+          type: DEPENDENT
+          key: system.sw.packages.get.gate
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: system.sw.packages.get
+        - uuid: dc113e7fbe6b495893a595ae17e8a097
+          name: system.sw.packages.get.target
+          type: DEPENDENT
+          key: system.sw.packages.get.target
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lines = JSON.parse(value);
+                  var out = [];
+                  for (i = 0; i < lines.length; i++)
+                  {
+                    var row = {};
+                    row["name"] = lines[i].name;
+                    row["version"] = lines[i].version;
+                    out.push(row);
+                  }
+                  return JSON.stringify(out);
+                  
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''name''] =~ ''zabbix'' || @.[''name''] =~ ''^(vim|tcpdump|nc|strace)$'')]'
+          master_item:
+            key: system.sw.packages.get.gate
+      discovery_rules:
+        - uuid: 3771347f472542de94091b92ab1d780b
+          name: package
+          type: DEPENDENT
+          key: package
+          delay: '0'
+          lifetime_type: DELETE_IMMEDIATELY
+          lifetime: '0'
+          item_prototypes:
+            - uuid: 5534642f4da74f8d825a53db3f4801e5
+              name: '{#NAME}'
+              type: CALCULATED
+              key: 'pkg[{#NAME}]'
+              value_type: CHAR
+              trends: '0'
+              params: '"{#VERSION}"'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '\d+\.\d+(?:\.\d+)?'
+                    - \0
+              tags:
+                - tag: report
+                  value: packages
+          master_item:
+            key: system.sw.packages.get.target
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''name'']'
+            - lld_macro: '{#VERSION}'
+              path: '$.[''version'']'
+      dashboards:
+        - uuid: 3e4eff857d6c454b88dd0fe7f3881323
+          name: Packages
+          pages:
+            - widgets:
+                - type: dataover
+                  width: '72'
+                  height: '10'
+                  fields:
+                    - type: INTEGER
+                      name: style
+                      value: '1'
+                    - type: INTEGER
+                      name: tags.0.operator
+                      value: '1'
+                    - type: STRING
+                      name: tags.0.tag
+                      value: report
+                    - type: STRING
+                      name: tags.0.value
+                      value: packages
