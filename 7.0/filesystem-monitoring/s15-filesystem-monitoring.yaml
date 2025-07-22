@@ -139,10 +139,7 @@ zabbix_export:
           trends: '0'
           timeout: 1s
           tags:
-            - tag: component
-              value: raw
-            - tag: debug
-              value: fs
+            - tag: fs
         - uuid: 05bd37964e04473b83d6db50e80fe674
           name: vfs.fs.get.gate
           type: DEPENDENT
@@ -183,12 +180,11 @@ zabbix_export:
               error_handler_params: '[]'
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
-                - 8h
+                - 1d
           master_item:
             key: vfs.fs.get.gate
           tags:
-            - tag: debug
-              value: fs
+            - tag: fs
       discovery_rules:
         - uuid: d8e93c7fb73f47408f677fec0d47dc7e
           name: fs
@@ -198,10 +194,24 @@ zabbix_export:
           lifetime_type: DELETE_IMMEDIATELY
           lifetime: '0'
           item_prototypes:
+            - uuid: 31eba4e0763b40b5bef6785d1aeb9f6c
+              name: '{#FSNAME} Get data'
+              type: DEPENDENT
+              key: 'data[{#FSNAME}]'
+              delay: '0'
+              history: '0'
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$.[?(@.fsname==''{#FSNAME}'')].first()'
+              master_item:
+                key: vfs.fs.get.gate
             - uuid: b18cf33f980c449f8706b87cc94dd234
               name: '{#FSNAME} space: remaining'
               type: DEPENDENT
-              key: 'fs.free[{#FSNAME}]'
+              key: 'free[{#FSNAME}]'
               delay: '0'
               history: 7d
               units: B
@@ -210,15 +220,13 @@ zabbix_export:
                   parameters:
                     - $.bytes.free
               master_item:
-                key: 'vfs.fs.dependent[{#FSNAME},data]'
+                key: 'data[{#FSNAME}]'
               tags:
-                - tag: report
-                  value: filesystem
-                - tag: space
+                - tag: fs
                   value: free
               trigger_prototypes:
                 - uuid: e06253055c6e4ee99d5db58bc1de9a5d
-                  expression: 'max(/fs/fs.free[{#FSNAME}],5m) < {$VFS.FS.FREE.MAX.CRIT:"{#FSNAME}"}'
+                  expression: 'max(/fs/free[{#FSNAME}],5m) < {$VFS.FS.FREE.MAX.CRIT:"{#FSNAME}"}'
                   name: 'Free space {#FSNAME}'
                   event_name: 'Free space for {#FSNAME} is {ITEM.VALUE1}, tatal is {{?last(//fs.total[{#FSNAME}]) / 1024 / 1024 / 1024}.fmtnum(2)} GB'
                   opdata: '{ITEM.LASTVALUE1}'
@@ -232,7 +240,7 @@ zabbix_export:
             - uuid: 7a5a9e5e697145069b417a8e0e475be5
               name: '{#FSNAME} space: free pct'
               type: DEPENDENT
-              key: 'fs.pfree[{#FSNAME}]'
+              key: 'pfree[{#FSNAME}]'
               delay: '0'
               history: 7d
               value_type: FLOAT
@@ -242,16 +250,14 @@ zabbix_export:
                   parameters:
                     - $.bytes.pfree
               master_item:
-                key: 'vfs.fs.dependent[{#FSNAME},data]'
+                key: 'data[{#FSNAME}]'
               tags:
-                - tag: report
-                  value: filesystem
-                - tag: space
+                - tag: fs
                   value: pfree
             - uuid: 3c88e93e8ec2480a80abf61e4fd6f8c8
               name: '{#FSNAME} space: used pct'
               type: DEPENDENT
-              key: 'fs.pused[{#FSNAME}]'
+              key: 'pused[{#FSNAME}]'
               delay: '0'
               history: 7d
               value_type: FLOAT
@@ -261,16 +267,14 @@ zabbix_export:
                   parameters:
                     - $.bytes.pused
               master_item:
-                key: 'vfs.fs.dependent[{#FSNAME},data]'
+                key: 'data[{#FSNAME}]'
               tags:
-                - tag: report
-                  value: filesystem
-                - tag: space
+                - tag: fs
                   value: pused
             - uuid: cbda193407e1475a98bd0161b0114965
               name: '{#FSNAME} space: total'
               type: DEPENDENT
-              key: 'fs.total[{#FSNAME}]'
+              key: 'total[{#FSNAME}]'
               delay: '0'
               history: 7d
               units: B
@@ -279,16 +283,14 @@ zabbix_export:
                   parameters:
                     - $.bytes.total
               master_item:
-                key: 'vfs.fs.dependent[{#FSNAME},data]'
+                key: 'data[{#FSNAME}]'
               tags:
-                - tag: report
-                  value: filesystem
-                - tag: space
+                - tag: fs
                   value: total
             - uuid: e433f18958ff45b9aa16154cbdb7aef6
               name: '{#FSNAME} space: consumed'
               type: DEPENDENT
-              key: 'fs.used[{#FSNAME}]'
+              key: 'used[{#FSNAME}]'
               delay: '0'
               history: 7d
               units: B
@@ -297,26 +299,10 @@ zabbix_export:
                   parameters:
                     - $.bytes.used
               master_item:
-                key: 'vfs.fs.dependent[{#FSNAME},data]'
+                key: 'data[{#FSNAME}]'
               tags:
-                - tag: report
-                  value: filesystem
-                - tag: space
+                - tag: fs
                   value: used
-            - uuid: 31eba4e0763b40b5bef6785d1aeb9f6c
-              name: '{#FSNAME} Get data'
-              type: DEPENDENT
-              key: 'vfs.fs.dependent[{#FSNAME},data]'
-              delay: '0'
-              history: '0'
-              value_type: TEXT
-              trends: '0'
-              preprocessing:
-                - type: JSONPATH
-                  parameters:
-                    - '$.[?(@.fsname==''{#FSNAME}'')].first()'
-              master_item:
-                key: vfs.fs.get.gate
           graph_prototypes:
             - uuid: 5fa47410ca2e4784be1d794be28bdc7e
               name: '{#FSNAME}: Space in %'
@@ -331,14 +317,14 @@ zabbix_export:
                   calc_fnc: MIN
                   item:
                     host: fs
-                    key: 'fs.pused[{#FSNAME}]'
+                    key: 'pused[{#FSNAME}]'
                 - sortorder: '1'
                   drawtype: FILLED_REGION
                   color: 9CCC65
                   calc_fnc: MIN
                   item:
                     host: fs
-                    key: 'fs.pfree[{#FSNAME}]'
+                    key: 'pfree[{#FSNAME}]'
             - uuid: 3eb06473f9b040b0a8621733cc72bddb
               name: '{#FSNAME}: Utilization'
               width: '600'
@@ -350,13 +336,13 @@ zabbix_export:
                   calc_fnc: MIN
                   item:
                     host: fs
-                    key: 'fs.used[{#FSNAME}]'
+                    key: 'used[{#FSNAME}]'
                 - sortorder: '1'
                   color: 43A047
                   calc_fnc: MIN
                   item:
                     host: fs
-                    key: 'fs.free[{#FSNAME}]'
+                    key: 'free[{#FSNAME}]'
           master_item:
             key: vfs.fs.get.target
           lld_macro_paths:
