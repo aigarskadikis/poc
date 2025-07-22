@@ -228,7 +228,7 @@ zabbix_export:
                 - uuid: e06253055c6e4ee99d5db58bc1de9a5d
                   expression: 'max(/fs/free[{#FSNAME}],5m) < {$VFS.FS.FREE.MAX.CRIT:"{#FSNAME}"}'
                   name: 'Free space {#FSNAME}'
-                  event_name: 'Free space for {#FSNAME} is {ITEM.VALUE1}, tatal is {{?last(//fs.total[{#FSNAME}]) / 1024 / 1024 / 1024}.fmtnum(2)} GB'
+                  event_name: 'Free space for {#FSNAME} is {ITEM.VALUE1}, tatal is {{?last(//total[{#FSNAME}]) / 1024 / 1024 / 1024}.fmtnum(2)} GB'
                   opdata: '{ITEM.LASTVALUE1}'
                   priority: DISASTER
                   manual_close: 'YES'
