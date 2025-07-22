@@ -191,8 +191,9 @@ zabbix_export:
           type: DEPENDENT
           key: fs
           delay: '0'
-          lifetime_type: DELETE_IMMEDIATELY
+          lifetime_type: DELETE_NEVER
           lifetime: '0'
+          enabled_lifetime_type: DISABLE_NEVER
           item_prototypes:
             - uuid: 31eba4e0763b40b5bef6785d1aeb9f6c
               name: '{#FSNAME} Get data'
@@ -353,8 +354,6 @@ zabbix_export:
       macros:
         - macro: '{$VFS.FS.FREE.MAX.CRIT}'
           value: 2G
-        - macro: '{$VFS.FS.FREE.MAX.CRIT:"/boot"}'
-          value: 200M
         - macro: '{$VFS.FS.FSNAME.NOT_MATCHES}'
           value: ^(/boot$|/dev|/sys|/run|/proc|.+/shm$|.+/efi$|.+/overlay$)
         - macro: '{$VFS.FS.FSTYPE.MATCHES}'
