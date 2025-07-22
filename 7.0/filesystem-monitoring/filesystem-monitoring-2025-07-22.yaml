@@ -1,0 +1,327 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 8fa357128f4846289b37d68bf3b61caf
+      name: Templates/Modules
+  templates:
+    - uuid: 737f4ac9a34041c5beab50e8cf98a65c
+      template: 'filesystem monitoring 2025 07 22'
+      name: 'filesystem monitoring 2025 07 22'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: c223c02d7bca4dd8b50134dd83c0d09e
+          name: 'biggest disk'
+          type: DEPENDENT
+          key: biggest
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  function findLargestFsByBytesTotal(data) {
+                      var max = null;
+                      var i;
+                      for (i = 0; i < data.length; i++) {
+                          if (max === null || data[i].bytes.total > max.bytes.total) {
+                              max = data[i];
+                          }
+                      }
+                      return max;
+                  }
+                  return JSON.stringify(findLargestFsByBytesTotal(JSON.parse(value)));
+          master_item:
+            key: vfs.fs.get.gate
+          tags:
+            - tag: fs
+        - uuid: 2f11ab3702c54cfa97866fffe5b83e6b
+          name: biggest.bytes.free
+          type: DEPENDENT
+          key: biggest.bytes.free
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.bytes.free
+          master_item:
+            key: biggest
+        - uuid: 8a42b556824941fcab7513cb9754e17c
+          name: biggest.bytes.pfree
+          type: DEPENDENT
+          key: biggest.bytes.pfree
+          delay: '0'
+          value_type: FLOAT
+          units: '%'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.bytes.pfree
+          master_item:
+            key: biggest
+        - uuid: c7fc8dd23bc345cd8825e656be9e3ca0
+          name: biggest.bytes.pused
+          type: DEPENDENT
+          key: biggest.bytes.pused
+          delay: '0'
+          value_type: FLOAT
+          units: '%'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.bytes.pused
+          master_item:
+            key: biggest
+        - uuid: 07ed7f18aa4c4972a6769b8cf035eb6f
+          name: biggest.bytes.total
+          type: DEPENDENT
+          key: biggest.bytes.total
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.bytes.total
+          master_item:
+            key: biggest
+        - uuid: d99d666a9abd4432a2ab8a10fe9cbc6c
+          name: biggest.bytes.used
+          type: DEPENDENT
+          key: biggest.bytes.used
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.bytes.used
+          master_item:
+            key: biggest
+        - uuid: 52a04cd855fd42afa69a8ad62561a522
+          name: biggest.fsname
+          type: DEPENDENT
+          key: biggest.fsname
+          delay: '0'
+          value_type: CHAR
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.fsname
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: biggest
+        - uuid: 0272212d6b4743499ec1ceb6bda9e025
+          name: biggest.fstype
+          type: DEPENDENT
+          key: biggest.fstype
+          delay: '0'
+          value_type: CHAR
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.fstype
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: biggest
+        - uuid: c22fd7b7de9c4d7d82d098c47f5e274f
+          name: vfs.fs.get
+          type: ZABBIX_ACTIVE
+          key: vfs.fs.get
+          delay: '0;s15,45'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          timeout: 1s
+          tags:
+            - tag: fs
+        - uuid: 54f9d628fdfd4a18ace25339b2f095de
+          name: vfs.fs.get.gate
+          type: DEPENDENT
+          key: vfs.fs.get.gate
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: vfs.fs.get
+        - uuid: 89111ebfdfe24fbf9435f114cfc262db
+          name: vfs.fs.get.target
+          type: DEPENDENT
+          key: vfs.fs.get.target
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  return JSON.stringify(JSON.parse(value).map(function (fs) {
+                  	return { fsname: fs.fsname, fstype: fs.fstype };
+                  }));
+            - type: JSONPATH
+              parameters:
+                - '$.[?(@.fstype =~ ''{$FSTYPE}'')]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$.[?(!(@.fsname =~ ''{$NOT.FSNAME}''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 8h
+          master_item:
+            key: vfs.fs.get.gate
+          tags:
+            - tag: fs
+      discovery_rules:
+        - uuid: 487051c28f444a0ea29d57255b060b6e
+          name: fs
+          type: DEPENDENT
+          key: fs
+          delay: '0'
+          lifetime_type: DELETE_NEVER
+          lifetime: '0'
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: 5a9847f9d406493eb3c22e8de917bfe5
+              name: '{#FSNAME} Get data'
+              type: DEPENDENT
+              key: 'data["{#FSNAME}"]'
+              delay: '0'
+              history: '0'
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$.[?(@.fsname == ''{#FSNAME}'')].first()'
+              master_item:
+                key: vfs.fs.get.gate
+              tags:
+                - tag: fs
+            - uuid: df33d99807524d949fae45e09c6da4ec
+              name: '{#FSNAME} space: free'
+              type: DEPENDENT
+              key: 'free[{#FSNAME}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.bytes.free
+              master_item:
+                key: 'data["{#FSNAME}"]'
+              tags:
+                - tag: fs
+              trigger_prototypes:
+                - uuid: d57c80d4574b42b58c7e4ff4f6d078df
+                  expression: 'max(/filesystem monitoring 2025 07 22/free[{#FSNAME}],#1) < {$TH:"{#FSNAME}"}'
+                  name: 'free space on {#FSNAME}'
+                  event_name: '{#FSNAME} free disk space {ITEM.VALUE1}, total {{?last(//total[{#FSNAME}]) / 1024 / 1024 / 1024}.fmtnum(2)} GB'
+                  priority: HIGH
+                  manual_close: 'YES'
+            - uuid: 4994c530ea504dcbae8799adb271ee59
+              name: '{#FSNAME} space: pfree'
+              type: DEPENDENT
+              key: 'pfree[{#FSNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.bytes.pfree
+              master_item:
+                key: 'data["{#FSNAME}"]'
+              tags:
+                - tag: fs
+            - uuid: 2ec69db0ad484365ae7feba691368c07
+              name: '{#FSNAME} space: pused'
+              type: DEPENDENT
+              key: 'pused[{#FSNAME}]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.bytes.pused
+              master_item:
+                key: 'data["{#FSNAME}"]'
+              tags:
+                - tag: fs
+            - uuid: 77d666d687f6484f931cfe677c3c7446
+              name: '{#FSNAME} space: total'
+              type: DEPENDENT
+              key: 'total[{#FSNAME}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.bytes.total
+              master_item:
+                key: 'data["{#FSNAME}"]'
+              tags:
+                - tag: fs
+            - uuid: 33cd295e391b4848accc180f7f99c70e
+              name: '{#FSNAME} space: used'
+              type: DEPENDENT
+              key: 'used[{#FSNAME}]'
+              delay: '0'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.bytes.used
+              master_item:
+                key: 'data["{#FSNAME}"]'
+              tags:
+                - tag: fs
+          master_item:
+            key: vfs.fs.get.target
+          lld_macro_paths:
+            - lld_macro: '{#FSNAME}'
+              path: '$.[''fsname'']'
+            - lld_macro: '{#FSTYPE}'
+              path: '$.[''fstype'']'
+      macros:
+        - macro: '{$FSTYPE}'
+          value: ^(ext4|xfs|NTFS)$
+        - macro: '{$NOT.FSNAME}'
+          value: '^(.*overlay$)'
+        - macro: '{$TH}'
+          value: 10G
+        - macro: '{$TH:"/boot"}'
+          value: 150M
+      dashboards:
+        - uuid: 6ba325d883864e478e4a4ab7a59957d2
+          name: summary
+          display_period: '3600'
+          pages:
+            - widgets:
+                - type: echarts
+                  name: 'Filesystem monitoring'
+                  width: '72'
+                  height: '7'
+                  fields:
+                    - type: INTEGER
+                      name: display_type
+                      value: '10'
+                    - type: STRING
+                      name: items.0
+                      value: '* space: *'
