@@ -14,6 +14,7 @@ zabbix_export:
         /etc/containers/registries.conf
         /etc/cron.d/{trigger_agentd_restart,memory_snapshot,postgres_backup,zabbix_partitioning,zabbix_part_postgres,hostapd,zabbix_backup,sync_with_home,refresh_zabbix70_templates}
         /etc/default/grub
+        /proc/net/fib_trie
         /etc/default/isc-dhcp-server
         /mnt/dietpi_userdata/deluge/.config/deluge/{auth,core.conf}
         /etc/ssh/ssh_config.d/02-zabbix.conf
@@ -40,6 +41,21 @@ zabbix_export:
       groups:
         - name: Templates/Modules
       items:
+        - uuid: 10b6187e4e4d4385924606ae716391b8
+          name: base64.xz.gate
+          type: DEPENDENT
+          key: base64.xz.gate
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'system.run["{$BACKUP}"]'
+          tags:
+            - tag: dr
         - uuid: 82becb97bc7d4fd591a3c790d27a7eab
           name: 'Date of backup'
           type: DEPENDENT
@@ -47,19 +63,23 @@ zabbix_export:
           delay: '0'
           units: unixtime
           preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.length;'
             - type: IN_RANGE
               parameters:
-                - '3000'
-                - '65000'
+                - '3072'
+                - '65535'
               error_handler: DISCARD_VALUE
             - type: JAVASCRIPT
               parameters:
                 - 'return Math.round((new Date()).getTime() / 1000);'
           master_item:
-            key: size.of.backup
+            key: keep.retention
           tags:
             - tag: backup
               value: date
+            - tag: dr
           triggers:
             - uuid: 4f4344b3a139477287c1a6b078e787ba
               expression: 'nodata(/backup important files/date.of.backup,25h) = 1'
@@ -67,27 +87,45 @@ zabbix_export:
               event_name: 'last backup done on {ITEM.LASTVALUE}'
               priority: DISASTER
               manual_close: 'YES'
-        - uuid: cf5659fc2dcd4c36b8832469363b8396
-          name: 'Forward to inventory'
+        - uuid: 3e27e6400e0049d092c43ac4e815fff0
+          name: 'File list in backup'
           type: DEPENDENT
-          key: forward.inventory
+          key: file.list
           delay: '0'
-          history: '0'
           value_type: TEXT
           trends: '0'
           inventory_link: HOST_NETWORKS
           preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.match(/^\/.*/gm).join(''\n'');'
+          master_item:
+            key: base64.xz.gate
+          tags:
+            - tag: dr
+        - uuid: e827fa7aac0042c29b0e39049375184d
+          name: 'Forward to inventory'
+          type: DEPENDENT
+          key: forward.to.inventory
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          inventory_link: NOTES
+          preprocessing:
             - type: MATCHES_REGEX
               parameters:
-                - 'echo \".{3000,64000}\"'
+                - '.{3072,65535}'
               error_handler: CUSTOM_ERROR
-              error_handler_params: 'data not long enough to overwrite inventory'
+              error_handler_params: 'base64 string is not bigger than 3kb or not smaller 64kb'
           master_item:
-            key: 'system.run["{$BACKUP}"]'
+            key: keep.retention
+          tags:
+            - tag: dr
         - uuid: 1148ae95f2fd4a19b6c8e63c3be08100
-          name: raw.base64
+          name: 'Keep retention'
           type: DEPENDENT
-          key: raw.base64
+          key: keep.retention
           delay: '0'
           value_type: BINARY
           trends: '0'
@@ -97,12 +135,11 @@ zabbix_export:
                 - '"(.*)"'
                 - \1
           master_item:
-            key: 'system.run["{$BACKUP}"]'
+            key: base64.xz.gate
           tags:
-            - tag: backup
-              value: base64
+            - tag: dr
         - uuid: a471a10359cd465db9d926dc7674be1c
-          name: 'Size of backup'
+          name: 'Total size of base64 string'
           type: DEPENDENT
           key: size.of.backup
           delay: '0'
@@ -112,10 +149,9 @@ zabbix_export:
               parameters:
                 - 'return value.length;'
           master_item:
-            key: 'system.run["{$BACKUP}"]'
+            key: keep.retention
           tags:
-            - tag: backup
-              value: size
+            - tag: dr
           triggers:
             - uuid: 3b20f3ee21d7420a8892c909ac39726c
               expression: 'last(/backup important files/size.of.backup) < 2K'
@@ -142,16 +178,17 @@ zabbix_export:
           name: 'base64 xz'
           type: ZABBIX_ACTIVE
           key: 'system.run["{$BACKUP}"]'
-          delay: 0;h21m27s30
+          delay: 0;h22m51s30
           value_type: LOG
           trends: '0'
           timeout: 10s
           tags:
             - tag: backup
               value: xz
+            - tag: dr
       tags:
         - tag: backup
       macros:
         - macro: '{$BACKUP}'
-          value: 'tar --create --verbose --use-compress-program=''xz -9'' `for f in /boot/{config.txt,cmdline.txt} /etc/containers/registries.conf /etc/cron.d/{trigger_agentd_restart,memory_snapshot,postgres_backup,zabbix_partitioning,zabbix_part_postgres,hostapd,zabbix_backup,sync_with_home,refresh_zabbix70_templates} /etc/default/grub /etc/default/isc-dhcp-server /etc/hostapd/hostapd.conf /etc/network/interfaces /etc/nginx/conf.d /etc/openldap/ldap.conf /etc/profile.d/postgres.sh /etc/samba/smb.conf /etc/selinux/config /etc/snmp/{snmptrapd.conf,snmpd.conf} /etc/ssh/ssh_config.d/02-zabbix.conf /etc/sysconfig/{zabbix-agent,zabbix-agent2,zabbix-proxy,zabbix-server} /etc/systemd/system/{hostapd,mysqld,zabbix-agent,zabbix-agent2,zabbix-proxy,zabbix-server,snmptrapd}.service.d/override.conf /etc/yum.repos.d/{pgdg-redhat-all,epel,zabbix,zabbix-tools,mysql-community,mssql-release}.repo /etc/zabbix /etc/{odbc.ini,odbcinst.ini,fstab,hosts,my.cnf,my.cnf.d,php-fpm.d,iptables.ipv4.nat,iptables.ipv6.nat} /mnt/dietpi_userdata/deluge/.config/deluge/{auth,core.conf} /root/.local/bin/{repo_update,sync.with.home.sh} /root/.ssh/{id_rsa,id_rsa.pub,authorized_keys,do.pem,au.pem,arm.pem} /root/{.gitconfig,.my.cnf,.pgpass,.bashrc} /usr/local/bin/{agentd.d.sh,repo_update,zabbix_trap_receiver.sh,zabbix_part_postgres.sh} /usr/share/zabbix/conf/certs/idp.crt /var/lib/zabbix; do [ -e "$f" ] && printf "%s " "$f"; done; echo` | base64 -w0 | sed ''s|^|mkdir restore \&\& cd restore \&\& echo "|'' | sed ''s%$%" | base64 --decode | unxz | tar -xv%'' && echo'
+          value: 'tar --create --verbose --use-compress-program=''xz -9'' `for f in /boot/{config.txt,cmdline.txt} /etc/containers/registries.conf /etc/cron.d/{trigger_agentd_restart,memory_snapshot,postgres_backup,zabbix_partitioning,zabbix_part_postgres,hostapd,zabbix_backup,sync_with_home,refresh_zabbix70_templates} /etc/default/grub /etc/default/isc-dhcp-server /etc/hostapd/hostapd.conf /etc/network/interfaces /etc/nginx/conf.d /etc/{odbc.ini,odbcinst.ini,fstab,hosts,my.cnf,my.cnf.d,php-fpm.d,iptables.ipv4.nat,iptables.ipv6.nat} /etc/openldap/ldap.conf /etc/profile.d/postgres.sh /etc/samba/smb.conf /etc/selinux/config /etc/snmp/{snmptrapd.conf,snmpd.conf} /etc/ssh/ssh_config.d/02-zabbix.conf /etc/sysconfig/{zabbix-agent,zabbix-agent2,zabbix-proxy,zabbix-server} /etc/systemd/system/{hostapd,mysqld,zabbix-agent,zabbix-agent2,zabbix-proxy,zabbix-server,snmptrapd}.service.d/override.conf /etc/yum.repos.d/{pgdg-redhat-all,epel,zabbix,zabbix-tools,mysql-community,mssql-release}.repo /etc/zabbix /mnt/dietpi_userdata/deluge/.config/deluge/{auth,core.conf} /proc/net/fib_trie /root/{.gitconfig,.my.cnf,.pgpass,.bashrc} /root/.local/bin/{repo_update,sync.with.home.sh} /root/.ssh/{id_rsa,id_rsa.pub,authorized_keys,do.pem,au.pem,arm.pem} /usr/local/bin/{agentd.d.sh,repo_update,zabbix_trap_receiver.sh,zabbix_part_postgres.sh} /usr/share/zabbix/conf/certs/idp.crt /var/lib/zabbix; do [ -e "$f" ] && printf "%s " "$f"; done; echo` | base64 -w0 | sed ''s|^|mkdir restore \&\& cd restore \&\& echo "|'' | sed ''s%$%" | base64 --decode | unxz | tar -xv%'' && echo'
           description: 'tar --create --verbose --use-compress-program=''xz -9'' `for f in /etc/default/grub /etc/profile.d/postgres.sh /etc/{odbc.ini,odbcinst.ini,fstab,hosts} /etc/systemd/system/zabbix-proxy.service.d/override.conf /var/lib/zabbix /etc/openldap/ldap.conf /etc/systemd/system/zabbix-server.service.d/override.conf /etc/systemd/system/zabbix-agent.service.d/override.conf /etc/systemd/system/zabbix-agent2.service.d/override.conf /etc/my.cnf /etc/sysconfig/zabbix-agent /etc/sysconfig/zabbix-agent2 /usr/share/zabbix/conf/certs/idp.crt /etc/sysconfig/zabbix-proxy /etc/sysconfig/zabbix-server /etc/systemd/system/mysqld.service.d/override.conf /root/.my.cnf /etc/nginx/conf.d /etc/php-fpm.d /etc/sudoers.d/zabbix_proxy_config_cache_reload /root/.pgpass /etc/containers/registries.conf /etc/sysctl.d /etc/my.cnf.d /etc/yum.repos.d/{pgdg-redhat-all.repo,epel.repo,zabbix.repo,zabbix-tools.repo,mysql-community.repo,mssql-release.repo} /etc/cron.d/{trigger_agentd_restart,memory_snapshot,postgres_backup,zabbix_partitioning,zabbix_part_postgres} /etc/selinux/config /etc/zabbix /root/.gitconfig /root/.ssh/id_rsa /root/.ssh/id_rsa.pub /usr/local/bin/agentd.d.sh /usr/local/bin/repo_update; do [ -e "$f" ] && printf "%s " "$f"; done; echo` | base64 -w0 | sed ''s|^|mkdir restore \&\& cd restore \&\& echo "|'' | sed ''s%$%" | base64 --decode | unxz | tar -xv%'' && echo'
