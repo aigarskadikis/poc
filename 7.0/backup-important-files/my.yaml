@@ -1,7 +1,7 @@
 zabbix_export:
   version: '7.0'
   template_groups:
-    - uuid: 57b7ae836ca64446ba2c296389c009b7
+    - uuid: 8fa357128f4846289b37d68bf3b61caf
       name: Templates/Modules
   templates:
     - uuid: a589d09c030a4058bd1cf3637bcdd478
@@ -79,7 +79,7 @@ zabbix_export:
           preprocessing:
             - type: MATCHES_REGEX
               parameters:
-                - 'echo \".{3000,}\"'
+                - 'echo \".{3000,64000}\"'
               error_handler: CUSTOM_ERROR
               error_handler_params: 'data not long enough to overwrite inventory'
           master_item:
@@ -142,7 +142,7 @@ zabbix_export:
           name: 'base64 xz'
           type: ZABBIX_ACTIVE
           key: 'system.run["{$BACKUP}"]'
-          delay: 0;h23m53s30
+          delay: 0;h21m27s30
           value_type: LOG
           trends: '0'
           timeout: 10s
