@@ -1,0 +1,26 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 8fa357128f4846289b37d68bf3b61caf
+      name: Templates/Modules
+  templates:
+    - uuid: 29cb3cca048240fea84a1029c75eacfc
+      template: snmp-walk-dump-into-log
+      name: snmp-walk-dump-into-log
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: e8fa25fae16948e4b811065cf3e9b56f
+          name: walk.dump.into.log
+          type: SNMP_AGENT
+          snmp_oid: 'walk[.]'
+          key: walk.dump.into.log
+          delay: 1d
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  Zabbix.Log(3,'walk dump begin');
+                  Zabbix.Log(3,value);
+                  Zabbix.Log(3,'walk dump end');
+                  return 0;

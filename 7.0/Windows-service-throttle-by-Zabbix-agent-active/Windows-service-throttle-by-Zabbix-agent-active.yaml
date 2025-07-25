@@ -1,0 +1,101 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 846977d1dfed4968bc5f8bdb363285bc
+      name: 'Templates/Operating systems'
+  templates:
+    - uuid: a35c928f539049288411c6eb0ef59940
+      template: 'Windows service throttle by Zabbix agent active'
+      name: 'Windows service throttle by Zabbix agent active'
+      groups:
+        - name: 'Templates/Operating systems'
+      discovery_rules:
+        - uuid: 057bea4978d141d484e972ced5453192
+          name: 'Windows services discovery'
+          type: ZABBIX_ACTIVE
+          key: service.discovery
+          delay: 1h
+          filter:
+            evaltype: AND
+            conditions:
+              - macro: '{#SERVICE.NAME}'
+                value: '{$SERVICE.NAME.MATCHES}'
+                formulaid: A
+              - macro: '{#SERVICE.NAME}'
+                value: '{$SERVICE.NAME.NOT_MATCHES}'
+                operator: NOT_MATCHES_REGEX
+                formulaid: B
+              - macro: '{#SERVICE.STARTUPNAME}'
+                value: '{$SERVICE.STARTUPNAME.MATCHES}'
+                formulaid: C
+              - macro: '{#SERVICE.STARTUPNAME}'
+                value: '{$SERVICE.STARTUPNAME.NOT_MATCHES}'
+                operator: NOT_MATCHES_REGEX
+                formulaid: D
+          description: 'Used for the discovery of Windows services of different types as defined in the template''s macros.'
+          item_prototypes:
+            - uuid: 8579c9745e1b45b3bdce2a6f59fef282
+              name: 'throttle["{#SERVICE.NAME}"]'
+              type: DEPENDENT
+              key: 'service.info.throttle["{#SERVICE.NAME}"]'
+              delay: '0'
+              preprocessing:
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              master_item:
+                key: 'service.info["{#SERVICE.NAME}",state]'
+              trigger_prototypes:
+                - uuid: 0ec4db92f0a846b98324abe10f68418a
+                  expression: 'min(/Windows service throttle by Zabbix agent active/service.info.throttle["{#SERVICE.NAME}"],#3)<>0'
+                  name: 'Windows: "{#SERVICE.NAME}" ({#SERVICE.DISPLAYNAME}) is not running'
+                  event_name: 'Windows: "{#SERVICE.NAME}" ({#SERVICE.DISPLAYNAME}) is not running (startup type {#SERVICE.STARTUPNAME})'
+                  priority: AVERAGE
+            - uuid: 36cc8cbcb2e54fde97574200fefe9e6b
+              name: 'State of service "{#SERVICE.NAME}" ({#SERVICE.DISPLAYNAME})'
+              type: ZABBIX_ACTIVE
+              key: 'service.info["{#SERVICE.NAME}",state]'
+              valuemap:
+                name: 'Windows service state'
+              tags:
+                - tag: component
+                  value: system
+                - tag: name
+                  value: '{#SERVICE.DISPLAYNAME}'
+                - tag: service
+                  value: '{#SERVICE.NAME}'
+      macros:
+        - macro: '{$SERVICE.NAME.MATCHES}'
+          value: '^.*$'
+          description: 'Used in Service discovery. Can be overridden on the host or linked template level.'
+        - macro: '{$SERVICE.NAME.NOT_MATCHES}'
+          value: '^(?:RemoteRegistry|MMCSS|gupdate|SysmonLog|clr_optimization_v.+|sppsvc|gpsvc|Pml Driver HPZ12|Net Driver HPZ12|MapsBroker|IntelAudioService|Intel\(R\) TPM Provisioning Service|dbupdate|DoSvc|CDPUserSvc_.+|WpnUserService_.+|OneSyncSvc_.+|WbioSrvc|BITS|tiledatamodelsvc|GISvc|ShellHWDetection|TrustedInstaller|TabletInputService|CDPSvc|wuauserv|edgeupdate|cbdhsvc_.+)$'
+          description: 'Used in Service discovery. Can be overridden on the host or linked template level.'
+        - macro: '{$SERVICE.STARTUPNAME.MATCHES}'
+          value: '^(?:automatic|automatic delayed)$'
+          description: 'Used in Service discovery. Can be overridden on the host or linked template level.'
+        - macro: '{$SERVICE.STARTUPNAME.NOT_MATCHES}'
+          value: '^(?:manual|disabled)$'
+          description: 'Used in Service discovery. Can be overridden on the host or linked template level.'
+      valuemaps:
+        - uuid: cb55569442514122b0c91039c5d492b4
+          name: 'Windows service state'
+          mappings:
+            - value: '0'
+              newvalue: Running
+            - value: '1'
+              newvalue: Paused
+            - value: '2'
+              newvalue: 'Start pending'
+            - value: '3'
+              newvalue: 'Pause pending'
+            - value: '4'
+              newvalue: 'Continue pending'
+            - value: '5'
+              newvalue: 'Stop pending'
+            - value: '6'
+              newvalue: Stopped
+            - value: '7'
+              newvalue: Unknown
+            - value: '255'
+              newvalue: 'No such service'
