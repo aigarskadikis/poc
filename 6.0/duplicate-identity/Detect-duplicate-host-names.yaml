@@ -1,0 +1,33 @@
+zabbix_export:
+  version: '6.0'
+  date: '2025-07-04T03:53:38Z'
+  groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: b90a3abf3fe4439281300c625ef46468
+      template: 'Detect duplicate host names'
+      name: 'Detect duplicate host names'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 9e1a995adde44b3fb8c7be1509479299
+          name: 'Linux: System description'
+          type: ZABBIX_ACTIVE
+          key: system.uname
+          history: 7d
+          trends: '0'
+          value_type: CHAR
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          tags:
+            - tag: component
+              value: system
+          triggers:
+            - uuid: a226fd050a62417fb191ccbeba0d651f
+              expression: 'change(/Detect duplicate host names/system.uname)=1'
+              name: 'duplicate hostname detected, explore history to find overlapping hosts'
+              priority: HIGH
+              manual_close: 'YES'

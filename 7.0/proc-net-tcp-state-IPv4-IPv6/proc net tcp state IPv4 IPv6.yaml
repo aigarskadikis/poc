@@ -1,0 +1,765 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 2788611be08745ec93becf7f6318decd
+      template: 'proc net tcp state IPv4 IPv6'
+      name: 'proc net tcp state IPv4 IPv6'
+      description: |
+        In the output:
+        cat /proc/net/tcp
+        the 4th column means the connection state
+        
+        https://users.cs.northwestern.edu/~agupta/cs340/project2/TCPIP_State_Transition_Diagram.pdf
+        
+        
+        for i in `seq 1 120`; do echo $(date) | tee -a /tmp/tcp.state.txt && awk '{print $4}' /proc/net/tcp /proc/net/tcp6 | grep -v st | sort | uniq -c | tee -a /tmp/tcp.state.txt && wc -l /proc/net/tcp | tee -a /tmp/tcp.state.txt && wc -l /proc/net/tcp6 | tee -a /tmp/tcp.state.txt && echo "=======" | tee -a /tmp/tcp.state.txt && sleep 1; done
+        
+        01 ESTABLISHED
+        06 TIME_WAIT
+        08 CLOSE_WAIT
+        0A LISTEN
+        
+        Value mapping is as follows:
+        00=UNKNOWN
+        01=ESTABLISHED
+        02=SYN_SENT
+        03=SYN_RECV
+        04=FIN_WAIT1
+        05=FIN_WAIT2
+        06=TIME_WAIT
+        07=CLOSED
+        08=CLOSE_WAIT
+        09=LAST_ACK
+        0A=LISTEN
+        0B=CLOSING
+        
+        This template collects data every 1m and feeds all 12 indications.
+        Zabbix agent 5.0 is limited for the data pick up of 64 kb
+        Zabbix agent 6.0 can pick up 16 MB in one go
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 8e563dd5cb424dbb9c653f6d980611af
+          name: detect.down
+          type: DEPENDENT
+          key: detect.down
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  var lines = value.match(/^\s+\S+:\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+/gm);
+                  var lines_num = lines.length;
+                  var local_address=[];
+                  var rem_address='';
+                  var st='';
+                  
+                  for (i = 0; i < lines_num; i++)
+                  {
+                    var row = {};
+                  
+                    array = lines[i].match(/[A-F0-9]{8}/)[0].match(/(\w{2})/gi);
+                    var answer='';
+                    for (var j = 0; j < array.length-1; j++) {answer='.'+parseInt(array[j],16)+answer;} answer=parseInt(array[array.length-1],16)+answer;
+                    row["local"] = answer;
+                  
+                  
+                  
+                    row["port"] = parseInt(lines[i].match(/[A-F0-9]{8}:([A-F0-9]{4})/)[1],16);
+                  
+                  //Zabbix.Log(4,lines[i]);
+                  //Zabbix.Log(4,row["port"]);
+                    row["state"] = lines[i].match(/[A-F0-9]{8}:[A-F0-9]{4}\s+[A-F0-9]{8}:[A-F0-9]{4}\s+([A-F0-9]{2})/)[1];
+                    row["uid"] = lines[i].match(/(\S+)$/)[1];
+                  //Zabbix.Log(4,row["uid"]);
+                  
+                  lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+          master_item:
+            key: 'vfs.file.contents[/proc/net/tcp]'
+          tags:
+            - tag: Application
+              value: 'Zabbix raw items'
+        - uuid: 0cf1530bbb314b5d8ef5eafc8d66b92c
+          name: 'IPv4 close wait'
+          type: DEPENDENT
+          key: ipv4.close.wait
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.08
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: d6adbc29074b45c686ad8b8d468a5701
+          name: 'IPv4 closed'
+          type: DEPENDENT
+          key: ipv4.closed
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.07
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 69d991a766e4406287ab42d0b7048e2b
+          name: 'IPv4 closing'
+          type: DEPENDENT
+          key: ipv4.closing
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.0B
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 727e9de06ae84a31869bd640f731c649
+          name: 'IPv4 established'
+          type: DEPENDENT
+          key: ipv4.established
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.01
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+            - tag: report
+        - uuid: 014505bb6d67402eb31270d4d66822d5
+          name: 'IPv4 fin wait1'
+          type: DEPENDENT
+          key: ipv4.fin.wait1
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.04
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 583616e0bc074318a05df3da030e7934
+          name: 'IPv4 fin wait2'
+          type: DEPENDENT
+          key: ipv4.fin.wait2
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.05
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: fdf6078c0dd94ddcb6a3639ee6102c66
+          name: 'IPv4 last ack'
+          type: DEPENDENT
+          key: ipv4.last.ack
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.09
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 6ccce553e19b46dea2c14053ebd19a28
+          name: 'IPv4 listen'
+          type: DEPENDENT
+          key: ipv4.listen
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.0A
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+            - tag: report
+        - uuid: 6fdb690ef1fe4923b14d5fad3aa7cbf0
+          name: 'IPv4 syn recv'
+          type: DEPENDENT
+          key: ipv4.syn.recv
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.03
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 9a619c19b4984cdd9b390ed546fedb43
+          name: 'IPv4 syn sent'
+          type: DEPENDENT
+          key: ipv4.syn.sent
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.02
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 1b6273e23935472889ec2d95904d108c
+          name: 'IPv4 time wait'
+          type: DEPENDENT
+          key: ipv4.time.wait
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.06
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+            - tag: report
+        - uuid: abe9b42c4f794e2db8ea162cf5c0db9d
+          name: 'IPv4 unknown'
+          type: DEPENDENT
+          key: ipv4.unknown
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.00
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 8413472ab59743db80bad6fc5517b597
+          name: 'IPv6 close wait'
+          type: DEPENDENT
+          key: ipv6.close.wait
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.08
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: d8d1d06aff0b45f59342eef793b453d0
+          name: 'IPv6 closed'
+          type: DEPENDENT
+          key: ipv6.closed
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.07
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: fc6528b52e9a4d4280cb313720dd74c4
+          name: 'IPv6 closing'
+          type: DEPENDENT
+          key: ipv6.closing
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.0B
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: e4fbf3e039c54307b0bb461bb9c660d8
+          name: 'IPv6 established'
+          type: DEPENDENT
+          key: ipv6.established
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.01
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: f65e95c860754dfdbc0c3a0a8a2f9a2b
+          name: 'IPv6 fin wait1'
+          type: DEPENDENT
+          key: ipv6.fin.wait1
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.04
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 8db8cffeef444119bb462962eae6682c
+          name: 'IPv6 fin wait2'
+          type: DEPENDENT
+          key: ipv6.fin.wait2
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.05
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 186f9dd55bc44d16a61f9ded68f27dc7
+          name: 'IPv6 last ack'
+          type: DEPENDENT
+          key: ipv6.last.ack
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.09
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 6c94c084eb204b31a7e60014456f51fc
+          name: 'IPv6 listen'
+          type: DEPENDENT
+          key: ipv6.listen
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.0A
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: ad6b36bc25a54e69a16220fa4d81f44a
+          name: 'IPv6 syn recv'
+          type: DEPENDENT
+          key: ipv6.syn.recv
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.03
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 5cba10d3bfe8446b8ce8ad320884d17a
+          name: 'IPv6 syn sent'
+          type: DEPENDENT
+          key: ipv6.syn.sent
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.02
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: e9e18ebf998446d6993f619e02174237
+          name: 'IPv6 time wait'
+          type: DEPENDENT
+          key: ipv6.time.wait
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.06
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: 0f774f43593940e5a5bd3fe4530953c3
+          name: 'IPv6 unknown'
+          type: DEPENDENT
+          key: ipv6.unknown
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.00
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: proc.net.tcp6
+          tags:
+            - tag: Application
+              value: 'TCP state'
+        - uuid: a0a8b4b7210e4479af7b08ad4bc82375
+          name: tcp
+          type: DEPENDENT
+          key: proc.net.tcp
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  const data = value;
+                  const lines = data.split('\n').slice(1); // Split data into lines and remove the first empty line
+                  const connectionStates = {};
+                  
+                  for (i = 0; i < lines.length; i++) {
+                      const line = lines[i];
+                      const columns = line.trim().split(/\s+/); // Split each line by whitespace
+                      const state = columns[3]; // Get the 4th column (index 3) which is the connection state
+                      connectionStates[state] = (connectionStates[state] || 0) + 1; // Increment the count for this state
+                  }
+                  
+                  return JSON.stringify(connectionStates);
+          master_item:
+            key: 'vfs.file.contents[/proc/net/tcp]'
+          tags:
+            - tag: Application
+              value: 'Zabbix raw items'
+        - uuid: 50d98b8c887f4fe0995ff82d2eea4466
+          name: tcp6
+          type: DEPENDENT
+          key: proc.net.tcp6
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  const data = value;
+                  const lines = data.split('\n').slice(1); // Split data into lines and remove the first empty line
+                  const connectionStates = {};
+                  
+                  for (i = 0; i < lines.length; i++) {
+                      const line = lines[i];
+                      const columns = line.trim().split(/\s+/); // Split each line by whitespace
+                      const state = columns[3]; // Get the 4th column (index 3) which is the connection state
+                      connectionStates[state] = (connectionStates[state] || 0) + 1; // Increment the count for this state
+                  }
+                  
+                  return JSON.stringify(connectionStates);
+          master_item:
+            key: 'vfs.file.contents[/proc/net/tcp6]'
+          tags:
+            - tag: Application
+              value: 'Zabbix raw items'
+        - uuid: 2753c50daaf8416492c388d7c1d8dc5e
+          name: 'tcp size'
+          type: DEPENDENT
+          key: tcp.size
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.length;'
+          master_item:
+            key: 'vfs.file.contents[/proc/net/tcp]'
+        - uuid: e68de075d8f84f8c9189488837e0db19
+          name: 'tcp6 size'
+          type: DEPENDENT
+          key: tcp6.size
+          delay: '0'
+          history: 90d
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.length;'
+          master_item:
+            key: 'vfs.file.contents[/proc/net/tcp6]'
+        - uuid: ff1ba8cc431b4d158f49f11baa0c0be3
+          name: 'raw tcp6'
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[/proc/net/tcp6]'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          timeout: 1s
+          tags:
+            - tag: Application
+              value: 'Zabbix raw items'
+        - uuid: e7d5e47865de49a39701fd3c0a5829f8
+          name: 'raw tcp'
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[/proc/net/tcp]'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          timeout: 1s
+          tags:
+            - tag: Application
+              value: 'Zabbix raw items'
+      tags:
+        - tag: offset
+          value: s16
+      macros:
+        - macro: '{$PROC.NET.TCP}'
+          value: 'awk ''{print $4}'' /proc/net/tcp /proc/net/tcp6 | grep -v st | sort | uniq -c'
+          description: 'observe situation'
+  graphs:
+    - uuid: a1197dfc555549f4a9a29120330e0ee9
+      name: 'proc net TCP IPv4 connection states'
+      ymin_type_1: FIXED
+      graph_items:
+        - sortorder: '1'
+          color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.closed
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.close.wait
+        - sortorder: '3'
+          color: 2774A4
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.closing
+        - sortorder: '4'
+          color: A54F10
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.established
+        - sortorder: '5'
+          color: FC6EA3
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.fin.wait1
+        - sortorder: '6'
+          color: 6C59DC
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.fin.wait2
+        - sortorder: '7'
+          color: AC8C14
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.last.ack
+        - sortorder: '8'
+          color: 611F27
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.listen
+        - sortorder: '9'
+          color: F230E0
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.syn.recv
+        - sortorder: '10'
+          color: 5CCD18
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.syn.sent
+        - sortorder: '11'
+          color: BB2A02
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.time.wait
+        - sortorder: '12'
+          color: 5A2B57
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv4.unknown
+    - uuid: dab8e4c0273546a289c8ef8721333e5e
+      name: 'proc net TCP IPv6 connection states'
+      ymin_type_1: FIXED
+      graph_items:
+        - sortorder: '1'
+          color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.closed
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.close.wait
+        - sortorder: '3'
+          color: 2774A4
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.closing
+        - sortorder: '4'
+          color: A54F10
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.established
+        - sortorder: '5'
+          color: FC6EA3
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.fin.wait1
+        - sortorder: '6'
+          color: 6C59DC
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.fin.wait2
+        - sortorder: '7'
+          color: AC8C14
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.last.ack
+        - sortorder: '8'
+          color: 611F27
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.listen
+        - sortorder: '9'
+          color: F230E0
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.syn.recv
+        - sortorder: '10'
+          color: 5CCD18
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.syn.sent
+        - sortorder: '11'
+          color: BB2A02
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.time.wait
+        - sortorder: '12'
+          color: 5A2B57
+          calc_fnc: ALL
+          item:
+            host: 'proc net tcp state IPv4 IPv6'
+            key: ipv6.unknown

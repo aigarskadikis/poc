@@ -1,0 +1,78 @@
+zabbix_export:
+  version: '6.0'
+  date: '2025-07-25T06:08:22Z'
+  groups:
+    - uuid: 74713b6e2e2e460f9583a6feadf697f2
+      name: 'Templates/Web Monitoring'
+  templates:
+    - uuid: e22026b9ff5149e9b0d0617f515b48c8
+      template: 'Zabbix 6.0 GUI speed'
+      name: 'Zabbix 6.0 GUI speed'
+      groups:
+        - name: 'Templates/Web Monitoring'
+      httptests:
+        - uuid: c3adb72a3aa5468e9a110e92fcdec7e2
+          name: sample
+          delay: 15s
+          steps:
+            - name: 'open landing page'
+              url: '{$TRANSPORT}://{$HOST:name}{$HOST:port}{$SUB}/index.php'
+              required: 'Zabbix SIA'
+              status_codes: '200'
+            - name: 'authorize and search for string'
+              url: '{$TRANSPORT}://{$HOST:name}{$HOST:port}{$SUB}/index.php'
+              posts:
+                - name: name
+                  value: '{$ZNAME}'
+                - name: password
+                  value: '{$ZPASSWORD}'
+                - name: enter
+                  value: 'Sign in'
+              variables:
+                - name: '{sid}'
+                  value: 'regex:name="csrf-token" content="([0-9a-z]{16})"'
+              required: Dashboard
+              status_codes: '200'
+            - name: 'hosts page'
+              url: '{$TRANSPORT}://{$HOST:name}{$HOST:port}{$SUB}/zabbix.php?action=host.list&filter_rst=1'
+              follow_redirects: 'NO'
+              required: 'Create host'
+              status_codes: '200'
+            - name: 'open templpates and click reset'
+              url: '{$TRANSPORT}://{$HOST:name}{$HOST:port}{$SUB}/templates.php?filter_rst=1'
+              follow_redirects: 'NO'
+              required: 'Create template'
+              status_codes: '200'
+            - name: 'open proxy list'
+              url: '{$TRANSPORT}://{$HOST:name}{$HOST:port}{$SUB}/zabbix.php?action=proxy.list'
+              required: 'Create proxy'
+              status_codes: '200'
+            - name: 'log out'
+              url: '{$TRANSPORT}://{$HOST:name}{$HOST:port}{$SUB}/index.php'
+              posts:
+                - name: sid
+                  value: '{sid}'
+                - name: reconnect
+                  value: '1'
+              status_codes: '200'
+          tags:
+            - tag: Application
+              value: 'Zabbix web site'
+      macros:
+        - macro: '{$HOST:name}'
+          value: zabbix.contoso.com
+        - macro: '{$HOST:port}'
+          description: ':44360'
+        - macro: '{$SUB}'
+          value: /zabbix
+        - macro: '{$TRANSPORT}'
+          value: https
+        - macro: '{$ZNAME}'
+          value: Admin
+        - macro: '{$ZPASSWORD}'
+          value: zabbix
+  triggers:
+    - uuid: 264b47dc627f4938beece85ef092c7c9
+      expression: 'last(/Zabbix 6.0 GUI speed/web.test.fail[sample])>0'
+      name: 'Some failed web scenario steps'
+      priority: AVERAGE
