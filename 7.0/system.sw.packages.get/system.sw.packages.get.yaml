@@ -1,0 +1,693 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 54e2096ccff34a8da0eaddf6049a59ba
+      name: Hourly/Linux
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 16644f350a2c43b598e630857e9a0fad
+      template: 's39m17 system.sw.packages.get'
+      name: 's39m17 system.sw.packages.get'
+      groups:
+        - name: Hourly/Linux
+      items:
+        - uuid: 7c66b30a0fa64fa7baf7b773d6185091
+          name: 'Package name and version'
+          type: DEPENDENT
+          key: name.version
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          inventory_link: SITE_NOTES
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lines = JSON.parse(value);
+                  var out = [];
+                  for (i = 0; i < lines.length; i++)
+                  {
+                    var row = {};
+                    row["name"] = lines[i].name;
+                    row["version"] = lines[i].version;
+                    out.push(row);
+                  }
+                  return JSON.stringify(out);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+          master_item:
+            key: system.sw.packages.get.gate
+        - uuid: bba0e04a63344ad3be21fd394f6dae95
+          name: 'Number of installed packages'
+          type: DEPENDENT
+          key: number.of.packages
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.length()
+          master_item:
+            key: system.sw.packages.get.gate
+          triggers:
+            - uuid: 49cf74a29ca04b63b3aa7897fe5553bb
+              expression: 'last(/s39m17 system.sw.packages.get/number.of.packages)=0'
+              name: 'number of installed packages'
+              event_name: 'number of installed packages is {ITEM.VALUE}'
+              priority: HIGH
+              description: 'db_recover -vh /var/lib/rpm'
+              manual_close: 'YES'
+        - uuid: ff1ca7f58c4443e08009365967792923
+          name: 'Package manager utility'
+          type: DEPENDENT
+          key: package.manager
+          delay: '0'
+          history: '0'
+          value_type: CHAR
+          trends: '0'
+          inventory_link: SITE_STATE
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''name''] == ''dnf'' || @.[''name''] == ''apt'')].name.first()'
+          master_item:
+            key: name.version
+        - uuid: 760ff69e905e4595b23317dfdfcf6758
+          name: system.sw.packages.get
+          type: ZABBIX_ACTIVE
+          key: system.sw.packages.get
+          delay: 0;m3s39
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: MATCHES_REGEX
+              parameters:
+                - '.{3}'
+              error_handler: CUSTOM_ERROR
+              error_handler_params: 'received string too short'
+          timeout: 5s
+        - uuid: 1f3ca5af3de0463484edf8e26a08f368
+          name: system.sw.packages.get.gate
+          type: DEPENDENT
+          key: system.sw.packages.get.gate
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: system.sw.packages.get
+        - uuid: 8c9b7bb75b4e486ebac72573f8f49ae5
+          name: 'Version of Agent 2'
+          type: DEPENDENT
+          key: 'version[zabbix-agent2]'
+          delay: '0'
+          history: '0'
+          value_type: CHAR
+          trends: '0'
+          inventory_link: POC_2_SCREEN
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''name''] == ''zabbix-agent2'')].version.first()'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: 99.99.99
+            - type: REGEX
+              parameters:
+                - '[0-9]+\.[0-9]+\.[0-9]+'
+                - \0
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: name.version
+          tags:
+            - tag: zabbix
+        - uuid: 4801cee5315a4b3f8be9db916c902652
+          name: 'Version of Agent 1'
+          type: DEPENDENT
+          key: 'version[zabbix-agent]'
+          delay: '0'
+          history: '0'
+          value_type: CHAR
+          trends: '0'
+          inventory_link: POC_1_SCREEN
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''name''] == ''zabbix-agent'')].version.first()'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: 99.99.99
+            - type: REGEX
+              parameters:
+                - '[0-9]+\.[0-9]+\.[0-9]+'
+                - \0
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: name.version
+          tags:
+            - tag: zabbix
+        - uuid: 9bfe5a40cc6a45d08821138448b9b48f
+          name: 'Package name and version'
+          type: DEPENDENT
+          key: zabbix.packages
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''name''] =~ "zabbix")]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lines = JSON.parse(value);
+                  var out = [];
+                  for (i = 0; i < lines.length; i++)
+                  {
+                    var row = {};
+                    row["name"] = lines[i].name;
+                    row["version"] = lines[i].version;
+                    out.push(row);
+                  }
+                  return JSON.stringify(out);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: system.sw.packages.get.gate
+      discovery_rules:
+        - uuid: df31d6ea8d8e4065ad0da0c0cc42417e
+          name: pack.zbx.lld
+          type: DEPENDENT
+          key: pack.zbx.lld
+          delay: '0'
+          item_prototypes:
+            - uuid: 21701414dbbf4e4395c15d6365293b52
+              name: '{#NAME}'
+              type: CALCULATED
+              key: 'zbx[{#NAME}]'
+              value_type: CHAR
+              trends: '0'
+              params: '"{#VERSION}"'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '\d+\.\d+(?:\.\d+)?'
+                    - \0
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1d
+              tags:
+                - tag: zabbixV
+          master_item:
+            key: zabbix.packages
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''name'']'
+            - lld_macro: '{#VERSION}'
+              path: '$.[''version'']'
+    - uuid: 9990086220ce4c3e9f48d252e76421e1
+      template: 'system.sw.packages.get blank'
+      name: 'system.sw.packages.get blank'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: ed6adcacc9b8444b94ef8954fcb01a89
+          name: 'installed packages and version'
+          type: DEPENDENT
+          key: installed.packages
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          inventory_link: SITE_NOTES
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lines = JSON.parse(value);
+                  var out = [];
+                  for (i = 0; i < lines.length; i++)
+                  {
+                    var row = {};
+                    row["name"] = lines[i].name;
+                    row["version"] = lines[i].version;
+                    out.push(row);
+                  }
+                  return JSON.stringify(out);
+                  
+          master_item:
+            key: system.sw.packages.get.gate
+        - uuid: 31b1d3303f7242c1bc37b844aa0b019e
+          name: package.mngr
+          type: DEPENDENT
+          key: package.mngr
+          delay: '0'
+          history: '0'
+          value_type: CHAR
+          trends: '0'
+          inventory_link: SITE_STATE
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''name''] == ''dnf'' || @.[''name''] == ''apt'')].name.first()'
+          master_item:
+            key: installed.packages
+        - uuid: 46153c14536e482bb93a51ac0cc8a176
+          name: system.sw.packages.get
+          type: ZABBIX_ACTIVE
+          key: system.sw.packages.get
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          timeout: 7s
+        - uuid: 29bb4f794a3b43f78745ded60d8eae3e
+          name: system.sw.packages.get.gate
+          type: DEPENDENT
+          key: system.sw.packages.get.gate
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: system.sw.packages.get
+        - uuid: e9bb59db7ca34c5fae63b403d2b5be9f
+          name: target
+          type: SCRIPT
+          key: target
+          delay: 10s
+          value_type: TEXT
+          trends: '0'
+          params: |
+            // load input variables
+            var arg = JSON.parse(value);
+            
+            // extract installed packages
+            var installedPackages = JSON.parse(arg.installed);
+            
+            // target version
+            var targetVersion = arg.target;
+            
+            // empty variables
+            var packInstaller, version = '';
+            
+            // function to compare version numbers
+            function compareVersions(currentVersion, targetVersion) {
+                function parseVersion(version) {
+                    var parts = version.split('.');
+                    return [
+                        parseInt(parts[0], 10),
+                        parseInt(parts[1], 10),
+                        parseInt(parts[2], 10)
+                    ];
+                }
+            
+                var current = parseVersion(currentVersion);
+                var target = parseVersion(targetVersion);
+            
+                for (var i = 0; i < 3; i++) {
+                    if (current[i] < target[i]) {
+                        return "upgrade";
+                    } else if (current[i] > target[i]) {
+                        return "downgrade";
+                    }
+                }
+                return "no action";
+            }
+            
+            // look for 'apt' or 'dnf' being used
+            for (p = 0; p < installedPackages.length; p++) {
+                if (installedPackages[p].name === 'apt' || installedPackages[p].name === 'dnf') {
+                    packInstaller = installedPackages[p].name;
+                }
+            }
+            
+            // extract version number
+            for (p = 0; p < installedPackages.length; p++) {
+                if (installedPackages[p].name === arg.package) {
+                    version = installedPackages[p].version.match(/([0-9]+\.[0-9]+\.[0-9]+)/)[1];
+                }
+            }
+            
+            // decide what to do
+            var operation = compareVersions(version, arg.target);
+            
+            if (packInstaller === 'apt' || packInstaller === 'dnf') {
+                return '[{"mngr":"' + packInstaller + '","package":"' + arg.package + '","action":"' + operation + '","current":"' + version + '","target":"' + arg.target + '"}]';
+            }
+            
+            return '[]';
+          parameters:
+            - name: installed
+              value: '{INVENTORY.SITE.NOTES}'
+            - name: package
+              value: '{$PACKAGE}'
+            - name: target
+              value: '{$TARGET}'
+        - uuid: d76e75065317441092a4de36a1767d71
+          name: target.apt
+          type: DEPENDENT
+          key: target.apt
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''mngr''] == ''apt'' && !(@.[''action''] == ''no action''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+          master_item:
+            key: target
+        - uuid: bb62172ce46f4243bbdc8fdd21e62eca
+          name: target.dnf
+          type: DEPENDENT
+          key: target.dnf
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''mngr''] == ''dnf'' && (@.[''action''] == ''downgrade'' || @.[''action''] == ''upgrade''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+          master_item:
+            key: target
+          triggers:
+            - uuid: 221004329dd540f79722352b61000cf5
+              expression: 'jsonpath(last(/system.sw.packages.get blank/target.dnf),"$.length()")>0'
+              name: 'need to do dnf something'
+              priority: HIGH
+              description: 'dnf -y {{ITEM.VALUE}.regsub("action.:.([^\"]+)",\1)} {{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)}-{{ITEM.VALUE}.regsub("target.:.([^\"]+)",\1)}'
+              manual_close: 'YES'
+              tags:
+                - tag: action
+                  value: '{{ITEM.VALUE}.regsub("action.:.([^\"]+)",\1)}'
+                - tag: current
+                  value: '{{ITEM.VALUE}.regsub("current.:.([^\"]+)",\1)}'
+                - tag: mngr
+                  value: '{{ITEM.VALUE}.regsub("mngr.:.([^\"]+)",\1)}'
+                - tag: package
+                  value: '{{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)}'
+                - tag: target
+                  value: '{{ITEM.VALUE}.regsub("target.:.([^\"]+)",\1)}'
+      macros:
+        - macro: '{$PACKAGE}'
+          value: zabbix-proxy-sqlite3
+        - macro: '{$TARGET}'
+          value: 7.0.19
+    - uuid: 47be049d07f34f07b88f4d442ce708e0
+      template: 'upgrade a package system.sw.packages.get'
+      name: 'upgrade a package system.sw.packages.get'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 54b9dc65d18f4414938a2da54b71a0d7
+          name: apt.y
+          type: DEPENDENT
+          key: apt.y
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''mngr''] == ''apt'' && !(@.[''action''] == ''no action''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+          master_item:
+            key: target
+          tags:
+            - tag: maintain
+          triggers:
+            - uuid: bfdf9f89b24b4b87ba3aaab152b6771a
+              expression: 'jsonpath(last(/upgrade a package system.sw.packages.get/apt.y),"$.length()") > 0'
+              name: 'apt-get upgrade or downgrade'
+              event_name: '{{ITEM.VALUE}.regsub("action.:.([^\"]+)",\1)} {{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)} from {{ITEM.VALUE}.regsub("current.:.([^\"]+)",\1)} to {{ITEM.VALUE}.regsub("target.:.([^\"]+)",\1)}'
+              priority: DISASTER
+              description: 'apt-cache madison ''{{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)}'' | grep ''{{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)}'' | grep -Eo ''\S+{{ITEM.VALUE}.regsub("target.:.([^\"]+)",\1)}\S+'' | xargs -I{} apt-get -y -o Dpkg::Options::="--force-confold" --allow-downgrades install {{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)}=''{}'''
+              manual_close: 'YES'
+              tags:
+                - tag: action
+                  value: '{{ITEM.VALUE}.regsub("action.:.([^\"]+)",\1)}'
+                - tag: current
+                  value: '{{ITEM.VALUE}.regsub("current.:.([^\"]+)",\1)}'
+                - tag: execute
+                  value: description
+                - tag: mngr
+                  value: '{{ITEM.VALUE}.regsub("mngr.:.([^\"]+)",\1)}'
+                - tag: package
+                  value: '{{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)}'
+                - tag: target
+                  value: '{{ITEM.VALUE}.regsub("target.:.([^\"]+)",\1)}'
+        - uuid: ecf43fc6ee6142d896457af7950864bc
+          name: dnf.y
+          type: DEPENDENT
+          key: dnf.y
+          delay: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''mngr''] == ''dnf'' && (@.[''action''] == ''downgrade'' || @.[''action''] == ''upgrade''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+          master_item:
+            key: target
+          tags:
+            - tag: maintain
+          triggers:
+            - uuid: 3abe16db89b5468fa4ad4ac3ba9b87cb
+              expression: 'jsonpath(last(/upgrade a package system.sw.packages.get/dnf.y),"$.length()") > 0'
+              name: 'need to do stuff'
+              event_name: '{{ITEM.VALUE}.regsub("current.:.([^\"]+)",\1)}: dnf -y {{ITEM.VALUE}.regsub("action.:.([^\"]+)",\1)} {{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)}-{{ITEM.VALUE}.regsub("target.:.([^\"]+)",\1)}'
+              priority: DISASTER
+              description: 'dnf -y {{ITEM.VALUE}.regsub("action.:.([^\"]+)",\1)} {{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)}-{{ITEM.VALUE}.regsub("target.:.([^\"]+)",\1)}'
+              manual_close: 'YES'
+              tags:
+                - tag: action
+                  value: '{{ITEM.VALUE}.regsub("action.:.([^\"]+)",\1)}'
+                - tag: current
+                  value: '{{ITEM.VALUE}.regsub("current.:.([^\"]+)",\1)}'
+                - tag: mngr
+                  value: '{{ITEM.VALUE}.regsub("mngr.:.([^\"]+)",\1)}'
+                - tag: package
+                  value: '{{ITEM.VALUE}.regsub("package.:.([^\"]+)",\1)}'
+                - tag: target
+                  value: '{{ITEM.VALUE}.regsub("target.:.([^\"]+)",\1)}'
+        - uuid: c52ed20744c34d9aad156f3845c59df6
+          name: 'package upgrades and downgrades agent2'
+          type: ZABBIX_ACTIVE
+          key: 'log[/var/log/zabbix/zabbix_agent2.log," (apt|dnf|Zabbix Agent) ",,,skip]'
+          delay: 1s
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+          tags:
+            - tag: maintain
+        - uuid: d3ca6f363e444819986d13a251f3d3e5
+          name: 'package upgrades and downgrades agent1'
+          type: ZABBIX_ACTIVE
+          key: 'log[/var/log/zabbix/zabbix_agentd.log," (apt|dnf|Zabbix Agent) ",,,skip]'
+          delay: 1s
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+          tags:
+            - tag: maintain
+        - uuid: fb2b1dc84113426cb9313ce0c54d3442
+          name: target
+          type: SCRIPT
+          key: target
+          delay: 6s
+          value_type: TEXT
+          trends: '0'
+          params: |
+            // load input variables
+            var arg = JSON.parse(value);
+            
+            // extract installed packages
+            var installedPackages = JSON.parse(arg.installed);
+            
+            // target version
+            var targetVersion = arg.target;
+            
+            // empty variables
+            var packInstaller, version = '';
+            
+            // function to compare version numbers
+            function compareVersions(currentVersion, targetVersion) {
+                function parseVersion(version) {
+                    var parts = version.split('.');
+                    return [
+                        parseInt(parts[0], 10),
+                        parseInt(parts[1], 10),
+                        parseInt(parts[2], 10)
+                    ];
+                }
+            
+                var current = parseVersion(currentVersion);
+                var target = parseVersion(targetVersion);
+            
+                for (var i = 0; i < 3; i++) {
+                    if (current[i] < target[i]) {
+                        return "upgrade";
+                    } else if (current[i] > target[i]) {
+                        return "downgrade";
+                    }
+                }
+                return "no action";
+            }
+            
+            // look for 'apt' or 'dnf' being used
+            for (p = 0; p < installedPackages.length; p++) {
+                if (installedPackages[p].name === 'apt' || installedPackages[p].name === 'dnf') {
+                    packInstaller = installedPackages[p].name;
+                }
+            }
+            
+            // extract version number
+            for (p = 0; p < installedPackages.length; p++) {
+                if (installedPackages[p].name === arg.package) {
+                    version = installedPackages[p].version.match(/([0-9]+\.[0-9]+\.[0-9]+)/)[1];
+                }
+            }
+            
+            // decide what to do
+            var operation = compareVersions(version, arg.target);
+            
+            if (packInstaller === 'apt' || packInstaller === 'dnf') {
+                return '[{"mngr":"' + packInstaller + '","package":"' + arg.package + '","action":"' + operation + '","current":"' + version + '","target":"' + arg.target + '"}]';
+            }
+            
+            return '[]';
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+          parameters:
+            - name: installed
+              value: '{INVENTORY.SITE.NOTES}'
+            - name: package
+              value: '{$PACKAGE}'
+            - name: target
+              value: '{$TARGET}'
+          tags:
+            - tag: maintain
+      tags:
+        - tag: conf
+          value: maintain
+      macros:
+        - macro: '{$PACKAGE}'
+          value: zabbix-agent
+        - macro: '{$TARGET}'
+          value: 7.0.15

@@ -1,0 +1,235 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 0953372e417f4af4a4a6429210c933aa
+      template: ep91
+      name: 'ep91 ultimate var log monitoring'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 54ba5f4e42384e02b7f868d9eb1d1961
+          name: scope.of.interest
+          type: DEPENDENT
+          key: scope.of.interest
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''basename''] =~ ''{$BASENAME}'')]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract basename, dirname
+                  var lines = JSON.parse(value);
+                  var out = [];
+                  for (i = 0; i < lines.length; i++)
+                  {
+                    var row = {};
+                    row["basename"] = lines[i].basename;
+                    row["dirname"] = lines[i].dirname;
+                    out.push(row);
+                  }
+                  return JSON.stringify(out);
+          master_item:
+            key: vfs.dir.get.gate
+          tags:
+            - tag: ultimate
+              value: scope
+        - uuid: fd70409699ff41b0839bba4bf7253ba2
+          name: vfs.dir.get.gate
+          type: DEPENDENT
+          key: vfs.dir.get.gate
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'vfs.dir.get[/var/log,,,file,,1]'
+        - uuid: c8e59038f79048d697a43676e9d13f99
+          name: 'list log files'
+          type: ZABBIX_ACTIVE
+          key: 'vfs.dir.get[/var/log,,,file,,1]'
+          value_type: TEXT
+          trends: '0'
+          timeout: 1s
+          tags:
+            - tag: ultimate
+              value: discovery
+      discovery_rules:
+        - uuid: d0198e1a45ab4d43bf73607f983ec13d
+          name: log
+          type: DEPENDENT
+          key: log
+          delay: '0'
+          item_prototypes:
+            - uuid: af76fc232b044e8995ca3aac8562f2bf
+              name: 'Accepted publickey {#DIRNAME}/{#BASENAME}'
+              type: DEPENDENT
+              key: 'accepted.publickey[{#DIRNAME}/{#BASENAME}]'
+              delay: '0'
+              value_type: LOG
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '.*(Accepted publickey|Disconnected from).*'
+                    - \0
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}]'
+              trigger_prototypes:
+                - uuid: c72c0df6ce6449098a10cbeaa42fc0b4
+                  expression: 'find(/ep91/accepted.publickey[{#DIRNAME}/{#BASENAME}],#1,"like","Accepted publickey") = 1'
+                  correlation_mode: TAG_VALUE
+                  correlation_tag: map
+                  name: 'Accepted publickey'
+                  event_name: '{{ITEM.VALUE}.regsub("\S+ from \S+ port \d+",\0)}'
+                  priority: AVERAGE
+                  type: MULTIPLE
+                  manual_close: 'YES'
+                  tags:
+                    - tag: map
+                      value: '{{ITEM.VALUE}.regsub("\S+ port \d+",\0)}'
+            - uuid: 54533e18a5e74cbd95b29a959d7fb275
+              name: '{#DIRNAME}/{#BASENAME} count'
+              type: CALCULATED
+              key: 'count[{#DIRNAME}/{#BASENAME}]'
+              delay: 5m
+              params: 'count(//log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}],5m)'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '-1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              tags:
+                - tag: ultimate
+                  value: count
+            - uuid: 8d672c9015b7462b815a36e3fd6a96e1
+              name: '{#DIRNAME}/{#BASENAME} length'
+              type: DEPENDENT
+              key: 'length[{#DIRNAME}/{#BASENAME}]'
+              delay: '0'
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - 'return value.length;'
+              master_item:
+                key: 'log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}]'
+            - uuid: 872672db1eec446aaf8617747d0aaf2a
+              name: '{#DIRNAME}/{#BASENAME} contents'
+              type: ZABBIX_ACTIVE
+              key: 'log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}]'
+              delay: '0;{$O:"{#NTH}"}'
+              value_type: LOG
+              trends: '0'
+              timeout: 1s
+              tags:
+                - tag: file
+                  value: '{#BASENAME}'
+                - tag: ultimate
+                  value: contents
+              trigger_prototypes:
+                - uuid: b01b06914f274a33852087debd253184
+                  expression: 'count(/ep91/log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}],3m) > 0'
+                  name: '{#DIRNAME}/{#BASENAME} new data detected'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+            - uuid: 4a5a082326e84c3a868858c93a380208
+              name: '{#DIRNAME}/{#BASENAME} size'
+              type: CALCULATED
+              key: 'size[{#DIRNAME}/{#BASENAME}]'
+              delay: 5m
+              units: B
+              params: 'sum(//length[{#DIRNAME}/{#BASENAME}],5m)'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '-1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              tags:
+                - tag: ultimate
+                  value: size
+          master_item:
+            key: scope.of.interest
+          lld_macro_paths:
+            - lld_macro: '{#BASENAME}'
+              path: '$.[''basename'']'
+            - lld_macro: '{#DIRNAME}'
+              path: '$.[''dirname'']'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // calculate offset % {$MAX.OFFSET}
+                  var jsonData = JSON.parse(value);
+                  lenghtOfArray = jsonData.length;
+                  var lld = [];
+                  for (var el = 0; el < lenghtOfArray; el++) {
+                      row = jsonData[el];
+                      row["{#NTH}"] = el % {$MAX.OFFSET};
+                      lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+          overrides:
+            - name: 'secure Accepted publickey'
+              step: '1'
+              filter:
+                conditions:
+                  - macro: '{#BASENAME}'
+                    value: secure
+                    formulaid: A
+              operations:
+                - operationobject: ITEM_PROTOTYPE
+                  operator: LIKE
+                  value: 'Accepted publickey'
+                  discover: DISCOVER
+                  status: ENABLED
+                - operationobject: TRIGGER_PROTOTYPE
+                  operator: LIKE
+                  value: 'Accepted publickey'
+                  discover: DISCOVER
+                  status: ENABLED
+      macros:
+        - macro: '{$BASENAME}'
+          value: ^(dnf.log|cron|secure|audit.log|dnf.rpm.log)$
+        - macro: '{$MAX.LINES}'
+          value: '20'
+        - macro: '{$MAX.LINES:"secure"}'
+          value: '100'
+        - macro: '{$MAX.OFFSET}'
+          value: '10'
+        - macro: '{$MODE}'
+          value: skip
+          description: skip
+        - macro: '{$O:"0"}'
+          value: 's0,10,20,30,40,50'
+        - macro: '{$O:"1"}'
+          value: 's1,11,21,31,41,51'
+        - macro: '{$O:"2"}'
+          value: 's2,12,22,32,42,52'
+        - macro: '{$O:"3"}'
+          value: 's3,13,23,33,43,53'
+        - macro: '{$O:"4"}'
+          value: 's4,14,24,34,44,54'
+        - macro: '{$O:"5"}'
+          value: 's5,15,25,35,45,55'
+        - macro: '{$O:"6"}'
+          value: 's6,16,26,36,46,56'
+        - macro: '{$O:"7"}'
+          value: 's7,17,27,37,47,57'
+        - macro: '{$O:"8"}'
+          value: 's8,18,28,38,48,58'
+        - macro: '{$O:"9"}'
+          value: 's9,19,29,39,49,59'

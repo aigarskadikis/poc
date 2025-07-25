@@ -1,0 +1,397 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: d0ce5f8d617c433eba54eb2158163ad9
+      template: log
+      name: 'ultimate var log monitoring'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 1b83932b71ba4ab8b9d0220db4518d9d
+          name: scope.of.interest
+          type: DEPENDENT
+          key: scope.of.interest
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''basename''] =~ ''{$BASENAME}'')]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract basename, dirname
+                  var lines = JSON.parse(value);
+                  var out = [];
+                  for (i = 0; i < lines.length; i++)
+                  {
+                    var row = {};
+                    row["basename"] = lines[i].basename;
+                    row["dirname"] = lines[i].dirname;
+                    out.push(row);
+                  }
+                  return JSON.stringify(out);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+          master_item:
+            key: var.log.gate
+          tags:
+            - tag: ultimate
+              value: json
+        - uuid: ded6a2b3df2c454fa558547ab6e5d11c
+          name: var.log.gate
+          type: DEPENDENT
+          key: var.log.gate
+          delay: '0'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'vfs.dir.get[/var/log,,,file,,1]'
+          tags:
+            - tag: ultimate
+              value: gate
+        - uuid: 68b516757fb9449092eb3f50a13bc3ab
+          name: var.log.save
+          type: DEPENDENT
+          key: var.log.save
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: scope.of.interest
+        - uuid: adcc739a533942a5896ba992904d4d6c
+          name: 'list var log files'
+          type: ZABBIX_ACTIVE
+          key: 'vfs.dir.get[/var/log,,,file,,1]'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          timeout: 3s
+      discovery_rules:
+        - uuid: 033671518faf4befac1fc560f189986f
+          name: log
+          type: DEPENDENT
+          key: log
+          delay: '0'
+          item_prototypes:
+            - uuid: c85145474ce24083a192f6b47ef74dd9
+              name: '{#DIRNAME}/{#BASENAME} Accepted publickey'
+              type: DEPENDENT
+              key: 'accepted.publickey[{#DIRNAME}/{#BASENAME}]'
+              delay: '0'
+              value_type: LOG
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '.*(Accepted publickey|Received disconnect|Disconnected from).*'
+                    - \0
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}]'
+              tags:
+                - tag: file
+                  value: '{#BASENAME}'
+                - tag: ultimate
+                  value: rsyslog
+              trigger_prototypes:
+                - uuid: 6ebc34da1ed94f73817fdf4bbd4d4561
+                  expression: 'find(/log/accepted.publickey[{#DIRNAME}/{#BASENAME}],#1,"like","Accepted publickey") = 1'
+                  correlation_mode: TAG_VALUE
+                  correlation_tag: map
+                  name: '{#DIRNAME}/{#BASENAME} Accepted publickey'
+                  event_name: '{{ITEM.VALUE}.regsub("Accepted publickey .* port \S+",\0)}'
+                  status: DISABLED
+                  discover: NO_DISCOVER
+                  priority: HIGH
+                  type: MULTIPLE
+                  manual_close: 'YES'
+                  tags:
+                    - tag: map
+                      value: '{{ITEM.VALUE}.regsub("\S+ port \d+",\0)}'
+            - uuid: 34553f7f5b5c44f899882385e980b7ee
+              name: '{#BASENAME} : count of lines'
+              type: CALCULATED
+              key: 'count[{#DIRNAME}/{#BASENAME}]'
+              delay: 5m
+              params: 'count(//length[{#DIRNAME}/{#BASENAME}],5m)'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '-1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              tags:
+                - tag: ultimate
+                  value: count
+            - uuid: 7b4cd106b86d4b7a845a5a95f97abef9
+              name: '{#DIRNAME}/{#BASENAME} Invalid user'
+              type: DEPENDENT
+              key: 'invalid.user[{#DIRNAME}/{#BASENAME}]'
+              delay: '0'
+              value_type: LOG
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '.*(Invalid user|invalid user).*'
+                    - \0
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}]'
+              tags:
+                - tag: file
+                  value: '{#BASENAME}'
+              trigger_prototypes:
+                - uuid: 7410df03c589494f99ce7cd968145367
+                  expression: 'find(/log/invalid.user[{#DIRNAME}/{#BASENAME}],#1,"like","Invalid user") = 1'
+                  name: '{#DIRNAME}/{#BASENAME} Invalid user'
+                  event_name: '{{ITEM.VALUE}.regsub("Invalid user .* port \S+",\0)}'
+                  status: DISABLED
+                  discover: NO_DISCOVER
+                  priority: HIGH
+                  manual_close: 'YES'
+                  tags:
+                    - tag: user
+                      value: '{{ITEM.VALUE}.regsub("Invalid user (\S+)",\1)}'
+            - uuid: 2ce57f5358cc48d29024febf3376d77f
+              name: '{#BASENAME} : length'
+              type: DEPENDENT
+              key: 'length[{#DIRNAME}/{#BASENAME}]'
+              delay: '0'
+              trends: '0'
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - 'return value.length;'
+              master_item:
+                key: 'log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}]'
+              tags:
+                - tag: ultimate
+                  value: beat
+            - uuid: d9841a1ae16f47b1a5f048794194697a
+              name: '{#DIRNAME}/{#BASENAME} contents'
+              type: ZABBIX_ACTIVE
+              key: 'log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}]'
+              delay: '0;{$O:"{#NTH}"}'
+              history: '{$H:"{#BASENAME}"}'
+              value_type: LOG
+              trends: '0'
+              timeout: 1s
+              tags:
+                - tag: file
+                  value: '{#BASENAME}'
+                - tag: ultimate
+                  value: log
+              trigger_prototypes:
+                - uuid: dd4d67d1fdb3496bac4b539256518e97
+                  expression: 'count(/log/log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}],1h) > {$LINES:"{#BASENAME}"}'
+                  name: '{#DIRNAME}/{#BASENAME} new data comming in'
+                  priority: AVERAGE
+                  manual_close: 'YES'
+            - uuid: 75a17dee88bd434faeb84cd378f8600f
+              name: '{#DIRNAME}/{#BASENAME} session_open'
+              type: DEPENDENT
+              key: 'session_open[{#DIRNAME}/{#BASENAME}]'
+              delay: '0'
+              value_type: LOG
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '^.*ses.*msg.*session_open.*exe.*sshd.*hostname.*addr.*'
+                    - \0
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'log[{#DIRNAME}/{#BASENAME},,,{$MAX.LINES:"{#BASENAME}"},{$MODE:"{#BASENAME}"}]'
+              tags:
+                - tag: file
+                  value: '{#BASENAME}'
+                - tag: ultimate
+                  value: session_open
+              trigger_prototypes:
+                - uuid: 1f0bde035b954f8fbed5d4459297dc8e
+                  expression: 'find(/log/session_open[{#DIRNAME}/{#BASENAME}],#1,"like","session_open") = 1'
+                  name: '{#DIRNAME}/{#BASENAME} session_open'
+                  event_name: 'ssh login from {{ITEM.VALUE}.regsub("addr=(\S+)",\1)}'
+                  status: DISABLED
+                  discover: NO_DISCOVER
+                  priority: HIGH
+                  manual_close: 'YES'
+                  tags:
+                    - tag: addr
+                      value: '{{ITEM.VALUE}.regsub("addr=(\S+)",\1)}'
+                    - tag: ses
+                      value: '{{ITEM.VALUE}.regsub("ses=(\S+)",\1)}'
+            - uuid: e134dd2fa2f54b479b51582b3634488f
+              name: '{#BASENAME} : size'
+              type: CALCULATED
+              key: 'sum[{#DIRNAME}/{#BASENAME}]'
+              delay: 5m
+              units: B
+              params: 'sum(//length[{#DIRNAME}/{#BASENAME}],5m)'
+              preprocessing:
+                - type: CHECK_NOT_SUPPORTED
+                  parameters:
+                    - '-1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              tags:
+                - tag: ultimate
+                  value: size
+          master_item:
+            key: scope.of.interest
+          lld_macro_paths:
+            - lld_macro: '{#BASENAME}'
+              path: '$.[''basename'']'
+            - lld_macro: '{#DIRNAME}'
+              path: '$.[''dirname'']'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // calculate offset % {$MAX.OFFSET}
+                  var jsonData = JSON.parse(value);
+                  lenghtOfArray = jsonData.length;
+                  var lld = [];
+                  for (var el = 0; el < lenghtOfArray; el++) {
+                      row = jsonData[el];
+                      row["{#NTH}"] = el % {$MAX.OFFSET};
+                      lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+          overrides:
+            - name: 'Accepted publickey'
+              step: '1'
+              filter:
+                conditions:
+                  - macro: '{#BASENAME}'
+                    value: '^.*(auth.log|secure)'
+                    formulaid: A
+              operations:
+                - operationobject: ITEM_PROTOTYPE
+                  operator: LIKE
+                  value: 'Accepted publickey'
+                  discover: DISCOVER
+                  status: ENABLED
+                - operationobject: TRIGGER_PROTOTYPE
+                  operator: LIKE
+                  value: 'Accepted publickey'
+                  discover: DISCOVER
+                  status: ENABLED
+            - name: 'Invalid user'
+              step: '2'
+              filter:
+                conditions:
+                  - macro: '{#BASENAME}'
+                    value: '^.*(auth.log|secure)'
+                    formulaid: A
+              operations:
+                - operationobject: ITEM_PROTOTYPE
+                  operator: LIKE
+                  value: 'Invalid user'
+                  discover: DISCOVER
+                  status: ENABLED
+                - operationobject: TRIGGER_PROTOTYPE
+                  operator: LIKE
+                  value: 'Invalid user'
+                  discover: DISCOVER
+                  status: ENABLED
+      macros:
+        - macro: '{$BASENAME}'
+          value: ^(dnf.log|dnf.librepo.log|dnf.rpm.log|cron|maillog|messages|secure|mysqld.log|dpkg.log|history.log|term.log|audit.log|kdump.log|access_log|error_log|ssl_access_log|ssl_error_log|ssl_request_log|auth.log|zabbix_traps.log)$
+        - macro: '{$H}'
+          value: 7d
+        - macro: '{$LINES}'
+          value: '3'
+        - macro: '{$LINES:"dnf.log"}'
+          value: '99'
+        - macro: '{$LINES:"error.log"}'
+          value: '0'
+        - macro: '{$LINES:"error_log"}'
+          value: '0'
+        - macro: '{$LINES:"kdump.log"}'
+          value: '0'
+        - macro: '{$LINES:"maillog"}'
+          value: '0'
+        - macro: '{$LINES:"messages"}'
+          value: '15'
+        - macro: '{$LINES:"ssl_error_log"}'
+          value: '0'
+        - macro: '{$MAX.LINES}'
+          value: '20'
+        - macro: '{$MAX.OFFSET}'
+          value: '10'
+        - macro: '{$MODE}'
+          value: skip
+          description: skip
+        - macro: '{$O:"0"}'
+          value: 's0,10,20,30,40,50'
+        - macro: '{$O:"1"}'
+          value: 's1,11,21,31,41,51'
+        - macro: '{$O:"2"}'
+          value: 's2,12,22,32,42,52'
+        - macro: '{$O:"3"}'
+          value: 's3,13,23,33,43,53'
+        - macro: '{$O:"4"}'
+          value: 's4,14,24,34,44,54'
+        - macro: '{$O:"5"}'
+          value: 's5,15,25,35,45,55'
+        - macro: '{$O:"6"}'
+          value: 's6,16,26,36,46,56'
+        - macro: '{$O:"7"}'
+          value: 's7,17,27,37,47,57'
+        - macro: '{$O:"8"}'
+          value: 's8,18,28,38,48,58'
+        - macro: '{$O:"9"}'
+          value: 's9,19,29,39,49,59'
