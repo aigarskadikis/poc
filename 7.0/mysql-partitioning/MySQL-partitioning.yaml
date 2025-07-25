@@ -1,0 +1,89 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 8fa357128f4846289b37d68bf3b61caf
+      name: Templates/Modules
+  templates:
+    - uuid: ad5e82f601794d2cbc0b6d548089f25f
+      template: 'MySQL partitioning monitoring'
+      name: 'MySQL partitioning monitoring'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: c38796ce0afd4ec580b09fd1cec41935
+          name: check.today
+          type: DEPENDENT
+          key: check.today
+          delay: '0'
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var files = JSON.parse(value);
+                  
+                  // what time is it right now
+                  var now = new Date();
+                  now.setDate(now.getDate() - 12);
+                  
+                  
+                  // function required to add zeros on the left side
+                  function padLeft(value, length, char) {
+                      value = String(value);
+                      while (value.length < length) { value = char + value; }
+                      return value;
+                  }
+                  
+                  // define format
+                  var year = now.getFullYear().toString(),
+                      month = padLeft(now.getMonth() + 1, 2, '0'),
+                      date = padLeft(now.getDate(), 2, '0'),
+                      hour = padLeft(now.getHours(), 2, '0'),
+                      minute = padLeft(now.getMinutes(), 2, '0'),
+                      seconds = padLeft(now.getSeconds(), 2, '0');
+                  
+                  // part name must be defined 'history#p#p20250708'
+                  var pattern = 'history#p#p' + year + '' + month + '' + date + '0000.ibd';
+                  
+                  // iterate through all filenames
+                  // .replace(/[0-9]{4}\.ibd$/,'.ibd')
+                  var output = [];
+                  for (f in files) {
+                      if (files[f].basename === pattern) {
+                          output.push(files[f]);
+                          break;
+                      }
+                  }
+                  
+                  if (output) {
+                      return JSON.stringify(output);
+                  } else {
+                      return '[]'
+                  }
+          master_item:
+            key: 'vfs.dir.get[{$DB.LOCATION},,,file,,0]'
+          tags:
+            - tag: part
+        - uuid: 0cce0a1e4adb484e810568d159511614
+          name: part
+          type: ZABBIX_ACTIVE
+          key: 'vfs.dir.get[{$DB.LOCATION},,,file,,0]'
+          delay: 1d
+          value_type: TEXT
+          trends: '0'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  return JSON.stringify(JSON.parse(value).map(function (file) {
+                  	return { basename: file.basename };
+                  }));
+            - type: JSONPATH
+              parameters:
+                - '$.[?(@.basename =~ ''^.*#.*$'')]'
+          tags:
+            - tag: part
+      macros:
+        - macro: '{$DB.LOCATION}'
+          value: /var/lib/mysql/zabbix
