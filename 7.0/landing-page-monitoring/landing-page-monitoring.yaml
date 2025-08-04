@@ -1,0 +1,46 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 8fa357128f4846289b37d68bf3b61caf
+      name: Templates/Modules
+  templates:
+    - uuid: c4e98d07671e4f469116be04b1486fd0
+      template: land
+      name: 'landing page monitoring'
+      groups:
+        - name: Templates/Modules
+      httptests:
+        - uuid: b9a87f3d5f7a41129448d3081a381a62
+          name: enter
+          delay: '{$UPD}'
+          steps:
+            - name: '1. open landing page'
+              url: '{$SCHEMA}://{$SITE}{$PATH}'
+              follow_redirects: 'NO'
+              required: '{$PATTERN}'
+      macros:
+        - macro: '{$PATH}'
+        - macro: '{$PATTERN}'
+        - macro: '{$SCHEMA}'
+          value: https
+        - macro: '{$SITE}'
+          value: blog.zabbix.com
+        - macro: '{$UPD}'
+          value: 6s
+  triggers:
+    - uuid: dd62b458294f4746af34896ff7b15b05
+      expression: |
+        count(/land/web.test.error[enter], 3m) > 2
+        and (last(/land/web.test.error[enter],#1) = last(/land/web.test.error[enter],#2))
+        and (last(/land/web.test.error[enter],#1) = last(/land/web.test.error[enter],#3))
+        and nodata(/land/web.test.error[enter], 1m) = 0
+      name: 'dynamic error'
+      event_name: '{ITEM.VALUE}'
+      priority: AVERAGE
+      manual_close: 'YES'
+    - uuid: 0e230cb6d96a453d86cba0e25362e667
+      expression: 'count(/land/web.test.rspcode[enter,1. open landing page], #3, "ne", 200) > 2'
+      name: 'http status code not 200'
+      event_name: 'HTTP status code for {$SITE}{$PATH} is {ITEM.VALUE}'
+      priority: AVERAGE
+      manual_close: 'YES'
