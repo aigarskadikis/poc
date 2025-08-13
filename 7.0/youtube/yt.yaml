@@ -1,0 +1,156 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 8fa357128f4846289b37d68bf3b61caf
+      name: Templates/Modules
+  host_groups:
+    - uuid: 84cf0024717642c1bf076039e6f505eb
+      name: YouTube/video
+  templates:
+    - uuid: ad9ee3a33c9c49cdb3a1655898a88c36
+      template: 'YouTube stats'
+      name: 'YouTube stats'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: d1039fbea8984bbf83ca9ea0dfb3fe0a
+          name: yt.stats.csv
+          key: 'vfs.file.contents[/tmp/yt.stats.csv]'
+          delay: 0;h6-22m32s32
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: CSV_TO_JSON
+              parameters:
+                - ','
+                - '"'
+                - '0'
+          timeout: 1s
+      discovery_rules:
+        - uuid: 5aaea770bb52408face4344ce5f232eb
+          name: yt
+          type: DEPENDENT
+          key: yt
+          delay: '0'
+          lifetime_type: DELETE_NEVER
+          lifetime: '0'
+          enabled_lifetime_type: DISABLE_NEVER
+          host_prototypes:
+            - uuid: fc987507ad744ff0b24fdd884cc223fc
+              host: '{#ID}'
+              name: '{#TITLE}'
+              group_links:
+                - group:
+                    name: YouTube/video
+              templates:
+                - name: yt
+              macros:
+                - macro: '{$COMMENT}'
+                  value: '{#COMMENT}'
+                - macro: '{$LIKE}'
+                  value: '{#LIKE}'
+                - macro: '{$VIEW}'
+                  value: '{#VIEW}'
+              custom_interfaces: 'YES'
+          master_item:
+            key: 'vfs.file.contents[/tmp/yt.stats.csv]'
+          lld_macro_paths:
+            - lld_macro: '{#COMMENT}'
+              path: $.5
+            - lld_macro: '{#ID}'
+              path: $.1
+            - lld_macro: '{#LIKE}'
+              path: $.3
+            - lld_macro: '{#TITLE}'
+              path: $.2
+            - lld_macro: '{#VIEW}'
+              path: $.4
+    - uuid: d1460c5c133e4b8db081657b09897d92
+      template: yt
+      name: 'youtube video statistics'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 55e29a56c1c9402db68c482b8ff7ddf8
+          name: yt.comment
+          type: CALCULATED
+          key: yt.comment
+          delay: '0;m7,37s37'
+          params: '{$COMMENT}'
+        - uuid: f1be5dd0ef024e2ba7dba66630f71db7
+          name: yt.like
+          type: CALCULATED
+          key: yt.like
+          delay: '0;m6,36s36'
+          params: '{$LIKE}'
+        - uuid: 5c6745d92b6e4465b17eec6620411c64
+          name: yt.new.comment
+          type: DEPENDENT
+          key: yt.new.comment
+          delay: '0'
+          preprocessing:
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: yt.comment
+        - uuid: 89bd34b02db243da810002affc6eadff
+          name: yt.new.likes
+          type: DEPENDENT
+          key: yt.new.likes
+          delay: '0'
+          preprocessing:
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: yt.like
+        - uuid: 92abcbf2d83e434ea4a22ce8cfcda08b
+          name: yt.new.views
+          type: DEPENDENT
+          key: yt.new.views
+          delay: '0'
+          preprocessing:
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: yt.view
+        - uuid: f0d96bb8201941e4abd716fc1d845303
+          name: yt.time.to.validate
+          type: SCRIPT
+          key: yt.time.to.validate
+          delay: 15m
+          params: 'return 0;'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'var now = new Date(); if (now.getMinutes() < 34) {return 0} else {return 1};'
+            - type: DISCARD_UNCHANGED
+              parameters:
+                - ''
+        - uuid: b72abd6aa22c4c3d88a371bae18a60e9
+          name: yt.view
+          type: CALCULATED
+          key: yt.view
+          delay: '0;m5,35s35'
+          params: '{$VIEW}'
+  triggers:
+    - uuid: cf5b5796a310499c9205d5ebb4f44e60
+      expression: |
+        last(/yt/yt.new.comment) > 0
+        and
+        last(/yt/yt.time.to.validate) = 1
+      name: 'new comment'
+      event_name: '{ITEM.VALUE} new comment'
+      priority: DISASTER
+      manual_close: 'YES'
+    - uuid: 280a60d5dae04b07a738ac4654cb661d
+      expression: |
+        last(/yt/yt.new.likes) > 0
+        and
+        last(/yt/yt.time.to.validate) = 1
+      name: 'new likes'
+      event_name: '{ITEM.VALUE} new likes'
+      priority: DISASTER
+      manual_close: 'YES'
