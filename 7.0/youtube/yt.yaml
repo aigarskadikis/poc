@@ -10,6 +10,14 @@ zabbix_export:
     - uuid: ad9ee3a33c9c49cdb3a1655898a88c36
       template: 'YouTube stats'
       name: 'YouTube stats'
+      description: |
+        #!/bin/bash
+        touch /tmp/yt.stats.csv.tmp
+        truncate --size 0 /tmp/yt.stats.csv.tmp
+        yt-dlp -s --skip-download --flat-playlist --print "%(id)s" "https://www.youtube.com/channel/UClosT-Nfyhpec-SCga-V12Q/videos" \
+          | xargs -I {} yt-dlp -s --skip-download --print "\"%(id)s\",\"%(title)s\",\"%(like_count)s\",\"%(view_count)s\",\"%(comment_count)s\"" "https://www.youtube.com/watch?v={}" \
+          | tee --append /tmp/yt.stats.csv.tmp
+        cat /tmp/yt.stats.csv.tmp | tee /tmp/yt.stats.csv
       groups:
         - name: Templates/Modules
       items:
@@ -77,12 +85,20 @@ zabbix_export:
           key: yt.comment
           delay: '0;m7,37s37'
           params: '{$COMMENT}'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
         - uuid: f1be5dd0ef024e2ba7dba66630f71db7
           name: yt.like
           type: CALCULATED
           key: yt.like
           delay: '0;m6,36s36'
           params: '{$LIKE}'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
         - uuid: 5c6745d92b6e4465b17eec6620411c64
           name: yt.new.comment
           type: DEPENDENT
@@ -135,6 +151,10 @@ zabbix_export:
           key: yt.view
           delay: '0;m5,35s35'
           params: '{$VIEW}'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
   triggers:
     - uuid: cf5b5796a310499c9205d5ebb4f44e60
       expression: |
