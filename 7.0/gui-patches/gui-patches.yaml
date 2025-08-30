@@ -1,0 +1,145 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 54e2096ccff34a8da0eaddf6049a59ba
+      name: Hourly/Linux
+  templates:
+    - uuid: 8b9fff9df9a244039c42e0b9a7b0ce8d
+      template: 'All Zabbix 7.0 frontend patches'
+      name: 'All Zabbix 7.0 frontend patches'
+      groups:
+        - name: Hourly/Linux
+      items:
+        - uuid: 05af9879b52d4bcd89e510733493a179
+          name: '270deg detected'
+          type: DEPENDENT
+          key: 270deg
+          delay: '0'
+          valuemap:
+            name: detected
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 270deg
+                - '1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: 'vfs.file.contents[/usr/share/zabbix/js/component.z-vertical.js]'
+          tags:
+            - tag: path
+              value: frontend
+          triggers:
+            - uuid: 2cea7ed7b5084436a9fcb6e4cb6bd1a8
+              expression: 'last(/All Zabbix 7.0 frontend patches/270deg)=1'
+              name: '270deg found'
+              priority: DISASTER
+              description: |
+                cat /usr/share/zabbix/js/component.z-vertical.js > ~/component.z-vertical.js.$(date +%Y.%m.%d.%H.%M.%S) && \
+                sed -i 's|270deg|0deg|' /usr/share/zabbix/js/component.z-vertical.js
+              manual_close: 'YES'
+        - uuid: db73823b732b41aa971db58dcd25f7ac
+          name: 'Support 200 characters per cell'
+          type: DEPENDENT
+          key: mb_strlen.200
+          delay: '0'
+          valuemap:
+            name: boolean
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - ' > 20 '
+                - '0'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '1'
+          master_item:
+            key: 'vfs.file.contents[/usr/share/zabbix/include/items.inc.php]'
+          tags:
+            - tag: path
+              value: frontend
+          triggers:
+            - uuid: 2b33f435d1884470b7ecfd6f8a40d04e
+              expression: 'last(/All Zabbix 7.0 frontend patches/mb_strlen.200)=0'
+              name: 'need to replace 20 with 200 in data overview widget'
+              priority: DISASTER
+              description: |
+                cat /usr/share/zabbix/include/items.inc.php > ~/items.inc.php.$(date +%Y.%m.%d.%H.%M.%S) && \
+                sed -i 's| > 20 | > 200 |' /usr/share/zabbix/include/items.inc.php
+              manual_close: 'YES'
+        - uuid: e12fce22a53f4d038607e8aaee584b78
+          name: 'Remove hostname from legend'
+          type: DEPENDENT
+          key: remove.hostname.from.legend
+          delay: '0'
+          valuemap:
+            name: completed
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'preg_replace.*item.*name'
+                - '1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: 'vfs.file.contents[/usr/share/zabbix/widgets/svggraph/includes/CSvgGraphLegend.php]'
+          tags:
+            - tag: path
+              value: frontend
+          triggers:
+            - uuid: 65e422019e594cb18a5f76b393f516d0
+              expression: 'last(/All Zabbix 7.0 frontend patches/remove.hostname.from.legend)=0'
+              name: 'neeed to remove hostname from legend'
+              priority: DISASTER
+              description: |
+                cat /usr/share/zabbix/widgets/svggraph/includes/CSvgGraphLegend.php > ~/CSvgGraphLegend.php.$(date +%Y.%m.%d.%H.%M.%S) && \
+                sed -i "s|(new CDiv(new CSpan(\$item\['name'])))|(new CDiv(new CSpan(preg_replace('/^.*: /', '', \$item\['name']))))|" /usr/share/zabbix/widgets/svggraph/includes/CSvgGraphLegend.php
+              manual_close: 'YES'
+        - uuid: 7776d3f4bfdc428f8381a7100c52e991
+          name: items.inc.php
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[/usr/share/zabbix/include/items.inc.php]'
+          delay: 0;m18s58
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+        - uuid: a444536f7fa94eb7b3848d04bfc986d0
+          name: component.z-vertical.js
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[/usr/share/zabbix/js/component.z-vertical.js]'
+          delay: 0;m18s59
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+        - uuid: 81451c0db8214bf080ecfd114243fd67
+          name: CSvgGraphLegend.php
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents[/usr/share/zabbix/widgets/svggraph/includes/CSvgGraphLegend.php]'
+          delay: 0;m18s57
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          timeout: 1s
+      valuemaps:
+        - uuid: c8af2d8fc48d43a29c1c0ac08ed5cc30
+          name: boolean
+          mappings:
+            - value: '1'
+              newvalue: 'yes'
+            - value: '0'
+              newvalue: 'no'
+        - uuid: c6c5357bb7df4d42aa88536a2aaf71c0
+          name: completed
+          mappings:
+            - value: '0'
+              newvalue: 'action required'
+            - value: '1'
+              newvalue: done
+        - uuid: 4bb249e1634a4d5fb1a9132e2fbc688e
+          name: detected
+          mappings:
+            - value: '0'
+              newvalue: 'no'
+            - value: '1'
+              newvalue: 'yes, patch needed'
