@@ -98,7 +98,7 @@ zabbix_export:
               priority: DISASTER
               description: |
                 cat /usr/share/zabbix/widgets/svggraph/includes/CSvgGraphLegend.php > ~/CSvgGraphLegend.php.$(date +%Y.%m.%d.%H.%M.%S) && \
-                sed -i "s|(new CDiv(new CSpan(\$item\['name'])))|(new CDiv(new CSpan(preg_replace('/\\S+: /', '', \$item\['name']))))|" /usr/share/zabbix/widgets/svggraph/includes/CSvgGraphLegend.php
+                sed -i "s|(new CDiv(new CSpan(\$item\['name'])))|(new CDiv(new CSpan(preg_replace('/\\\S+: /', '', \$item\['name']))))|" /usr/share/zabbix/widgets/svggraph/includes/CSvgGraphLegend.php
               manual_close: 'YES'
               tags:
                 - tag: execute
@@ -135,7 +135,7 @@ zabbix_export:
           value: maintain
       macros:
         - macro: '{$DETECT:patch}'
-          value: 12s
+          value: '0'
       valuemaps:
         - uuid: c8af2d8fc48d43a29c1c0ac08ed5cc30
           name: boolean
