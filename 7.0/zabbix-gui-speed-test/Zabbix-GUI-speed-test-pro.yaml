@@ -1,0 +1,338 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 50a34b35b67149a3811445c045d226ae
+      template: 'Zabbix GUI speed test pro'
+      name: 'Zabbix GUI speed test pro'
+      groups:
+        - name: Templates/Modules
+      httptests:
+        - uuid: c0d8abe6a4d14c149289cb763a29c6fd
+          name: 'Frontend status'
+          agent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
+          variables:
+            - name: '{password}'
+              value: '{$BNCHMRK.PASS}'
+            - name: '{path}'
+              value: '{$BNCHMRK.PATH}'
+            - name: '{port}'
+              value: '{$BNCHMRK.PORT}'
+            - name: '{schema}'
+              value: '{$BNCHMRK.SCHEMA}'
+            - name: '{site}'
+              value: '{$BNCHMRK.SITE}'
+            - name: '{username}'
+              value: '{$BNCHMRK.USER}'
+          steps:
+            - name: '01. landing page'
+              url: '{schema}://{site}{port}{path}/index.php'
+              follow_redirects: 'NO'
+              required: 'Zabbix SIA'
+              status_codes: '200'
+            - name: '02. login test'
+              url: '{schema}://{site}{port}{path}/index.php'
+              posts:
+                - name: name
+                  value: '{username}'
+                - name: password
+                  value: '{password}'
+                - name: enter
+                  value: 'Sign in'
+              variables:
+                - name: '{csrf_token}'
+                  value: 'regex:([0-9a-z]{64})'
+              retrieve_mode: BOTH
+            - name: '03. system information'
+              url: '{schema}://{site}{port}{path}/zabbix.php?action=report.status'
+              follow_redirects: 'NO'
+              required: 'High availability cluster'
+              status_codes: '200'
+            - name: '04. proxy list'
+              url: '{schema}://{site}{port}{path}/zabbix.php?action=proxy.list&filter_rst=1'
+              follow_redirects: 'NO'
+              required: 'Last seen'
+              status_codes: '200'
+            - name: '05. template list'
+              url: '{schema}://{site}{port}{path}/zabbix.php?action=template.list&filter_rst=1'
+              follow_redirects: 'NO'
+              required: 'by Zabbix agent'
+              status_codes: '200'
+            - name: '06. host groups'
+              url: '{schema}://{site}{port}{path}/zabbix.php?action=hostgroup.list&filter_rst=1'
+              follow_redirects: 'NO'
+              required: 'Create host group'
+              status_codes: '200'
+            - name: '07. template groups'
+              url: '{schema}://{site}{port}{path}/zabbix.php?action=templategroup.list&filter_rst=1'
+              follow_redirects: 'NO'
+              required: 'Create template group'
+            - name: '08. search linux'
+              url: '{schema}://{site}{port}{path}/zabbix.php?action=search&search=linux'
+              follow_redirects: 'NO'
+              required: 'Search:'
+              status_codes: '200'
+            - name: '09. open host list'
+              url: '{schema}://{site}{port}{path}/zabbix.php?action=host.list&filter_rst=1'
+              follow_redirects: 'NO'
+              required: 'Create host'
+            - name: '10. trigger actions'
+              url: '{schema}://{site}{port}{path}/zabbix.php?action=action.list&eventsource=0&filter_rst=1'
+              follow_redirects: 'NO'
+              required: 'Create action'
+            - name: '11. host view'
+              url: '{schema}://{site}{port}{path}/zabbix.php?action=host.view&filter_reset=1'
+              follow_redirects: 'NO'
+              required: 'Save as'
+              status_codes: '200'
+            - name: '99. log out'
+              url: '{schema}://{site}{port}{path}/index.php'
+              posts:
+                - name: reconnect
+                  value: '1'
+                - name: _csrf_token
+                  value: '{csrf_token}'
+              follow_redirects: 'NO'
+      macros:
+        - macro: '{$BNCHMRK.PASS}'
+          description: '< /dev/urandom tr -dc ''A-Za-z0-9~!@#$%^&*()-+<>.,/\"'' | head -c${1:-20};echo;'
+        - macro: '{$BNCHMRK.PATH}'
+          description: 'use "/zabbix" in case of apache2/httpd'
+        - macro: '{$BNCHMRK.PORT}'
+          description: 'must write ":80" or ":443" or keep field empty'
+        - macro: '{$BNCHMRK.SCHEMA}'
+          value: http
+          description: '"https" or "http"'
+        - macro: '{$BNCHMRK.SITE}'
+        - macro: '{$BNCHMRK.USER}'
+          value: speed
+          description: 'dedicated user'
+      dashboards:
+        - uuid: ba3182c327bc442fb519c745fd2f18cd
+          name: summary
+          pages:
+            - widgets:
+                - type: svggraph
+                  width: '72'
+                  height: '7'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'Download speed for step "01. landing page" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: 'Download speed for step "02. login test" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.2
+                      value: 'Download speed for step "04. proxy list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.3
+                      value: 'Download speed for step "05. template list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.4
+                      value: 'Download speed for step "06. host groups" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.5
+                      value: 'Download speed for step "07. template groups" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.6
+                      value: 'Download speed for step "08. search linux" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.7
+                      value: 'Download speed for step "09. open host list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.8
+                      value: 'Download speed for step "10. trigger actions" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.9
+                      value: 'Download speed for step "99. log out" of scenario "Frontend status".'
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: or.0.color
+                      value: D81B60
+                    - type: STRING
+                      name: or.0.items.0
+                      value: 'Download speed for step "02. login test" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.1.color
+                      value: 6A1B9A
+                    - type: STRING
+                      name: or.1.items.0
+                      value: 'Download speed for step "04. proxy list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.2.color
+                      value: 4527A0
+                    - type: STRING
+                      name: or.2.items.0
+                      value: 'Download speed for step "05. template list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.3.color
+                      value: 1565C0
+                    - type: STRING
+                      name: or.3.items.0
+                      value: 'Download speed for step "06. host groups" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.4.color
+                      value: 0097A7
+                    - type: STRING
+                      name: or.4.items.0
+                      value: 'Download speed for step "07. template groups" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.5.color
+                      value: 2E7D32
+                    - type: STRING
+                      name: or.5.items.0
+                      value: 'Download speed for step "08. search linux" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.6.color
+                      value: FF8F00
+                    - type: STRING
+                      name: or.6.items.0
+                      value: 'Download speed for step "09. open host list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.7.color
+                      value: E64A19
+                    - type: STRING
+                      name: or.7.items.0
+                      value: 'Download speed for step "10. trigger actions" of scenario "Frontend status".'
+                    - type: STRING
+                      name: reference
+                      value: EANVI
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  'y': '7'
+                  width: '72'
+                  height: '7'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: 0080FF
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '2'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'Response time for step "01. landing page" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: 'Response time for step "02. login test" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.2
+                      value: 'Response time for step "03. system information" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.3
+                      value: 'Response time for step "04. proxy list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.4
+                      value: 'Response time for step "05. template list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.5
+                      value: 'Response time for step "06. host groups" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.6
+                      value: 'Response time for step "07. template groups" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.7
+                      value: 'Response time for step "08. search linux" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.8
+                      value: 'Response time for step "09. open host list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.9
+                      value: 'Response time for step "10. trigger actions" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.10
+                      value: 'Response time for step "11. host view" of scenario "Frontend status".'
+                    - type: STRING
+                      name: ds.0.items.11
+                      value: 'Response time for step "99. log out" of scenario "Frontend status".'
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '3'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: or.0.color
+                      value: D81B60
+                    - type: STRING
+                      name: or.0.items.0
+                      value: 'Download speed for step "02. login test" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.1.color
+                      value: 6A1B9A
+                    - type: STRING
+                      name: or.1.items.0
+                      value: 'Download speed for step "04. proxy list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.2.color
+                      value: 4527A0
+                    - type: STRING
+                      name: or.2.items.0
+                      value: 'Download speed for step "05. template list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.3.color
+                      value: 1565C0
+                    - type: STRING
+                      name: or.3.items.0
+                      value: 'Download speed for step "06. host groups" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.4.color
+                      value: 0097A7
+                    - type: STRING
+                      name: or.4.items.0
+                      value: 'Download speed for step "07. template groups" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.5.color
+                      value: 2E7D32
+                    - type: STRING
+                      name: or.5.items.0
+                      value: 'Download speed for step "08. search linux" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.6.color
+                      value: FF8F00
+                    - type: STRING
+                      name: or.6.items.0
+                      value: 'Download speed for step "09. open host list" of scenario "Frontend status".'
+                    - type: STRING
+                      name: or.7.color
+                      value: E64A19
+                    - type: STRING
+                      name: or.7.items.0
+                      value: 'Download speed for step "10. trigger actions" of scenario "Frontend status".'
+                    - type: STRING
+                      name: reference
+                      value: HBBAA
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
