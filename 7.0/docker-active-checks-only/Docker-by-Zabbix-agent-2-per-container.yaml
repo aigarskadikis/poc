@@ -1,0 +1,115 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: c954f41d0ba94683975468908433e083
+      template: 'Docker by Zabbix agent 2 per container'
+      name: 'Docker by Zabbix agent 2 per container'
+      description: |
+        # cat /etc/zabbix/one_host_per_container.conf
+        HostMetadata=docker
+        HostnameItem=list.pods
+        ListenPort=13050
+        LogFile=/tmp/pods.log
+        PidFile=/tmp/pods.pid
+        PluginSocket=/tmp/pods.sock
+        ServerActive=aigars.zabbix.cloud
+        Timeout=28
+        UserParameter=list.pods,docker ps --all --no-trunc --format {{.Names}} | paste -sd,
+        
+        # allow zabbix service user to access stats from docker
+        usermod -a -G docker zabbix
+        
+        # check if service user is part of docker group
+        id zabbix
+        
+        # list all containers
+        docker ps --all --no-trunc --format {{.Names}}
+        
+        # launch manually agent2 in foregroud
+        /usr/sbin/zabbix_agent2 --config /etc/zabbix/one_host_per_container.conf --foreground
+        
+        # enter service user
+        su - zabbix -s /bin/bash
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 81bbe14a9b684c53b79f3dae1265aee0
+          name: 'Docker CPU percent usage'
+          type: DEPENDENT
+          key: docker.container_stats.cpu_pct_usage
+          delay: '0'
+          value_type: FLOAT
+          units: '%'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.cpu_stats.cpu_usage.percent_usage
+          master_item:
+            key: 'docker.container_stats["/{HOST.HOST}"]'
+        - uuid: cc5c65002b0049e3b251174fe5b731eb
+          name: 'Docker memory usage'
+          type: DEPENDENT
+          key: docker.container_stats.memory.usage
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.memory_stats.usage
+          master_item:
+            key: 'docker.container_stats["/{HOST.HOST}"]'
+        - uuid: 02a17e0b46464a93959ca640e4aa1bcf
+          name: 'Docker Current PIDs count'
+          type: DEPENDENT
+          key: docker.container_stats.pids_stats.current
+          delay: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.pids_stats.current
+          master_item:
+            key: 'docker.container_stats["/{HOST.HOST}"]'
+        - uuid: 08ff88e16bb2476da24166e607962302
+          name: 'Get stats'
+          type: ZABBIX_ACTIVE
+          key: 'docker.container_stats["/{HOST.HOST}"]'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+        - uuid: 142e2a1c7f804fc88c42eb0db10596ef
+          name: 'Docker Networks bytes received per second'
+          type: DEPENDENT
+          key: docker.networks.rx_bytes
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.networks[*].rx_bytes.sum()'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: 'docker.container_stats["/{HOST.HOST}"]'
+        - uuid: 4d847fda1bbc447a8984bee2bbd22ddb
+          name: 'Docker Networks bytes sent per second'
+          type: DEPENDENT
+          key: docker.networks.tx_bytes
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.networks[*].tx_bytes.sum()'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: CHANGE_PER_SECOND
+              parameters:
+                - ''
+          master_item:
+            key: 'docker.container_stats["/{HOST.HOST}"]'
