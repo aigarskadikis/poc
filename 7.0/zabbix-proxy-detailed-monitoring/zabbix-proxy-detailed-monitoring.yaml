@@ -1,0 +1,195 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  host_groups:
+    - uuid: c1183aaa022f4779a41bdaac2562cb6e
+      name: PIDs
+  templates:
+    - uuid: 0d5a055d154d480ea8025e0c27491b74
+      template: 'zabbix proxy detailed monitoring'
+      name: 'zabbix proxy detailed monitoring'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: af87676be1c443b98732ee7dd0d921d7
+          name: zabbix.proxy.children.pid.get
+          key: zabbix.proxy.children.pid.get
+          value_type: LOG
+          trends: '0'
+      discovery_rules:
+        - uuid: 879ccf94183248bb8042fffa766bcc6c
+          name: pid
+          type: DEPENDENT
+          key: pid
+          delay: '0'
+          lifetime_type: DELETE_IMMEDIATELY
+          lifetime: '0'
+          host_prototypes:
+            - uuid: d7d4410581a8465ebebf2575f88378b5
+              host: '{#NAME} {#HOST}'
+              name: '{#NAME} {#HOST}'
+              inventory_mode: AUTOMATIC
+              group_links:
+                - group:
+                    name: PIDs
+              group_prototypes:
+                - name: 'zabbix_proxy/{#HOST}'
+              templates:
+                - name: 'zabbix proxy pid'
+              macros:
+                - macro: '{$HOST}'
+                  value: '{#HOST}'
+                - macro: '{$PID}'
+                  value: '{#PID}'
+          master_item:
+            key: zabbix.proxy.children.pid.get
+          lld_macro_paths:
+            - lld_macro: '{#HOST}'
+              path: '$.[''host'']'
+            - lld_macro: '{#NAME}'
+              path: '$.[''name'']'
+            - lld_macro: '{#PID}'
+              path: '$.[''pid'']'
+    - uuid: a6fab2f02f134908be1954fd52399e70
+      template: 'zabbix proxy pid'
+      name: 'zabbix proxy pid'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: a2db1800461f44fca83af0b832a151dd
+          name: RSS
+          type: DEPENDENT
+          key: RSS
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'VmRSS:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: status
+          tags:
+            - tag: top
+              value: RSS
+        - uuid: 67e70b35b2334d229c8d8260a2d86a90
+          name: stat
+          type: DEPENDENT
+          key: stat
+          delay: '0'
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/stat]'
+        - uuid: c5f5784ba35e4acca46a8b5abff98fab
+          name: status
+          type: DEPENDENT
+          key: status
+          delay: '0'
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
+        - uuid: 83ba8c4a9d36485db6b7d99f47aa24fe
+          name: 'proc pid status root'
+          key: 'vfs.file.contents[/proc/{$PID}/status]'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          timeout: 1s
+        - uuid: 2a74b5d3fbbf4353919a648d8811eab6
+          name: 'proc pid stat root'
+          key: 'vfs.file.contents[/proc/{$PID}/stat]'
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          timeout: 1s
+        - uuid: 576a12de68844486ab181cd8e0159595
+          name: VSZ
+          type: DEPENDENT
+          key: VSZ
+          delay: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - \S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)
+                - \1
+          master_item:
+            key: stat
+          tags:
+            - tag: top
+              value: VSZ
+      dashboards:
+        - uuid: ed39f5ae74734c108c870bcfa4567956
+          name: Memory
+          pages:
+            - widgets:
+                - type: svggraph
+                  name: 'VSZ and RSS'
+                  width: '72'
+                  height: '6'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: RSS
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: STRING
+                      name: ds.1.color
+                      value: FFD54F
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: VSZ
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '2'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: LCCNI
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
