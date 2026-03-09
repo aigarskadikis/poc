@@ -1,0 +1,680 @@
+zabbix_export:
+  version: '7.4'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 1a615d32a9db492c95c8f44911db3015
+      template: 'Zabbix resource consumptions memory leak'
+      name: 'Zabbix resource consumptions memory leak'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 22adf04abd65462cb92c71cf1a018c83
+          name: gate
+          type: DEPENDENT
+          key: all.pids.gate
+          value_type: LOG
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  var result = [];
+                  
+                  for (var i = 0; i < data.length; i++) {
+                      var obj = data[i];
+                  
+                      if (obj.cmdline) {
+                          obj.cmdline = obj.cmdline.replace(/ \[.*/, '').replace(/#/, '').replace(/ started/, '');
+                      }
+                  
+                      result.push(obj);
+                  }
+                  
+                  return JSON.stringify(result);
+          master_item:
+            key: 'proc.get[,zabbix,".*zabbix_.*",]'
+        - uuid: c028e71cafbf49a8b44df0b8a0fdc882
+          name: all
+          type: ZABBIX_ACTIVE
+          key: 'proc.get[,zabbix,".*zabbix_.*",]'
+          delay: 0;s46
+          history: '0'
+          value_type: LOG
+          timeout: 3s
+      discovery_rules:
+        - uuid: 1bf792d4fccb40a69af0c12fbccc9dc8
+          name: process
+          type: DEPENDENT
+          key: process
+          filter:
+            conditions:
+              - macro: '{#CMDLINE}'
+                value: '.*\.conf'
+                operator: NOT_MATCHES_REGEX
+          lifetime_type: DELETE_IMMEDIATELY
+          item_prototypes:
+            - uuid: fc77ebb886984cf0ade4c1315613e2eb
+              name: '{#CMDLINE} raw'
+              type: DEPENDENT
+              key: 'all["{#CMDLINE}"]'
+              history: '0'
+              value_type: LOG
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''cmdline''] == ''{#CMDLINE}'')].first()'
+              master_item:
+                key: all.pids.gate
+              tags:
+                - tag: component
+                  value: raw
+            - uuid: e3ec2a591eb340b4ae901159fca2b66b
+              name: 'cpu: {{#CMDLINE}.regsub("(:)* (.*)",\2)}'
+              type: DEPENDENT
+              key: 'cputime["{#CMDLINE}"]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - 'var i=JSON.parse(value);return i.cputime_user+i.cputime_system;'
+                - type: SIMPLE_CHANGE
+              master_item:
+                key: 'all["{#CMDLINE}"]'
+              tags:
+                - tag: bin
+                  value: '{#NAME}'
+                - tag: category
+                  value: '{{#CMDLINE}.regsub(": ([a-z ]+)( )*",\1)}'
+                - tag: cpu
+                  value: total
+            - uuid: 53e4621b9eff48d5815f96573fe60e9f
+              name: 'cputime_system: {{#CMDLINE}.regsub("(:)* (.*)",\2)}'
+              type: DEPENDENT
+              key: 'cputime_system["{#CMDLINE}"]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.cputime_system
+                - type: SIMPLE_CHANGE
+              master_item:
+                key: 'all["{#CMDLINE}"]'
+              tags:
+                - tag: bin
+                  value: '{#NAME}'
+                - tag: category
+                  value: '{{#CMDLINE}.regsub(": ([a-z ]+)( )*",\1)}'
+                - tag: cpu
+                  value: system
+            - uuid: 034f4007f9764d2e9ecfae496570cb4a
+              name: 'cputime_user: {{#CMDLINE}.regsub("(:)* (.*)",\2)}'
+              type: DEPENDENT
+              key: 'cputime_user["{#CMDLINE}"]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.cputime_user
+                - type: SIMPLE_CHANGE
+              master_item:
+                key: 'all["{#CMDLINE}"]'
+              tags:
+                - tag: bin
+                  value: '{#NAME}'
+                - tag: category
+                  value: '{{#CMDLINE}.regsub(": ([a-z ]+)( )*",\1)}'
+                - tag: cpu
+                  value: user
+            - uuid: 73b52f6f112e49a883db75fb018c0e07
+              name: 'ctx_switches: {#CMDLINE}'
+              type: DEPENDENT
+              key: 'ctx_switches["{#CMDLINE}"]'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.ctx_switches
+                - type: SIMPLE_CHANGE
+              master_item:
+                key: 'all["{#CMDLINE}"]'
+              tags:
+                - tag: bin
+                  value: '{#NAME}'
+                - tag: category
+                  value: '{{#CMDLINE}.regsub(": ([a-z ]+)( )*",\1)}'
+                - tag: ctx
+                  value: switches
+            - uuid: d61fe0db859d465dbf901fc911d53102
+              name: 'data: {{#CMDLINE}.regsub("(:)* (.*)",\2)}'
+              type: DEPENDENT
+              key: 'data["{#CMDLINE}"]'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.data
+              master_item:
+                key: 'all["{#CMDLINE}"]'
+              tags:
+                - tag: bin
+                  value: '{#NAME}'
+                - tag: category
+                  value: '{{#CMDLINE}.regsub(": ([a-z ]+)( )*",\1)}'
+                - tag: memory
+                  value: data
+            - uuid: 65f3b103a2f84faeac7f5cc7fa40ebea
+              name: 'pmem: {#CMDLINE}'
+              type: DEPENDENT
+              key: 'pmem["{#CMDLINE}"]'
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.pmem
+              master_item:
+                key: 'all["{#CMDLINE}"]'
+              tags:
+                - tag: bin
+                  value: '{#NAME}'
+                - tag: category
+                  value: '{{#CMDLINE}.regsub(": ([a-z ]+)( )*",\1)}'
+                - tag: memory
+                  value: pmem
+            - uuid: b489ab0628994912a1695d5c184f703f
+              name: 'rss: {{#CMDLINE}.regsub("(:)* (.*)",\2)}'
+              type: DEPENDENT
+              key: 'rss["{#CMDLINE}"]'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.rss
+              master_item:
+                key: 'all["{#CMDLINE}"]'
+              tags:
+                - tag: bin
+                  value: '{#NAME}'
+                - tag: category
+                  value: '{{#CMDLINE}.regsub(": ([a-z ]+)( )*",\1)}'
+                - tag: memory
+                  value: rss
+            - uuid: 3cf6af85c5b04d4c8030a7ffa3c87142
+              name: 'swap: {{#CMDLINE}.regsub("(:)* (.*)",\2)}'
+              type: DEPENDENT
+              key: 'swap["{#CMDLINE}"]'
+              units: B
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $.swap
+              master_item:
+                key: 'all["{#CMDLINE}"]'
+              tags:
+                - tag: bin
+                  value: '{#NAME}'
+                - tag: category
+                  value: '{{#CMDLINE}.regsub(": ([a-z ]+)( )*",\1)}'
+                - tag: memory
+                  value: swap
+          graph_prototypes:
+            - uuid: a057e80f55f84a3e9a7859496775e880
+              name: 'Resources per {#NAME} {#CMDLINE}'
+              ymin_type_1: FIXED
+              graph_items:
+                - drawtype: BOLD_LINE
+                  color: '000000'
+                  yaxisside: RIGHT
+                  calc_fnc: ALL
+                  item:
+                    host: 'Zabbix resource consumptions memory leak'
+                    key: 'cputime["{#CMDLINE}"]'
+                - sortorder: '1'
+                  drawtype: BOLD_LINE
+                  color: FFBF00
+                  calc_fnc: ALL
+                  item:
+                    host: 'Zabbix resource consumptions memory leak'
+                    key: 'rss["{#CMDLINE}"]'
+                - sortorder: '2'
+                  drawtype: BOLD_LINE
+                  color: FF0000
+                  calc_fnc: ALL
+                  item:
+                    host: 'Zabbix resource consumptions memory leak'
+                    key: 'swap["{#CMDLINE}"]'
+          master_item:
+            key: all.pids.gate
+          lld_macro_paths:
+            - lld_macro: '{#CMDLINE}'
+              path: '$.[''cmdline'']'
+            - lld_macro: '{#NAME}'
+              path: '$.[''name'']'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // pick up bare minimum columns
+                  var input = JSON.parse(value);
+                  var lld = [];
+                  for (i = 0; i < input.length; i++)
+                  {
+                    var row = {};
+                    row["name"] = input[i].name;
+                    row["cmdline"] = input[i].cmdline;
+                    lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+      dashboards:
+        - uuid: 970b4823420144bfbf5f1c4e5477223f
+          name: Debug
+          display_period: '3600'
+          auto_start: 'NO'
+          pages:
+            - name: Leaders
+              widgets:
+                - type: svggraph
+                  name: 'Memory leaders'
+                  width: '18'
+                  height: '6'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'rss: *'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend
+                      value: '0'
+                    - type: STRING
+                      name: reference
+                      value: PMPFB
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: CPU
+                  'y': '6'
+                  width: '24'
+                  height: '6'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'cpu: *'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend
+                      value: '0'
+                    - type: STRING
+                      name: reference
+                      value: JWBYL
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: topitems
+                  name: Swap
+                  x: '18'
+                  width: '18'
+                  height: '6'
+                  fields:
+                    - type: STRING
+                      name: columns.0.base_color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '*'
+                    - type: INTEGER
+                      name: columns.0.item_tags.0.operator
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.item_tags.0.tag
+                      value: memory
+                    - type: STRING
+                      name: columns.0.item_tags.0.value
+                      value: swap
+                    - type: STRING
+                      name: columns.0.max
+                      value: '100000000'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.thresholds.0.color
+                      value: FF465C
+                    - type: STRING
+                      name: columns.0.thresholds.0.threshold
+                      value: '1'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                - type: topitems
+                  name: 'CPU burst'
+                  x: '24'
+                  'y': '6'
+                  width: '24'
+                  height: '17'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.decimal_places
+                      value: '0'
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '6'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '*'
+                    - type: INTEGER
+                      name: columns.0.item_tags.0.operator
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.item_tags.0.tag
+                      value: cpu
+                    - type: STRING
+                      name: columns.0.item_tags.0.value
+                      value: total
+                    - type: INTEGER
+                      name: columns.0.sparkline.fill
+                      value: '5'
+                    - type: INTEGER
+                      name: columns.0.sparkline.history
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: columns.0.sparkline.width
+                      value: '0'
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '1'
+                - type: topitems
+                  name: 'Resident set size'
+                  x: '36'
+                  width: '18'
+                  height: '6'
+                  fields:
+                    - type: STRING
+                      name: columns.0.base_color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '*'
+                    - type: INTEGER
+                      name: columns.0.item_tags.0.operator
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.item_tags.0.tag
+                      value: memory
+                    - type: STRING
+                      name: columns.0.item_tags.0.value
+                      value: rss
+                    - type: STRING
+                      name: columns.0.max
+                      value: '120000000'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.thresholds.0.color
+                      value: FFD54F
+                    - type: STRING
+                      name: columns.0.thresholds.0.threshold
+                      value: '30000000'
+                    - type: STRING
+                      name: columns.0.thresholds.1.color
+                      value: FF465C
+                    - type: STRING
+                      name: columns.0.thresholds.1.threshold
+                      value: '60000000'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                - type: topitems
+                  name: 'CPU per period'
+                  x: '48'
+                  'y': '6'
+                  width: '24'
+                  height: '17'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: INTEGER
+                      name: columns.0.decimal_places
+                      value: '0'
+                    - type: INTEGER
+                      name: columns.0.history
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '*'
+                    - type: INTEGER
+                      name: columns.0.item_tags.0.operator
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.item_tags.0.tag
+                      value: cpu
+                    - type: STRING
+                      name: columns.0.item_tags.0.value
+                      value: total
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                - type: topitems
+                  name: Data
+                  x: '54'
+                  width: '18'
+                  height: '6'
+                  fields:
+                    - type: STRING
+                      name: columns.0.base_color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '*'
+                    - type: INTEGER
+                      name: columns.0.item_tags.0.operator
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.item_tags.0.tag
+                      value: memory
+                    - type: STRING
+                      name: columns.0.item_tags.0.value
+                      value: data
+                    - type: STRING
+                      name: columns.0.max
+                      value: '240000000'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.thresholds.0.color
+                      value: FFD54F
+                    - type: STRING
+                      name: columns.0.thresholds.0.threshold
+                      value: '80000000'
+                    - type: STRING
+                      name: columns.0.thresholds.1.color
+                      value: FF465C
+                    - type: STRING
+                      name: columns.0.thresholds.1.threshold
+                      value: '160000000'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+            - name: 'CPU system / user time'
+              widgets:
+                - type: topitems
+                  name: 'CPU system'
+                  width: '24'
+                  height: '17'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: INTEGER
+                      name: columns.0.decimal_places
+                      value: '0'
+                    - type: INTEGER
+                      name: columns.0.history
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '*'
+                    - type: INTEGER
+                      name: columns.0.item_tags.0.operator
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.item_tags.0.tag
+                      value: cpu
+                    - type: STRING
+                      name: columns.0.item_tags.0.value
+                      value: system
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                - type: topitems
+                  name: 'CPU user'
+                  x: '24'
+                  width: '24'
+                  height: '17'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: INTEGER
+                      name: columns.0.decimal_places
+                      value: '0'
+                    - type: INTEGER
+                      name: columns.0.history
+                      value: '1'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '*'
+                    - type: INTEGER
+                      name: columns.0.item_tags.0.operator
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.item_tags.0.tag
+                      value: cpu
+                    - type: STRING
+                      name: columns.0.item_tags.0.value
+                      value: user
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
