@@ -1,0 +1,81 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: dc579cd7a1a34222933f24f52a68bcd8
+      name: 'Linux server'
+  templates:
+    - uuid: 40545c6926c1430288660184a2954987
+      template: 'Website monitoring - status and redirect check'
+      name: 'Website monitoring - status and redirect check'
+      description: 'Basic web monitoring - checking if website is available'
+      groups:
+        - name: 'Linux server'
+      httptests:
+        - uuid: ed3978ae5c1447f8a5f9d86e28d541f8
+          name: 'Website redirects and status check'
+          delay: 2m
+          attempts: '2'
+          agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
+          steps:
+            - name: 'Website redirect check'
+              url: 'http://{$WEB.URL}'
+              follow_redirects: 'NO'
+              timeout: 5s
+              status_codes: '301'
+            - name: 'Main page'
+              url: 'https://{$WEB.URL}'
+              status_codes: '200'
+          tags:
+            - tag: Application
+              value: Web
+      tags:
+        - tag: Application
+          value: Web
+      macros:
+        - macro: '{$WEB.URL}'
+          description: 'Use just domain and skip protocol (http/https) so it can be reused for redirect check'
+  triggers:
+    - uuid: ab451169a06340138e0ab059c240e4b8
+      expression: |
+        length(last(/Website monitoring - status and redirect check/web.test.error[Website redirects and status check]))>0 and
+        last(/Website monitoring - status and redirect check/web.test.fail[Website redirects and status check],#1)>0
+      name: 'Error with redirect/status: {$WEB.URL} - 2 minutes'
+      priority: AVERAGE
+      description: |
+        Error:  {ITEM.VALUE1}
+        Step: {ITEM.VALUE2}
+      manual_close: 'YES'
+      dependencies:
+        - name: 'Error with redirect/status: {$WEB.URL} - 5 minutes'
+          expression: |
+            length(last(/Website monitoring - status and redirect check/web.test.error[Website redirects and status check]))>0 and
+            min(/Website monitoring - status and redirect check/web.test.fail[Website redirects and status check],5m)>0
+        - name: 'Error with redirect/status: {$WEB.URL} - 10 minutes'
+          expression: |
+            length(last(/Website monitoring - status and redirect check/web.test.error[Website redirects and status check]))>0 and
+            min(/Website monitoring - status and redirect check/web.test.fail[Website redirects and status check],10m)>0
+    - uuid: bae01cec82504c62b77899782f44255b
+      expression: |
+        length(last(/Website monitoring - status and redirect check/web.test.error[Website redirects and status check]))>0 and
+        min(/Website monitoring - status and redirect check/web.test.fail[Website redirects and status check],5m)>0
+      name: 'Error with redirect/status: {$WEB.URL} - 5 minutes'
+      priority: HIGH
+      description: |
+        Error:  {ITEM.VALUE1}
+        Step: {ITEM.VALUE2}
+      manual_close: 'YES'
+      dependencies:
+        - name: 'Error with redirect/status: {$WEB.URL} - 10 minutes'
+          expression: |
+            length(last(/Website monitoring - status and redirect check/web.test.error[Website redirects and status check]))>0 and
+            min(/Website monitoring - status and redirect check/web.test.fail[Website redirects and status check],10m)>0
+    - uuid: 2f5ab944c35744b3bc33d9ee29f14ede
+      expression: |
+        length(last(/Website monitoring - status and redirect check/web.test.error[Website redirects and status check]))>0 and
+        min(/Website monitoring - status and redirect check/web.test.fail[Website redirects and status check],10m)>0
+      name: 'Error with redirect/status: {$WEB.URL} - 10 minutes'
+      priority: DISASTER
+      description: |
+        Error:  {ITEM.VALUE1}
+        Step:  {ITEM.VALUE2}
+      manual_close: 'YES'
