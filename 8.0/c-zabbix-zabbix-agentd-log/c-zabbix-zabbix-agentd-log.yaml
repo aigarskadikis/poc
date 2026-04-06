@@ -1,0 +1,111 @@
+zabbix_export:
+  version: '8.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 5b31c6d3b1894a95ad5900818511b6e4
+      template: 'c zabbix zabbix agentd log'
+      name: 'c zabbix zabbix agentd log'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: d21ae05a45ae44f5a929532ed14efe1f
+          name: hashtag.detected
+          type: DEPENDENT
+          key: hashtag.detected
+          value_type: LOG
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '.* #\d+ .*'
+                - \0
+              error_handler: DISCARD_VALUE
+            - type: REGEX
+              parameters:
+                - '(\d+):\d+:\d+\.\d+ .* \[(.*)\]'
+                - '[{"pid":"\1","name":"\2"}]'
+            - type: STR_REPLACE
+              parameters:
+                - '#'
+                - ''
+          master_item:
+            key: 'log["{$AGENTD.LOG}",,,1]'
+          tags:
+            - tag: agentd
+        - uuid: 63de993b2c65421cbeab31ebb5097458
+          name: 'zabbix_agentd.log raw'
+          type: ZABBIX_ACTIVE
+          key: 'log["{$AGENTD.LOG}",,,1]'
+          delay: 1s
+          value_type: LOG
+          logtimefmt: 'pppppppppp:yyyyMMdd:hhmmss'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // code is longer, but it not using regEx which is more CPU friendly
+                  function formatLine(line) {
+                      var i = 0;
+                      var len = line.length;
+                  
+                      // Skip leading spaces manually (faster than regex)
+                      while (i < len && line.charCodeAt(i) === 32) {
+                          i++;
+                      }
+                  
+                      // Find first colon
+                      var colon = line.indexOf(':', i);
+                      if (colon === -1) return line; // fallback
+                  
+                      var first = line.substring(i, colon);
+                      var rest = line.substring(colon); // includes ':'
+                  
+                      // Precompute padding (avoids loop concatenation)
+                      var padLen = 10 - first.length;
+                      var padding = '';
+                  
+                      if (padLen > 0) {
+                          // Small fixed padding is cheap
+                          padding = '          '.substring(0, padLen);
+                      }
+                  
+                      return padding + first + rest;
+                  }
+                  
+                  return formatLine(value);
+          timeout: 1s
+          tags:
+            - tag: agentd
+      discovery_rules:
+        - uuid: 46d3fcf6fd0a434fbcff5f9bd5bc4c77
+          name: agentd
+          type: DEPENDENT
+          key: agentd
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: cc4d51e50aa04d35ab6026a3f73e12c6
+              name: '{#NAME}'
+              type: DEPENDENT
+              key: 'pid[{#NAME}]'
+              value_type: LOG
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '{#PID}:.*'
+                    - \0
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'log["{$AGENTD.LOG}",,,1]'
+              tags:
+                - tag: agentd
+          master_item:
+            key: hashtag.detected
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''name'']'
+            - lld_macro: '{#PID}'
+              path: '$.[''pid'']'
+      macros:
+        - macro: '{$AGENTD.LOG}'
+          value: 'C:\zabbix\zabbix_agentd.log'
