@@ -1,0 +1,251 @@
+zabbix_export:
+  version: '8.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 2d735561b9c7463a894b4351c592942f
+      template: 'podman zabbix_sender monitoring json'
+      name: 'podman zabbix_sender monitoring json'
+      description: |
+        # list all containrs
+        podman stats --all --format json
+        
+        # compact
+        jq -c
+        
+        # insert host destination and item key destination
+        sed 's|^|do.prx.vm.pod.gnt1.el9 json |'
+        
+        # deliver
+        zabbix_sender --zabbix-server 127.0.0.1 --real-time --input-file -
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: b31e354337fe4c98be2925abde9b2018
+          name: 'podman stats'
+          type: TRAP
+          key: json
+          history: '0'
+          value_type: LOG
+          tags:
+            - tag: live
+              value: pod
+      discovery_rules:
+        - uuid: f6c32adb933d44cf92a80954c87c72a4
+          name: live.pod
+          type: DEPENDENT
+          key: live.pod
+          lifetime: 1h
+          item_prototypes:
+            - uuid: 6523dc17893947479fac153d472a094d
+              name: 'cpu_percent[{#NAME}]'
+              type: DEPENDENT
+              key: 'cpu_percent[{#NAME}]'
+              value_type: FLOAT
+              trends: '0'
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''name''] == ''{#NAME}'')].cpu_percent.first()'
+                - type: STR_REPLACE
+                  parameters:
+                    - '%'
+                    - ''
+              master_item:
+                key: json
+              tags:
+                - tag: live
+                  value: pod
+            - uuid: 24463be719a44f6bab1f294bfdbe57e3
+              name: 'cpu_time[{#NAME}]'
+              type: DEPENDENT
+              key: 'cpu_time[{#NAME}]'
+              value_type: FLOAT
+              trends: '0'
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''name''] == ''{#NAME}'')].cpu_time.first()'
+                - type: JAVASCRIPT
+                  parameters:
+                    - |
+                      var input = value;
+                      
+                      var hPos = input.indexOf("h");
+                      var mPos = input.indexOf("m");
+                      var sPos = input.indexOf("s");
+                      
+                      var hours = 0;
+                      var minutes = 0;
+                      var seconds = 0;
+                      
+                      if (hPos != -1) {
+                          hours = Number(input.substring(0, hPos));
+                      }
+                      
+                      if (mPos != -1) {
+                          minutes = Number(input.substring(hPos + 1, mPos));
+                      }
+                      
+                      if (sPos != -1) {
+                          seconds = Number(input.substring(mPos + 1, sPos));
+                      }
+                      
+                      var result = (hours * 3600) + (minutes * 60) + seconds;
+                      
+                      return result;
+                - type: SIMPLE_CHANGE
+              master_item:
+                key: json
+              tags:
+                - tag: live
+                  value: pod
+            - uuid: 3ae4eae0e7ec4233818e5386c370e0c1
+              name: 'mem_percent[{#NAME}]'
+              type: DEPENDENT
+              key: 'mem_percent[{#NAME}]'
+              value_type: FLOAT
+              trends: '0'
+              units: '%'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''name''] == ''{#NAME}'')].mem_percent.first()'
+                - type: STR_REPLACE
+                  parameters:
+                    - '%'
+                    - ''
+              master_item:
+                key: json
+              tags:
+                - tag: live
+                  value: pod
+          master_item:
+            key: json
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  var lines=JSON.parse(value);
+                  for (i = 0; i < lines.length; i++)
+                  {  
+                     var row = {};  
+                     row["{#NAME}"] = lines[i].name; 
+                     lld.push(row);
+                  } 
+                  return JSON.stringify(lld);
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+      macros:
+        - macro: '{$PODMAN.STATS}'
+          value: 'podman stats --all --format json'
+      dashboards:
+        - uuid: 5bc2d19dca3947fc90874938c2144959
+          name: 'Live pods'
+          display_period: '3600'
+          auto_start: 'NO'
+          pages:
+            - widgets:
+                - type: svggraph
+                  name: '%'
+                  width: '24'
+                  height: '11'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.aggregate_function
+                      value: '5'
+                    - type: STRING
+                      name: ds.0.aggregate_interval
+                      value: 1m
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'cpu_percent*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: OXOHG
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: topitems
+                  name: 'CPU time'
+                  x: '24'
+                  width: '24'
+                  height: '11'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '2'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: 'cpu_time*'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '1'
+                - type: topitems
+                  name: 'CPU %'
+                  x: '48'
+                  width: '24'
+                  height: '11'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '6'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: 'cpu_percent*'
+                    - type: STRING
+                      name: columns.0.sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '1'
