@@ -1,0 +1,1463 @@
+zabbix_export:
+  version: '8.0'
+  template_groups:
+    - uuid: bc222ed8fc494eb5851b7f65b54af37e
+      name: pidmon
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  host_groups:
+    - uuid: 0cb0914c97d349acbaf3082e1637af24
+      name: p/z
+  templates:
+    - uuid: 43c25f57edaa409b8624e6657d7b7281
+      template: 'pid mon'
+      name: 'pid mon'
+      groups:
+        - name: pidmon
+      items:
+        - uuid: ce6951aecef449bcb835ad44362222e7
+          name: cmdline.list
+          type: DEPENDENT
+          key: cmdline.list
+          history: '0'
+          value_type: LOG
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  var lines = JSON.parse(value);
+                  var output = '';
+                  for (i = 0; i < lines.length; i++) {
+                  output = output + lines[i].cmdline.replace(/\s+$/, '').replace(/ \[[^\]]+\]$/, '');
+                  if (i !== lines.length) output = output + '\n';
+                  }
+                  
+                  return output;
+          master_item:
+            key: gate
+          tags:
+            - tag: ppid
+        - uuid: 6bf0832ab68749258f05a95eb7ef8369
+          name: element.clount.of.process
+          type: DEPENDENT
+          key: element.clount.of.process
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.length()
+          master_item:
+            key: process.path.translated
+          tags:
+            - tag: ppid
+          triggers:
+            - uuid: 6ba20c8da1554484ae616d6d14221768
+              expression: 'last(/pid mon/element.clount.of.process) > ( {$SCH:delay} - 20 )'
+              name: 'process monitoring will reach overlaping soon'
+              event_name: 'process monitoring has reached {$SCH:delay} elements'
+              priority: DISASTER
+              manual_close: 'YES'
+        - uuid: a4becf905f2d486e840a730cd6c9c3e5
+          name: gate
+          type: DEPENDENT
+          key: gate
+          history: '0'
+          value_type: TEXT
+          inventory_link: HARDWARE_FULL
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''ppid''] == 2))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.["ppid"] > 0)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?((@.[''user''] =~ ''^{$USER:target}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?((@.[''name''] =~ ''^{$COMM:target}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''cmdline''] =~ ''digitalocean''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''name''] =~ ''^{$COMM:ignore}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  var lines = JSON.parse(value);
+                  for (i = 0; i < lines.length; i++) {
+                    var row = {};
+                    row["pid"] = lines[i].pid;
+                    row["ppid"] = lines[i].ppid;
+                    row["name"] = lines[i].name;
+                  
+                  if (lines[i].cmdline.match(/(postgres: \S+ \S+ [0-9\.]+)/)) {
+                  row["cmdline"] = lines[i].cmdline.match(/(postgres: \S+ \S+ [0-9\.]+)/)[1];
+                  } else {
+                  row["cmdline"] = lines[i].cmdline.replace(/\s+$/, '').replace(/ \[[^\]]+\]$/, '');
+                  }
+                  
+                  lld.push(row);
+                  }
+                  
+                  return JSON.stringify(lld);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: protect
+          tags:
+            - tag: ppid
+        - uuid: fb93e94f98cb45ad8377fdfb481d4791
+          name: memory.leaders
+          type: DEPENDENT
+          key: memory.leaders
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''ppid''] == 2))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.["ppid"] > 0)]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var lld = [];
+                  var lines = JSON.parse(value);
+                  for (i = 0; i < lines.length; i++) {
+                    var row = {};
+                    row["cmdline"] = lines[i].cmdline;
+                    row["rss"] = lines[i].rss;
+                  lld.push(row);
+                  }
+                  
+                  return JSON.stringify(lld);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // parse to array (if you already have an array object, skip this and set arr = yourArray)
+                  var arr = JSON.parse(value);
+                  
+                  // sort in-place by rss descending
+                  arr.sort(function(a, b) {
+                    var ra = Number((a && a.rss) || 0);
+                    var rb = Number((b && b.rss) || 0);
+                    return rb - ra; // rb - ra => descending order
+                  });
+                  
+                  // pretty-print result
+                  return JSON.stringify(arr, null, 2);
+            - type: JSONPATH
+              parameters:
+                - '$.[0:{$LEADERS}]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+          master_item:
+            key: protect
+        - uuid: 790986f8dd344ab5b231d571f03e59ba
+          name: 'pid max'
+          type: DEPENDENT
+          key: pid.max
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $..pid.max()
+          master_item:
+            key: protect
+          tags:
+            - tag: ppid
+        - uuid: 081bfed8a37c42668fc8d2b383ce31ff
+          name: 'pid max delta'
+          type: DEPENDENT
+          key: pid.max.delta
+          preprocessing:
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: pid.max
+          tags:
+            - tag: ppid
+        - uuid: fd3b98f821164e0697dc8248a456aab7
+          name: 'pid max throttled'
+          type: DEPENDENT
+          key: pid.max.throttled
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: pid.max
+          tags:
+            - tag: ppid
+        - uuid: 75f934da17714e9b87e1a7b5b6cd7762
+          name: 'ppid max'
+          type: DEPENDENT
+          key: ppid.max
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $..ppid.max()
+          master_item:
+            key: protect
+          tags:
+            - tag: ppid
+        - uuid: 87b8c6d7b2a2486b8e0347e151cff980
+          name: 'ppid max delta'
+          type: DEPENDENT
+          key: ppid.max.delta
+          preprocessing:
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: ppid.max
+          tags:
+            - tag: ppid
+        - uuid: b00eb6be24d04557884b391299cdbef0
+          name: 'ppid max throttled'
+          type: DEPENDENT
+          key: ppid.max.throttled
+          preprocessing:
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
+          master_item:
+            key: ppid.max
+          tags:
+            - tag: ppid
+        - uuid: f7d5283d04364558a40a48d79db88810
+          name: 'process.get raw'
+          key: 'proc.get[,,,process]'
+          delay: 0;s57
+          history: '0'
+          value_type: LOG
+          timeout: 1s
+        - uuid: ce04e585829147b5a1a3687835c3ffb9
+          name: 'process path debug'
+          type: DEPENDENT
+          key: process.path.debug
+          value_type: LOG
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  delay = {$SCH:delay};
+                  // delay = 300;
+                  
+                  // formulate output array
+                  var lld = [];
+                  
+                  // load into array
+                  var lines = JSON.parse(value);
+                  for (i = 0; i < lines.length; i++) {
+                      var row = {};
+                  
+                      // read 3 columns
+                      row["pid"] = lines[i].pid;
+                      row["ppid"] = lines[i].ppid;
+                      row["name"] = lines[i].name;
+                  
+                      // in case of docker being used, cmdline sometimes can be too long
+                      row["cmdline"] = lines[i].cmdline.match(/pidfile....(.*)...exit.dir/) ? 'pod ' +
+                          lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)[1] :
+                          lines[i].cmdline.replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
+                  
+                      // if process comes from docker lets replace and say the pid belongs to pod
+                      if (lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)) {
+                          row["host"] = 'pod ' + lines[i].cmdline.replace(/\s+$/, '').match(/pidfile....(.*)...exit.dir/)[1];
+                      }
+                  
+                      // if process belongs to postgres, then unpack the cmdline without a PID number
+                      else if (lines[i].cmdline.match(/postgres: \S+ \S+ [0-9.]+/)) {
+                          row["host"] = lines[i].cmdline.replace(/\s+$/, '').match(/(postgres: \S+ \S+ [0-9.]+)/)[1].replace(/[^a-zA-Z0-9\. ]/g, '');
+                      }
+                  
+                      // ugly code to replace container IDs with container name
+                      // this will shortify the host name and give recognition where the pid belongs
+                      else if (lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)) {
+                          row["host"] = lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)[1];
+                          if (row["host"] === '9cda5629cd399f28b5713aeb105f3092ee6e0449af50f818170ae7d537d4a4dc') row["host"] = 'z70prx.riga';
+                          if (row["host"] === 'c28b8221161141ae41ff0a23352717193d8099c91d2c3b98a97fe2600aaf3f2d') row["host"] = 'z70prx.riga.cloud';
+                          if (row["host"] === 'cc027a87e89021eec9bb8f84b835a9cef3b77cf97465a8b672d45fe72cdd7a19') row["host"] = 'ps3netsrv';
+                      }
+                  
+                      // shortify, extract listening port number
+                      else if (lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)) {
+                          row["host"] = lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)[1].replace(/ .container/g, ' container');
+                  
+                      }
+                      else {
+                          row["host"] = lines[i].cmdline.replace(/\s+$/, '').replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
+                      }
+                  
+                      lld.push(row);
+                  }
+                  
+                  var processes = lld;
+                  
+                  // return JSON.stringify(lld);
+                  
+                  // Create a mapping from pid to process
+                  var pidMap = {};
+                  for (var i = 0; i < processes.length; i++) {
+                      pidMap[processes[i].pid] = processes[i];
+                  }
+                  
+                  // Function to build full path from root to a given pid
+                  function buildPath(pid) {
+                      var path = [];
+                      while (pidMap[pid]) {
+                          path.unshift(pid);
+                          pid = pidMap[pid].ppid;
+                      }
+                      path.unshift(pid); // Add the root (e.g., 1)
+                      return path.join("/");
+                  }
+                  
+                  // Find leaf nodes (those not being a parent of any other)
+                  var parentSet = {};
+                  for (var i = 0; i < processes.length; i++) {
+                      parentSet[processes[i].ppid] = true;
+                  }
+                  
+                  var out = [];
+                  for (var i = 0; i < processes.length; i++) {
+                      var pid = processes[i].pid;
+                      if (!parentSet[pid]) {
+                          out.push(buildPath(pid));
+                      }
+                  }
+                  
+                  var input = [];
+                  //for (var i = 0; i < out.length; i++) {
+                  //Zabbix.Log(3,out[i])
+                  //if (out[i].match(/^1\//)) {  input.push(out[i].match(/^1\/(.*)/)[1]); }
+                  //}
+                  
+                  input = out;
+                  
+                  // return input;
+                  
+                  processPidRel = [];
+                  
+                  for (var i = 0; i < input.length; i++) {
+                  
+                      // split line into PIDs
+                      var translated = '';
+                  
+                      //Zabbix.Log(3,"input: "+input[i])
+                      var fullPath = input[i].split("\/");
+                  
+                      //Zabbix.Log(3,"full: "+fullPath.join("\n"));
+                  
+                      for (var f = 0; f < fullPath.length; f++) {
+                  
+                          // locate process binary name based on pid
+                          for (var n = 0; n < lld.length; n++) {
+                  
+                              // if process ID match
+                              if (parseInt(fullPath[f]) === parseInt(lld[n].pid)) {
+                  
+                                  if (
+                                      lld[n].host.match(/^systemd/) ||
+                                      lld[n].host.match(/^dbusbrokerlaunch/) ||
+                                      lld[n].host.match(/^dbusbroker/) ||
+                                      lld[n].host.match(/^sshd/) ||
+                                      lld[n].host.match(/^volumes/)
+                  
+                                  ) {
+                                      addToString = lld[n].host.match(/^(\S+)/)[1];
+                                  } else {
+                                      addToString = lld[n].host;
+                                  }
+                  
+                                  if (translated === '') {
+                                      translated = translated + addToString;
+                                  } else {
+                                      translated = translated + '/' + addToString;
+                                  }
+                                  //Zabbix.Log(3,"translated: "+translated)
+                                  lastPid = lld[n].pid;
+                                  commName = lld[n].name;
+                  
+                              }
+                  
+                          }
+                  
+                  
+                  
+                      }
+                  
+                      processPidRel.push({
+                          'host': translated
+                              .replace(/\//gm, ' ')
+                              .replace(/zabbixserver.*zabbixserver/gm, 'zabbixserver')
+                              .replace(/zabbixproxy.*zabbixproxy/gm, 'zabbixproxy')
+                              .replace(/zabbixagentd.*zabbixagentd/gm, 'zabbixagentd')
+                              .replace(/zabbixagent2.*zabbixagent2/gm, 'zabbixagent2')
+                              .replace(/zabbixjavagateway.*JavaGateway/gm, 'ZabbixJavaGateway')
+                              .replace(/sshd.*oCASignatureAlgorithmsecdsasha2nistp256ecdsasha2nistp384ecdsasha2nistp521sshed25519rsasha2256rsasha2512sshrsa/gm, 'sshd')
+                              .replace(/postgres.*postgres/gm, 'postgres')
+                          , 'name': commName
+                          , 'path': translated.replace(/^\//, ''), 'pid': lastPid, 'server': '{$HOST.HOST}'
+                      });
+                  
+                  }
+                  
+                  
+                  
+                  // generate all possible timestamps
+                  function generateSchedule(batchDelay, offset) {
+                      // the perfect second
+                      var perfectSecond = offset % 60;
+                      // jump
+                      var jump = Math.floor(batchDelay / 60);
+                      // first minute to kick in
+                      var firstkick = Math.floor(offset / 60);
+                      var times = [];
+                      for (var m = firstkick; m < 60; m += jump) { times.push(m); }
+                      return "m" + times.join(',') + "s" + perfectSecond;
+                  }
+                  var all = [];
+                  for (var n = 0; n < delay; n++) {
+                      if (!((n % 60) === 57)) {
+                          all.push(generateSchedule(delay, n));
+                      }
+                  }
+                  
+                  // inject timestamp
+                  var outcome = [];
+                  for (var n = 0; n < processPidRel.length; n++) {
+                      var row = processPidRel[n];
+                      row["itstime"] = all[n % delay];
+                      outcome.push(row);
+                  }
+                  
+                  
+                  return JSON.stringify(outcome);
+          master_item:
+            key: gate
+          tags:
+            - tag: ppid
+        - uuid: 0cb4520bbae54ab4a2ae48acad9a9878
+          name: 'process path translated'
+          type: DEPENDENT
+          key: process.path.translated
+          history: '0'
+          value_type: TEXT
+          inventory_link: SOFTWARE_FULL
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  delay = {$SCH:delay};
+                  //delay = 300;
+                  
+                  var lld = [];
+                  var lines = JSON.parse(value);
+                  for (i = 0; i < lines.length; i++) {
+                    var row = {};
+                    row["pid"] = lines[i].pid;
+                    row["ppid"] = lines[i].ppid;
+                    row["dad"] = lines[i].ppid;
+                    row["name"] = lines[i].name;
+                  
+                    row["cmdline"] = lines[i].cmdline.match(/pidfile....(.*)...exit.dir/) ? 'pod ' +
+                      lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)[1] :
+                      lines[i].cmdline.replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
+                  
+                  // special formating rule
+                   if (lines[i].cmdline.match(/pidfile....(.*)...exit.dir/)) {
+                      row["host"] = 'pod ' + lines[i].cmdline.replace(/\s+$/, '').match(/pidfile....(.*)...exit.dir/)[1];
+                  }
+                  else if (lines[i].cmdline.match(/postgres: \S+ \S+ [0-9.]+/)) {
+                    row["host"] = lines[i].cmdline.replace(/\s+$/, '').match(/(postgres: \S+ \S+ [0-9.]+)/)[1].replace(/[^a-zA-Z0-9\. ]/g, '');
+                  }
+                  else if (lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)) {
+                    row["host"] = lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)[1];
+                  
+                  if (row["host"] === '6515d41fd45928c6fa3fe8acc0c7c5e882bdd79139a83d2543f73433c57d10c8') row["host"] = 'z70pg';
+                  if (row["host"] === '8657500e7d53d996cbe5d2dfe5e3d508f5503fc061eedc97c26b59e0f76375e1') row["host"] = 'z70active2';
+                  if (row["host"] === '4af8183df4fe9682d8a02d701c1826f9b0a52be53f736a53317caef6c36727ec') row["host"] = 'z70web';
+                  if (row["host"] === '1dfa01f6cae1a28af1c5c8e87704007c5d155cbcb54d5da7c3da41f01221ec4c') row["host"] = 'z70active1';
+                  if (row["host"] === '4e139afe633787f696f34756edb532187f01786d83aa906319050a8e5a2a263e') row["host"] = 'z99web';
+                  if (row["host"] === '2909a6b880e076f277f378b3e67837b400ee5c076ea49c41c241376a4e45fad3') row["host"] = 'z99pg';
+                  if (row["host"] === '827e0dc6658ca465772515151a34a817668c19e45e37973437d939a893c579a4') row["host"] = 'pg17ts';
+                  
+                  }
+                  else if (lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)) {
+                    row["host"] = lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)[1].replace(/ .container/g, ' container');
+                    
+                  }
+                  else {
+                      row["host"] = lines[i].cmdline.replace(/\s+$/, '').replace(/ \[[^\]]+\]$/, '').replace(/^.*\//gm, '').replace(/[^a-zA-Z0-9\. ]/g, '');
+                  }
+                  
+                    lld.push(row);
+                  }
+                  
+                  var processes = lld;
+                  
+                  // return JSON.stringify(lld);
+                  
+                  // Create a mapping from pid to process
+                  var pidMap = {};
+                  for (var i = 0; i < processes.length; i++) {
+                    pidMap[processes[i].pid] = processes[i];
+                  }
+                  
+                  // Function to build full path from root to a given pid
+                  function buildPath(pid) {
+                    var path = [];
+                    while (pidMap[pid]) {
+                      path.unshift(pid);
+                      pid = pidMap[pid].ppid;
+                    }
+                    path.unshift(pid); // Add the root (e.g., 1)
+                    return path.join("/");
+                  }
+                  
+                  // Find leaf nodes (those not being a parent of any other)
+                  var parentSet = {};
+                  for (var i = 0; i < processes.length; i++) {
+                    parentSet[processes[i].ppid] = true;
+                  }
+                  
+                  var out = [];
+                  for (var i = 0; i < processes.length; i++) {
+                    var pid = processes[i].pid;
+                    if (!parentSet[pid]) {
+                      out.push(buildPath(pid));
+                    }
+                  }
+                  
+                  var input = [];
+                  //for (var i = 0; i < out.length; i++) {
+                    //Zabbix.Log(3,out[i])
+                    //if (out[i].match(/^1\//)) {  input.push(out[i].match(/^1\/(.*)/)[1]); }
+                  //}
+                  
+                  input = out;
+                  
+                  // return input;
+                  
+                  processPidRel = [];
+                  
+                  for (var i = 0; i < input.length; i++) {
+                  
+                    // split line into PIDs
+                    var translated = '';
+                  
+                    //Zabbix.Log(3,"input: "+input[i])
+                    var fullPath = input[i].split("\/");
+                  
+                    //Zabbix.Log(3,"full: "+fullPath.join("\n"));
+                  
+                    for (var f = 0; f < fullPath.length; f++) {
+                  
+                      // locate process binary name based on pid
+                      for (var n = 0; n < lld.length; n++) {
+                  
+                        // if process ID match
+                        if (parseInt(fullPath[f]) === parseInt(lld[n].pid)) {
+                  
+                          if ( 
+                            lld[n].host.match(/^systemd/) || 
+                            lld[n].host.match(/^dbusbrokerlaunch/) || 
+                            lld[n].host.match(/^dbusbroker/) ||
+                            lld[n].host.match(/^sshd/) ||
+                            lld[n].host.match(/^volumes/)
+                          
+                          ) {
+                            addToString = lld[n].host.match(/^(\S+)/)[1];
+                          } else {
+                            addToString = lld[n].host;
+                          }
+                  
+                          if (translated === '') {
+                            translated = translated + addToString;
+                          } else {
+                            translated = translated + '/' + addToString;
+                          }
+                          //Zabbix.Log(3,"translated: "+translated)
+                          lastPid = lld[n].pid;
+                          commName = lld[n].name;
+                  
+                        }
+                  
+                      }
+                  
+                  
+                  
+                    }
+                  
+                  var pod = translated.match(/^[^\/]+/)[0] ? '/' + translated.match(/^[^\/]+/)[0] : 
+                  'nos';
+                  
+                  
+                  
+                    processPidRel.push({'host':translated
+                    .replace(/\//gm,' ')
+                    .replace(/zabbixserver.*zabbixserver/gm,'zabbixserver')
+                    .replace(/zabbixproxy.*zabbixproxy/gm,'zabbixproxy')
+                    .replace(/zabbixagentd.*zabbixagentd/gm,'zabbixagentd')
+                    .replace(/zabbixagent2.*zabbixagent2/gm,'zabbixagent2')
+                    .replace(/zabbixjavagateway.*JavaGateway/gm,'ZabbixJavaGateway')
+                    .replace(/sshd.*oCASignatureAlgorithmsecdsasha2nistp256ecdsasha2nistp384ecdsasha2nistp521sshed25519rsasha2256rsasha2512sshrsa/gm,'sshd')
+                    .replace(/postgres.*postgres/gm,'postgres')
+                    ,'name':commName
+                    ,'path':translated.replace(/^\//,'')
+                    ,'pod':pod
+                    ,'pid':lastPid
+                    ,'server':'{$HOST.HOST}'});
+                  
+                  }
+                  
+                  
+                  
+                  // generate all possible timestamps
+                  function generateSchedule(batchDelay, offset) {
+                      // the perfect second
+                      var perfectSecond = offset % 60;
+                      // jump
+                      var jump = Math.floor(batchDelay / 60);
+                      // first minute to kick in
+                      var firstkick = Math.floor(offset / 60);
+                      var times = [];
+                      for (var m = firstkick; m < 60; m += jump) { times.push(m); }
+                      return "m" + times.join(',') + "s" + perfectSecond;
+                  }
+                  var all = [];
+                  for (var n = 0; n < delay; n++) {
+                  if (!( (n % 60) === 57 )) {
+                          all.push(generateSchedule(delay, n));
+                  }
+                  }
+                  
+                  // inject timestamp
+                  var outcome = [];
+                    for (var n = 0; n < processPidRel.length; n++) {
+                  var row = processPidRel[n];
+                  row["itstime"] = all[ n % delay ];
+                  outcome.push(row);
+                  }
+                  
+                  
+                  return JSON.stringify(outcome);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // avoid duplicate process names by adding number
+                  var data = JSON.parse(value);
+                  
+                  // Step 1: Count occurrences of each host
+                  var hostOccurrences = {};
+                  for (var i = 0; i < data.length; i++) {
+                      var host = data[i].host;
+                      if (hostOccurrences[host] === undefined) {
+                          hostOccurrences[host] = 1;
+                      } else {
+                          hostOccurrences[host]++;
+                      }
+                  }
+                  
+                  // Step 2: Modify host names only if duplicates exist
+                  var hostCount = {};  // Dictionary to track occurrences
+                  for (var i = 0; i < data.length; i++) {
+                      var host = data[i].host;
+                  
+                      if (hostOccurrences[host] > 1) {
+                          // If first occurrence, add "1"
+                          if (hostCount[host] === undefined) {
+                              hostCount[host] = 1;
+                              data[i].host = host + " 1";
+                          } else {
+                              hostCount[host]++;
+                              data[i].host = host + " " + hostCount[host];
+                          }
+                      }
+                  }
+                  
+                  // Print output (Duktape doesn't have console.log, use print)
+                  return JSON.stringify(data, null, 2);
+          master_item:
+            key: gate
+          tags:
+            - tag: ppid
+        - uuid: 5c6daae787bf4ba8b61db39d07e9adfc
+          name: protect
+          type: DEPENDENT
+          key: protect
+          history: '0'
+          value_type: LOG
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'proc.get[,,,process]'
+        - uuid: 95d39802428440d781ee1e35e6c7e2cb
+          name: containerIDs
+          key: 'system.run["{$CMD:containerIDs}"]'
+          delay: 1h
+          history: '0'
+          value_type: TEXT
+          inventory_link: NOTES
+      discovery_rules:
+        - uuid: 9fcdf4e126314dd3a6d8e7d922c33c81
+          name: pid
+          type: DEPENDENT
+          key: pid
+          filter:
+            conditions:
+              - macro: '{#HOST}'
+                value: '.* postgres autovacuum worker .*'
+                operator: NOT_MATCHES_REGEX
+          lifetime_type: DELETE_IMMEDIATELY
+          host_prototypes:
+            - uuid: 522909d1d40e437ea9bc1d2500ba604e
+              host: '{#SERVER} {#HOST}'
+              name: '{#SERVER} {#HOST}'
+              inventory_mode: AUTOMATIC
+              group_links:
+                - group:
+                    name: p/z
+              group_prototypes:
+                - name: 'p/c/{#SERVER}{#POD}/{#NAME}'
+                - name: 'p/n/{#NAME}/{#SERVER}'
+                - name: 'p/p/{#NAME}'
+                - name: 'p/s/{#SERVER}'
+              templates:
+                - name: 'proc pid mon individual'
+              macros:
+                - macro: '{$ITS.TIME}'
+                  value: '{#ITS.TIME}'
+                - macro: '{$PATH}'
+                  value: '{#PATH}'
+                - macro: '{$PID}'
+                  value: '{#PID}'
+                - macro: '{$POD}'
+                  value: '{#POD}'
+              tags:
+                - tag: comm
+                  value: '{#NAME}'
+                - tag: pid
+          master_item:
+            key: process.path.translated
+          lld_macro_paths:
+            - lld_macro: '{#HOST}'
+              path: '$.[''host'']'
+            - lld_macro: '{#ITS.TIME}'
+              path: '$.[''itstime'']'
+            - lld_macro: '{#NAME}'
+              path: '$.[''name'']'
+            - lld_macro: '{#PATH}'
+              path: '$.[''path'']'
+            - lld_macro: '{#PID}'
+              path: '$.[''pid'']'
+            - lld_macro: '{#POD}'
+              path: '$.[''pod'']'
+            - lld_macro: '{#PPID}'
+              path: '$.[''ppid'']'
+            - lld_macro: '{#SERVER}'
+              path: '$.[''server'']'
+      macros:
+        - macro: '{$CMD:containerIDs}'
+          value: 'docker ps --all --no-trunc --format "if (row[\"host\"] === ''{{.ID}}'') row[\"host\"] = ''{{.Names}}'';"'
+          description: 'echo ''['' && docker ps --all --no-trunc --format "{\"{#NAME}\":\"{{.Names}}\",\"{#ID}\":\"{{.ID}}\"}," && echo ''{"{#NAME}":"asdf","{#ID}":"asdf"}]'''
+        - macro: '{$COMM:ignore}'
+          value: (auditd|dhclient|dbus-daemon|lsmd|rpcbind|polkitd|systemd-journald|systemd-logind|systemd-udevd|agent|updater|sssd_nss|NetworkManager|atd|chronyd|crond|dtprobed|dtprobed|gssproxy|irqbalance|iscsid|rsyslogd|sedispatch|smartd|sshd|sssd|run-parts|sssd_be|agetty|droplet-agent|dbus-broker-launch|tuned|aardvark-dns|.sd-pam.|bash|tmux..server|screen|slirp4netns|dbus-broker|catatonit|sssd_kcm|systemd-timesyncd|systemd-networkd|systemd-resolved|networkd-dispat|unattended-upgr|udisksd|ModemManager|anacron|fwupd|dnf|sleep|grep|apt|apt-get|rpm|smbd|sed|rngd|ruby|fluentd|gpg-agent|oci-wlp|pmdakvm|pmdalinux|pmdaproc|pmdaxfs|cron|dhcpd|dropbear|lpqd|nmbd|pmdaroot|s6-log|s6-supervise|smbd-notifyd|ssh|unifiedmonitoring|cleanupd|exe|haveged|s6-svscan|su|wget|curl|systemd-timedated|apt-check|apt.systemd.dai|jq|pg_dump|php|psql|rclone|refresh_stock.s|update.opus.m4a|uptrack-upgrade|xz|yt-dlp|tzdata.config|pigz|systemd-hostnamed|systemctl|apt-show-versio|timedatex|sh|python3|mandb|tail|update-motd-upd|sudo|strace|store|vim|dietpi-update|tmux|tee|nm-dispatcher|gpgv|apt-helper|50-motd-news)
+        - macro: '{$COMM:target}'
+          value: (containerd-shim-runc-v2|zabbix_proxy|zabbix_server|zabbix_agentd|zabbix_agent2)
+        - macro: '{$COMM:whitelist}'
+          value: (conmon|containerd|deluge-web|deluged|docker-proxy|java|mysql|mysqld|nginx|php-fpm|postgres|ps3netsrv|snmpd|snmptrapd|zabbix-plugin_linux_arm64|zabbix_agent2|zabbix_agentd|zabbix_proxy|zabbix_server)
+        - macro: '{$LEADERS}'
+          value: '3'
+        - macro: '{$SCH:delay}'
+          value: '120'
+        - macro: '{$USER:target}'
+          value: (1997|root)
+    - uuid: e8cbfbb36854405a8f3d254cbe605447
+      template: 'proc pid mon individual'
+      name: 'proc pid mon individual'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 7929935e6f2f4362b4b8cb7df9453652
+          name: 'pid cancelled_write_bytes'
+          type: DEPENDENT
+          key: cancelled_write_bytes
+          trends: 21d
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'cancelled_write_bytes: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: io
+        - uuid: b45ded4febb1401687ca61e11f6de13a
+          name: children
+          type: DEPENDENT
+          key: children
+          value_type: LOG
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/task/{$PID}/children]'
+        - uuid: b5889866b46c411dad465a976d31e9cd
+          name: 'CPU 1h'
+          type: CALCULATED
+          key: 'cpu[1h]'
+          delay: '{$SCH:delay}'
+          trends: 21d
+          params: 'sum(//user.system.time,1h)'
+        - uuid: b893545960af4fbbb9d5b1e5d089f4e6
+          name: io
+          type: DEPENDENT
+          key: io
+          history: '0'
+          value_type: LOG
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/io]'
+        - uuid: 19ab8d58f4cb415aacd1280802dc6afd
+          name: 'pid nonvoluntary ctxt switches'
+          type: DEPENDENT
+          key: nonvoluntary.ctxt.switches
+          trends: 21d
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'nonvoluntary_ctxt_switches:\s+(\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: status
+        - uuid: f742292c476546d4bcd6deef5f5bbe4a
+          name: Pickup
+          type: DEPENDENT
+          key: pickup
+          trends: 21d
+          units: unixtime
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return Math.round((new Date()).getTime() / 1000);'
+          master_item:
+            key: io
+          tags:
+            - tag: ppid
+        - uuid: 885d4c7d2f4a48929b7fedfe0bd43887
+          name: 'Pid number'
+          type: CALCULATED
+          key: pid.nr
+          trends: 21d
+          params: '{$PID}'
+          preprocessing:
+            - type: DISCARD_UNCHANGED
+          triggers:
+            - uuid: 779cf7d75f56455bbdeff8d0e6a3ebc1
+              expression: 'change(/proc pid mon individual/pid.nr)>0'
+              name: 'Now PID number'
+              event_name: 'Now pid number is {$PID}'
+              status: DISABLED
+              priority: AVERAGE
+              manual_close: 'YES'
+        - uuid: 8710d1d31cde473aa8b946021a1b38bc
+          name: 'pid rchar'
+          type: DEPENDENT
+          key: rchar
+          trends: 21d
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'rchar: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: io
+        - uuid: 9c282bdbffa84ee1aea08cdb8cc5ad75
+          name: 'pid read bytes'
+          type: DEPENDENT
+          key: read_bytes
+          trends: 21d
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'read_bytes: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: io
+        - uuid: a591a639e25542f4975ccd77365940bb
+          name: 'pid rss anon'
+          type: DEPENDENT
+          key: RssAnon
+          trends: 21d
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'RssAnon:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: status
+        - uuid: 6c84aee327cc411c869580ab7c6e7db1
+          name: 'pid rss file'
+          type: DEPENDENT
+          key: RssFile
+          trends: 21d
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'RssFile:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: status
+        - uuid: c1405fe3dc6d4d8590bcf1629dbf521a
+          name: 'pid rss shmem'
+          type: DEPENDENT
+          key: RssShmem
+          trends: 21d
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'RssShmem:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: status
+        - uuid: e4df4c2538314abd8f82917301c7ccaa
+          name: stat
+          type: DEPENDENT
+          key: stat
+          history: '0'
+          value_type: LOG
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/stat]'
+        - uuid: 732ae64ed780446f988b009795266e31
+          name: status
+          type: DEPENDENT
+          key: status
+          history: '0'
+          value_type: LOG
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'vfs.file.contents[/proc/{$PID}/status]'
+          tags:
+            - tag: raw
+        - uuid: 698a00a7db6746a6aa893276b0297b46
+          name: 'pid system time'
+          type: DEPENDENT
+          key: stime
+          trends: 21d
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - \S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: stat
+        - uuid: e0eeb757b95f45e38b341dbd9fb3ce22
+          name: 'pid syscr'
+          type: DEPENDENT
+          key: syscr
+          trends: 21d
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'syscr: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: io
+        - uuid: 6cf035edb75e4a7986c51b8781b60f7d
+          name: 'pid syscw'
+          type: DEPENDENT
+          key: syscw
+          trends: 21d
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'syscw: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: io
+        - uuid: a7780afafd4e479694f8923cad46842c
+          name: 'pid threads'
+          type: DEPENDENT
+          key: threads
+          trends: 21d
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'Threads:\s+(\d+)'
+                - \1
+          master_item:
+            key: status
+        - uuid: b72d683723d246678828ac514953d880
+          name: 'pid user and system time'
+          type: DEPENDENT
+          key: user.system.time
+          trends: 21d
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - \S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)\s+(\S+)
+                - '\1 \2'
+            - type: JAVASCRIPT
+              parameters:
+                - 'return parseInt(value.match(/^[0-9]+/)[0]) + parseInt(value.match(/[0-9]+$/)[0]);'
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: stat
+        - uuid: 2e849e8618db4f939c463f5cccab061e
+          name: 'pid user time'
+          type: DEPENDENT
+          key: utime
+          trends: 21d
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - \S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: stat
+        - uuid: 76185010aff448f6b17c4cf26444b55b
+          name: 'proc pid io root'
+          key: 'vfs.file.contents[/proc/{$PID}/io]'
+          delay: '0;{$ITS.TIME}'
+          history: '0'
+          value_type: TEXT
+          timeout: 1s
+        - uuid: fc7cc2e739174383b2483f23ada76cbb
+          name: 'proc pid status root'
+          key: 'vfs.file.contents[/proc/{$PID}/status]'
+          delay: '0;{$ITS.TIME}'
+          history: '0'
+          value_type: TEXT
+          timeout: 1s
+          tags:
+            - tag: raw
+        - uuid: 1828d2866cd84f8d96141c6f05410df0
+          name: 'proc pid stat root'
+          key: 'vfs.file.contents[/proc/{$PID}/stat]'
+          delay: '0;{$ITS.TIME}'
+          history: '0'
+          value_type: TEXT
+          timeout: 1s
+        - uuid: e66028f230444143900231153bf0de6b
+          name: 'children root'
+          key: 'vfs.file.contents[/proc/{$PID}/task/{$PID}/children]'
+          delay: '0;{$ITS.TIME}'
+          value_type: TEXT
+          timeout: 1s
+        - uuid: 10a14e06f90041d8b37e9e76574ff93f
+          name: 'pid vm data'
+          type: DEPENDENT
+          key: VmData
+          trends: 21d
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'VmData:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: status
+        - uuid: 9fe4244f70bd403a91df14789e64e4b5
+          name: 'pid vm swap'
+          type: DEPENDENT
+          key: VmSwap
+          trends: 21d
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'VmSwap:\s+(\d+)'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: status
+        - uuid: 32e8dbf5ebf447bda43a7d417892b9a1
+          name: 'pid voluntary ctxt switches'
+          type: DEPENDENT
+          key: voluntary.ctxt.switches
+          trends: 21d
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'voluntary_ctxt_switches:\s+(\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: status
+        - uuid: 0007822b325d48b499e204d91199bfca
+          name: 'pid wchar'
+          type: DEPENDENT
+          key: wchar
+          trends: 21d
+          units: '!char'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'wchar: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: io
+        - uuid: 0dd90e02d9e4480796a7de40236d6660
+          name: 'pid write bytes'
+          type: DEPENDENT
+          key: write_bytes
+          trends: 21d
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'write_bytes: (\d+)'
+                - \1
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: io
+      macros:
+        - macro: '{$SCH:delay}'
+          value: '60'
+        - macro: '{$UPD}'
+          value: '0'
+      dashboards:
+        - uuid: ad3c41ed2f3244e2b41514c64f056029
+          name: pid
+          pages:
+            - widgets:
+                - type: svggraph
+                  name: CPU
+                  width: '24'
+                  height: '4'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '2'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'pid system time*'
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.color
+                      value: FFD54F
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: 'pid user time*'
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '4'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: UDITR
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: Disk
+                  x: '24'
+                  width: '24'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'pid write bytes*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.color
+                      value: FFD54F
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: 'pid read bytes*'
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: WZUKX
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: Memory
+                  x: '48'
+                  width: '24'
+                  height: '5'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF465C
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'pid rss anon*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.color
+                      value: FFD54F
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: 'pid rss file*'
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.2.color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: ds.2.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.2.items.0
+                      value: 'pid rss shmem*'
+                    - type: INTEGER
+                      name: ds.2.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.3.color
+                      value: 524BBC
+                    - type: INTEGER
+                      name: ds.3.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.3.items.0
+                      value: 'pid vm data*'
+                    - type: INTEGER
+                      name: ds.3.transparency
+                      value: '0'
+                    - type: STRING
+                      name: ds.4.color
+                      value: BF00FF
+                    - type: INTEGER
+                      name: ds.4.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.4.items.0
+                      value: 'pid vm swap*'
+                    - type: INTEGER
+                      name: ds.4.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: WWMJS
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+  graphs:
+    - uuid: ee1e1da86ea1491c9cfea8009fecc1d1
+      name: 'pid CPU'
+      type: STACKED
+      ymin_type_1: FIXED
+      graph_items:
+        - drawtype: BOLD_LINE
+          color: FF0000
+          calc_fnc: MIN
+          item:
+            host: 'proc pid mon individual'
+            key: stime
+        - sortorder: '1'
+          drawtype: BOLD_LINE
+          color: FFBF00
+          calc_fnc: MIN
+          item:
+            host: 'proc pid mon individual'
+            key: utime
+    - uuid: f1c71517a3504701bd41cbedba78a4b7
+      name: 'pid Memory'
+      ymin_type_1: FIXED
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'proc pid mon individual'
+            key: RssAnon
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'proc pid mon individual'
+            key: RssFile
+        - sortorder: '2'
+          color: F63100
+          calc_fnc: ALL
+          item:
+            host: 'proc pid mon individual'
+            key: RssShmem
+        - sortorder: '3'
+          color: 2774A4
+          calc_fnc: ALL
+          item:
+            host: 'proc pid mon individual'
+            key: VmData
+        - sortorder: '4'
+          color: A54F10
+          calc_fnc: ALL
+          item:
+            host: 'proc pid mon individual'
+            key: VmSwap
+    - uuid: ed197a71791e4a229ea7ba9f084d1eca
+      name: 'pid wchar rchar'
+      ymin_type_1: FIXED
+      graph_items:
+        - drawtype: BOLD_LINE
+          color: 00BFFF
+          calc_fnc: MIN
+          item:
+            host: 'proc pid mon individual'
+            key: rchar
+        - sortorder: '1'
+          drawtype: BOLD_LINE
+          color: FF0000
+          calc_fnc: MIN
+          item:
+            host: 'proc pid mon individual'
+            key: wchar
