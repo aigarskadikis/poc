@@ -149,6 +149,9 @@ zabbix_export:
                   }
                   
                   return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1d
           master_item:
             key: protect
           tags:
@@ -522,9 +525,15 @@ zabbix_export:
                   }
                   else if (lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)) {
                     row["host"] = lines[i].cmdline.match(/moby..id ([a-f0-9]{64})..address/)[1];
-                    if (row["host"] === '9cda5629cd399f28b5713aeb105f3092ee6e0449af50f818170ae7d537d4a4dc') row["host"] = 'z70prx.riga';
-                    if (row["host"] === 'c28b8221161141ae41ff0a23352717193d8099c91d2c3b98a97fe2600aaf3f2d') row["host"] = 'z70prx.riga.cloud';
-                    if (row["host"] === 'cc027a87e89021eec9bb8f84b835a9cef3b77cf97465a8b672d45fe72cdd7a19') row["host"] = 'ps3netsrv';
+                  
+                  if (row["host"] === '6515d41fd45928c6fa3fe8acc0c7c5e882bdd79139a83d2543f73433c57d10c8') row["host"] = 'z70pg';
+                  if (row["host"] === '8657500e7d53d996cbe5d2dfe5e3d508f5503fc061eedc97c26b59e0f76375e1') row["host"] = 'z70active2';
+                  if (row["host"] === '4af8183df4fe9682d8a02d701c1826f9b0a52be53f736a53317caef6c36727ec') row["host"] = 'z70web';
+                  if (row["host"] === '1dfa01f6cae1a28af1c5c8e87704007c5d155cbcb54d5da7c3da41f01221ec4c') row["host"] = 'z70active1';
+                  if (row["host"] === '4e139afe633787f696f34756edb532187f01786d83aa906319050a8e5a2a263e') row["host"] = 'z99web';
+                  if (row["host"] === '2909a6b880e076f277f378b3e67837b400ee5c076ea49c41c241376a4e45fad3') row["host"] = 'z99pg';
+                  if (row["host"] === '827e0dc6658ca465772515151a34a817668c19e45e37973437d939a893c579a4') row["host"] = 'pg17ts';
+                  
                   }
                   else if (lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)) {
                     row["host"] = lines[i].cmdline.match(/(host.port \S+ .container.ip \S+)/)[1].replace(/ .container/g, ' container');
@@ -632,6 +641,11 @@ zabbix_export:
                   
                     }
                   
+                  var pod = translated.match(/^[^\/]+/)[0] ? '/' + translated.match(/^[^\/]+/)[0] : 
+                  'nos';
+                  
+                  
+                  
                     processPidRel.push({'host':translated
                     .replace(/\//gm,' ')
                     .replace(/zabbixserver.*zabbixserver/gm,'zabbixserver')
@@ -642,7 +656,10 @@ zabbix_export:
                     .replace(/sshd.*oCASignatureAlgorithmsecdsasha2nistp256ecdsasha2nistp384ecdsasha2nistp521sshed25519rsasha2256rsasha2512sshrsa/gm,'sshd')
                     .replace(/postgres.*postgres/gm,'postgres')
                     ,'name':commName
-                    ,'path':translated.replace(/^\//,''),'pid':lastPid,'server':'{$HOST.HOST}'});
+                    ,'path':translated.replace(/^\//,'')
+                    ,'pod':pod
+                    ,'pid':lastPid
+                    ,'server':'{$HOST.HOST}'});
                   
                   }
                   
@@ -729,6 +746,13 @@ zabbix_export:
                 - '-1'
           master_item:
             key: 'proc.get[,,,process]'
+        - uuid: 95d39802428440d781ee1e35e6c7e2cb
+          name: containerIDs
+          key: 'system.run["{$CMD:containerIDs}"]'
+          delay: 1h
+          history: '0'
+          value_type: TEXT
+          inventory_link: NOTES
       discovery_rules:
         - uuid: 9fcdf4e126314dd3a6d8e7d922c33c81
           name: pid
@@ -749,7 +773,7 @@ zabbix_export:
                 - group:
                     name: p/z
               group_prototypes:
-                - name: 'p/c/{#SERVER}/{#NAME}'
+                - name: 'p/c/{#SERVER}{#POD}/{#NAME}'
                 - name: 'p/n/{#NAME}/{#SERVER}'
                 - name: 'p/p/{#NAME}'
                 - name: 'p/s/{#SERVER}'
@@ -762,8 +786,8 @@ zabbix_export:
                   value: '{#PATH}'
                 - macro: '{$PID}'
                   value: '{#PID}'
-                - macro: '{$PPID}'
-                  value: '{#PPID}'
+                - macro: '{$POD}'
+                  value: '{#POD}'
               tags:
                 - tag: comm
                   value: '{#NAME}'
@@ -781,15 +805,20 @@ zabbix_export:
               path: '$.[''path'']'
             - lld_macro: '{#PID}'
               path: '$.[''pid'']'
+            - lld_macro: '{#POD}'
+              path: '$.[''pod'']'
             - lld_macro: '{#PPID}'
               path: '$.[''ppid'']'
             - lld_macro: '{#SERVER}'
               path: '$.[''server'']'
       macros:
+        - macro: '{$CMD:containerIDs}'
+          value: 'docker ps --all --no-trunc --format "if (row[\"host\"] === ''{{.ID}}'') row[\"host\"] = ''{{.Names}}'';"'
+          description: 'echo ''['' && docker ps --all --no-trunc --format "{\"{#NAME}\":\"{{.Names}}\",\"{#ID}\":\"{{.ID}}\"}," && echo ''{"{#NAME}":"asdf","{#ID}":"asdf"}]'''
         - macro: '{$COMM:ignore}'
           value: (auditd|dhclient|dbus-daemon|lsmd|rpcbind|polkitd|systemd-journald|systemd-logind|systemd-udevd|agent|updater|sssd_nss|NetworkManager|atd|chronyd|crond|dtprobed|dtprobed|gssproxy|irqbalance|iscsid|rsyslogd|sedispatch|smartd|sshd|sssd|run-parts|sssd_be|agetty|droplet-agent|dbus-broker-launch|tuned|aardvark-dns|.sd-pam.|bash|tmux..server|screen|slirp4netns|dbus-broker|catatonit|sssd_kcm|systemd-timesyncd|systemd-networkd|systemd-resolved|networkd-dispat|unattended-upgr|udisksd|ModemManager|anacron|fwupd|dnf|sleep|grep|apt|apt-get|rpm|smbd|sed|rngd|ruby|fluentd|gpg-agent|oci-wlp|pmdakvm|pmdalinux|pmdaproc|pmdaxfs|cron|dhcpd|dropbear|lpqd|nmbd|pmdaroot|s6-log|s6-supervise|smbd-notifyd|ssh|unifiedmonitoring|cleanupd|exe|haveged|s6-svscan|su|wget|curl|systemd-timedated|apt-check|apt.systemd.dai|jq|pg_dump|php|psql|rclone|refresh_stock.s|update.opus.m4a|uptrack-upgrade|xz|yt-dlp|tzdata.config|pigz|systemd-hostnamed|systemctl|apt-show-versio|timedatex|sh|python3|mandb|tail|update-motd-upd|sudo|strace|store|vim|dietpi-update|tmux|tee|nm-dispatcher|gpgv|apt-helper|50-motd-news)
         - macro: '{$COMM:target}'
-          value: (containerd-shim-runc-v2|zabbix_proxy|zabbix_server)
+          value: (containerd-shim-runc-v2|zabbix_proxy|zabbix_server|zabbix_agentd|zabbix_agent2)
         - macro: '{$COMM:whitelist}'
           value: (conmon|containerd|deluge-web|deluged|docker-proxy|java|mysql|mysqld|nginx|php-fpm|postgres|ps3netsrv|snmpd|snmptrapd|zabbix-plugin_linux_arm64|zabbix_agent2|zabbix_agentd|zabbix_proxy|zabbix_server)
         - macro: '{$LEADERS}'
