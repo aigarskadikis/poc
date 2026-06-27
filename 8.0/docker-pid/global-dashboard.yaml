@@ -1,0 +1,238 @@
+zabbix_export:
+  version: '8.0'
+  dashboards:
+    - name: '2 PIDs'
+      pages:
+        - widgets:
+            - type: problemhosts
+              name: 'Host group navigation'
+              width: '33'
+              height: '6'
+              fields:
+                - type: GROUP
+                  name: groupids.0
+                  value:
+                    name: p/c
+                - type: STRING
+                  name: reference
+                  value: WBHXD
+            - type: tophosts
+              name: PIDs
+              'y': '6'
+              width: '72'
+              height: '56'
+              fields:
+                - type: INTEGER
+                  name: column
+                  value: '2'
+                - type: INTEGER
+                  name: columns.0.data
+                  value: '2'
+                - type: STRING
+                  name: columns.0.name
+                  value: PID
+                - type: INTEGER
+                  name: columns.1.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.1.decimal_places
+                  value: '0'
+                - type: INTEGER
+                  name: columns.1.display
+                  value: '6'
+                - type: INTEGER
+                  name: columns.1.history
+                  value: '1'
+                - type: STRING
+                  name: columns.1.item
+                  value: 'pid user and system time'
+                - type: STRING
+                  name: columns.1.name
+                  value: 'CPU time'
+                - type: INTEGER
+                  name: columns.2.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.2.decimal_places
+                  value: '0'
+                - type: INTEGER
+                  name: columns.2.history
+                  value: '1'
+                - type: STRING
+                  name: columns.2.item
+                  value: 'CPU 1h'
+                - type: STRING
+                  name: columns.2.name
+                  value: 'CPU 1h'
+                - type: INTEGER
+                  name: columns.3.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.3.history
+                  value: '1'
+                - type: STRING
+                  name: columns.3.item
+                  value: 'pid write bytes'
+                - type: STRING
+                  name: columns.3.name
+                  value: 'pid write bytes'
+                - type: INTEGER
+                  name: columns.4.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.4.history
+                  value: '1'
+                - type: STRING
+                  name: columns.4.item
+                  value: 'pid read bytes'
+                - type: STRING
+                  name: columns.4.name
+                  value: 'pid read bytes'
+                - type: INTEGER
+                  name: columns.5.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.5.decimal_places
+                  value: '0'
+                - type: INTEGER
+                  name: columns.5.history
+                  value: '1'
+                - type: STRING
+                  name: columns.5.item
+                  value: 'pid rchar'
+                - type: STRING
+                  name: columns.5.name
+                  value: rchar
+                - type: INTEGER
+                  name: columns.6.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.6.history
+                  value: '1'
+                - type: STRING
+                  name: columns.6.item
+                  value: 'pid rss file'
+                - type: STRING
+                  name: columns.6.name
+                  value: 'rss file'
+                - type: INTEGER
+                  name: columns.7.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.7.history
+                  value: '1'
+                - type: STRING
+                  name: columns.7.item
+                  value: 'pid vm swap'
+                - type: STRING
+                  name: columns.7.name
+                  value: 'vm swap'
+                - type: INTEGER
+                  name: columns.8.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.8.history
+                  value: '1'
+                - type: STRING
+                  name: columns.8.item
+                  value: 'pid rss shmem'
+                - type: STRING
+                  name: columns.8.name
+                  value: 'rss shmem'
+                - type: INTEGER
+                  name: columns.9.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.9.history
+                  value: '1'
+                - type: STRING
+                  name: columns.9.item
+                  value: 'pid rss anon'
+                - type: STRING
+                  name: columns.9.name
+                  value: 'rss anon'
+                - type: INTEGER
+                  name: columns.10.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.10.history
+                  value: '1'
+                - type: STRING
+                  name: columns.10.item
+                  value: 'pid vm data'
+                - type: STRING
+                  name: columns.10.name
+                  value: 'vm data'
+                - type: INTEGER
+                  name: columns.11.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.11.decimal_places
+                  value: '0'
+                - type: INTEGER
+                  name: columns.11.history
+                  value: '1'
+                - type: STRING
+                  name: columns.11.item
+                  value: 'pid nonvoluntary ctxt switches'
+                - type: STRING
+                  name: columns.11.name
+                  value: 'nonvol ctxt'
+                - type: INTEGER
+                  name: columns.12.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.12.decimal_places
+                  value: '0'
+                - type: INTEGER
+                  name: columns.12.history
+                  value: '1'
+                - type: STRING
+                  name: columns.12.item
+                  value: 'pid voluntary ctxt switches'
+                - type: STRING
+                  name: columns.12.name
+                  value: 'vol ctxt'
+                - type: INTEGER
+                  name: columns.13.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.13.decimal_places
+                  value: '0'
+                - type: INTEGER
+                  name: columns.13.history
+                  value: '1'
+                - type: STRING
+                  name: columns.13.item
+                  value: 'unsupported items'
+                - type: STRING
+                  name: columns.13.name
+                  value: unsup
+                - type: INTEGER
+                  name: columns.14.data
+                  value: '1'
+                - type: INTEGER
+                  name: columns.14.decimal_places
+                  value: '0'
+                - type: INTEGER
+                  name: columns.14.history
+                  value: '1'
+                - type: STRING
+                  name: columns.14.item
+                  value: offset
+                - type: STRING
+                  name: columns.14.name
+                  value: offset
+                - type: STRING
+                  name: groupids._reference
+                  value: WBHXD._hostgroupids
+                - type: STRING
+                  name: reference
+                  value: UCMIS
+                - type: INTEGER
+                  name: show_lines
+                  value: '1000'
+            - type: systeminfo
+              x: '33'
+              width: '39'
+              height: '6'
