@@ -20,7 +20,7 @@ zabbix_export:
           name: 'Website {$WEBSITE.DOMAIN} Get data'
           type: BROWSER
           key: website.get.data
-          delay: 12s
+          delay: 30s
           history: '0'
           value_type: TEXT
           params: |
@@ -62,6 +62,7 @@ zabbix_export:
                     screenshot = browser.getScreenshot();
                     const result = browser.getResult();
                     result.screenshot = screenshot;
+                    Zabbix.sleep(20000);
             
                     return JSON.stringify(result);
                 }
