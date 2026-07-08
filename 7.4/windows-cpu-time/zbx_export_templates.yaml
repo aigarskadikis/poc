@@ -1,5 +1,5 @@
 zabbix_export:
-  version: '8.0'
+  version: '7.4'
   template_groups:
     - uuid: 57b7ae836ca64446ba2c296389c009b7
       name: Templates/Modules
@@ -73,7 +73,7 @@ zabbix_export:
               parameters:
                 - '{$PROTECT}'
           master_item:
-            key: total
+            key: delta
           tags:
             - tag: debug
         - uuid: dd442b88960342f18dff2dafd48d9ad3
@@ -138,7 +138,7 @@ zabbix_export:
               parameters:
                 - '{$PROTECT}'
           master_item:
-            key: total
+            key: delta
           tags:
             - tag: debug
         - uuid: 014cfcadac424925b6b33db477d9eba9
@@ -203,14 +203,14 @@ zabbix_export:
               parameters:
                 - '{$PROTECT}'
           master_item:
-            key: total
+            key: delta
           tags:
             - tag: debug
         - uuid: 1c41229aef7144c8b429d1f182460c07
           name: autoSum
           type: DEPENDENT
           key: autoSum
-          value_type: JSON
+          value_type: LOG
           preprocessing:
             - type: JAVASCRIPT
               parameters:
@@ -244,6 +244,113 @@ zabbix_export:
                   return JSON.stringify(result);
           master_item:
             key: total
+          tags:
+            - tag: debug
+        - uuid: c073a8872c2443499a549037dba4de7f
+          name: delta
+          type: DEPENDENT
+          key: delta
+          history: '{$DBG}'
+          value_type: LOG
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: deltaProtect
+          tags:
+            - tag: debug
+        - uuid: 419f30fb0007431c9f7cc94f1ad292d1
+          name: deltaProtect
+          type: DEPENDENT
+          key: deltaProtect
+          history: '{$DBG}'
+          value_type: LOG
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract delta
+                  var input = JSON.parse(value);
+                  
+                  var list1 = JSON.parse(input[0].value);
+                  var list2 = JSON.parse(input[1].value);
+                  
+                  function aggregate(list) {
+                      var map = {};
+                  
+                      for (var i = 0; i < list.length; i++) {
+                          var item = list[i];
+                  
+                          if (!map[item.Name]) {
+                              map[item.Name] = 0;
+                          }
+                  
+                          // Sum CPUTime for processes with the same name
+                          map[item.Name] += Number(item.CPUTime);
+                      }
+                  
+                      return map;
+                  }
+                  
+                  var cpu1 = aggregate(list1);
+                  var cpu2 = aggregate(list2);
+                  
+                  var output = [];
+                  
+                  for (var name in cpu1) {
+                      output.push({
+                          Name: name,
+                          Delta: cpu1[name] - (cpu2[name] || 0)
+                      });
+                  }
+                  
+                  // Include names that exist only in the second list
+                  for (var name in cpu2) {
+                      if (!(name in cpu1)) {
+                          output.push({
+                              Name: name,
+                              Delta: -cpu2[name]
+                          });
+                      }
+                  }
+                  
+                  return JSON.stringify(output);
+          master_item:
+            key: fetch.history.stats
+          tags:
+            - tag: debug
+        - uuid: 37e953f635084578991f3cd3035c0bbc
+          name: fetch.history.stats
+          type: CALCULATED
+          key: fetch.history.stats
+          value_type: LOG
+          params: '1'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var url = '{$ZABBIX.URL}/api_jsonrpc.php'
+                  
+                  // new http request
+                  var req = new HttpRequest();
+                  
+                  // header
+                  req.addHeader('Content-Type: application/json');
+                  req.addHeader('Authorization: Bearer {$ZABBIX.API.TOKEN}');
+                  
+                  // extract itemid and data type
+                  var el = JSON.parse(req.post(url,
+                    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["itemid","value_type"],"hostids":"{$HOST.ID}","filter":{"key_":"total"}},"id":1}'
+                  )).result[0];
+                  
+                  // fetch 2 most recent samples
+                  var context = JSON.parse(req.post(url,
+                    '{"jsonrpc":"2.0","method":"history.get","params":{"output":["value"],"history":' + el.value_type + ',"itemids":"' + el.itemid + '","sortfield":"clock","sortorder":"DESC","limit":2},"id":1}'
+                  )).result;
+                  
+                  
+                  return JSON.stringify(context);
           tags:
             - tag: debug
         - uuid: ce447d53479146998c9c32442038b1bc
@@ -345,7 +452,7 @@ zabbix_export:
               parameters:
                 - '{$PROTECT}'
           master_item:
-            key: total
+            key: delta
           tags:
             - tag: debug
         - uuid: b2b89a2767a94f0d830f5f4fe6abb1cc
@@ -410,7 +517,7 @@ zabbix_export:
               parameters:
                 - '{$PROTECT}'
           master_item:
-            key: total
+            key: delta
           tags:
             - tag: debug
         - uuid: 35868876cc474d7baaea913f7ce9fcad
@@ -506,7 +613,7 @@ zabbix_export:
           type: DEPENDENT
           key: total
           history: 1d
-          value_type: JSON
+          value_type: LOG
           preprocessing:
             - type: JAVASCRIPT
               parameters:
@@ -652,7 +759,7 @@ zabbix_export:
               parameters:
                 - '{$PROTECT}'
           master_item:
-            key: total
+            key: delta
           tags:
             - tag: debug
         - uuid: 07bfe5a1552e4355833ed3371b57d453
@@ -672,7 +779,7 @@ zabbix_export:
           enabled_lifetime_type: DISABLE_NEVER
           item_prototypes:
             - uuid: 62bcb9bd8b1d4107b15f843c51539aff
-              name: '{{#NAME}.regrepl(".exe","")}{$EMPTY:": a1 CPU time"}'
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": a1 CPU time"}'
               type: DEPENDENT
               key: 'a1["{#NAME}"]'
               value_type: FLOAT
@@ -718,7 +825,7 @@ zabbix_export:
           enabled_lifetime_type: DISABLE_NEVER
           item_prototypes:
             - uuid: d527f8ecad1c4b2ea42b76587ab1652b
-              name: '{{#NAME}.regrepl(".exe","")}{$EMPTY:": a2 CPU time"}'
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": a2 CPU time"}'
               type: DEPENDENT
               key: 'a2["{#NAME}"]'
               value_type: FLOAT
@@ -764,7 +871,7 @@ zabbix_export:
           enabled_lifetime_type: DISABLE_NEVER
           item_prototypes:
             - uuid: 6bbe037514964cebb62b938a1b4c5c70
-              name: '{{#NAME}.regrepl(".exe","")}{$EMPTY:": a3 CPU time"}'
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": a3 CPU time"}'
               type: DEPENDENT
               key: 'a3[{#NAME}]'
               value_type: FLOAT
@@ -797,7 +904,7 @@ zabbix_export:
           enabled_lifetime_type: DISABLE_NEVER
           item_prototypes:
             - uuid: ac1a132a0da748ad960087661ab58787
-              name: '{{#NAME}.regrepl(".exe","")}{$EMPTY:": m1 CPU time"}'
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": m1 CPU time"}'
               type: DEPENDENT
               key: 'm1["{#NAME}"]'
               value_type: FLOAT
@@ -843,7 +950,7 @@ zabbix_export:
           enabled_lifetime_type: DISABLE_NEVER
           item_prototypes:
             - uuid: 129de0afaaa141b48c886b5dfeaad12f
-              name: '{{#NAME}.regrepl(".exe","")}{$EMPTY:": m2 CPU time"}'
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": m2 CPU time"}'
               type: DEPENDENT
               key: 'm2["{#NAME}"]'
               value_type: FLOAT
@@ -889,7 +996,7 @@ zabbix_export:
           enabled_lifetime_type: DISABLE_NEVER
           item_prototypes:
             - uuid: 399f16b370dc427cbb8257b3e5b7fb60
-              name: '{{#NAME}.regrepl(".exe","")}{$EMPTY:": o CPU time"}'
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": o CPU time"}'
               type: DEPENDENT
               key: 'o["{#NAME}"]'
               value_type: FLOAT
@@ -953,7 +1060,6 @@ zabbix_export:
           value: '(updater.exe|AM_Delta.*|System Idle Process|Memory Compression|System|Registry|Secure System)'
         - macro: '{$PROTECT}'
           value: 1h
-          description: 'frequency to reexecute LLD'
         - macro: '{$SENSITIVITY:lvl1}'
           value: '5000000'
         - macro: '{$SENSITIVITY:lvl2}'
@@ -1017,8 +1123,8 @@ zabbix_export:
                 - type: topitems
                   name: m1
                   'y': '4'
-                  width: '23'
-                  height: '7'
+                  width: '16'
+                  height: '4'
                   hide_header: 'YES'
                   fields:
                     - type: INTEGER
@@ -1062,9 +1168,9 @@ zabbix_export:
                       value: '0'
                 - type: topitems
                   name: m2
-                  'y': '11'
-                  width: '23'
-                  height: '7'
+                  'y': '8'
+                  width: '16'
+                  height: '4'
                   hide_header: 'YES'
                   fields:
                     - type: INTEGER
@@ -1108,9 +1214,9 @@ zabbix_export:
                       value: '0'
                 - type: topitems
                   name: a1
-                  'y': '18'
-                  width: '23'
-                  height: '6'
+                  'y': '12'
+                  width: '16'
+                  height: '4'
                   hide_header: 'YES'
                   fields:
                     - type: INTEGER
@@ -1154,9 +1260,9 @@ zabbix_export:
                       value: '0'
                 - type: topitems
                   name: a2
-                  'y': '24'
-                  width: '23'
-                  height: '6'
+                  'y': '16'
+                  width: '16'
+                  height: '4'
                   hide_header: 'YES'
                   fields:
                     - type: INTEGER
@@ -1237,10 +1343,10 @@ zabbix_export:
                       value: '0'
                 - type: svggraph
                   name: m1
-                  x: '23'
+                  x: '16'
                   'y': '4'
-                  width: '31'
-                  height: '7'
+                  width: '20'
+                  height: '4'
                   hide_header: 'YES'
                   fields:
                     - type: INTEGER
@@ -1259,6 +1365,9 @@ zabbix_export:
                       name: ds.0.width
                       value: '2'
                     - type: INTEGER
+                      name: legend_columns
+                      value: '2'
+                    - type: INTEGER
                       name: legend_lines
                       value: '10'
                     - type: INTEGER
@@ -1272,10 +1381,10 @@ zabbix_export:
                       value: '0'
                 - type: svggraph
                   name: m2
-                  x: '23'
-                  'y': '11'
-                  width: '31'
-                  height: '7'
+                  x: '16'
+                  'y': '8'
+                  width: '20'
+                  height: '4'
                   hide_header: 'YES'
                   fields:
                     - type: INTEGER
@@ -1295,7 +1404,7 @@ zabbix_export:
                       value: '2'
                     - type: INTEGER
                       name: legend_columns
-                      value: '2'
+                      value: '3'
                     - type: INTEGER
                       name: legend_lines
                       value: '10'
@@ -1310,10 +1419,10 @@ zabbix_export:
                       value: '0'
                 - type: svggraph
                   name: a1
-                  x: '23'
-                  'y': '18'
-                  width: '31'
-                  height: '6'
+                  x: '16'
+                  'y': '12'
+                  width: '20'
+                  height: '4'
                   hide_header: 'YES'
                   fields:
                     - type: INTEGER
@@ -1332,6 +1441,9 @@ zabbix_export:
                       name: ds.0.width
                       value: '2'
                     - type: INTEGER
+                      name: legend_columns
+                      value: '2'
+                    - type: INTEGER
                       name: legend_lines
                       value: '10'
                     - type: INTEGER
@@ -1345,10 +1457,10 @@ zabbix_export:
                       value: '0'
                 - type: svggraph
                   name: a2
-                  x: '23'
-                  'y': '24'
-                  width: '31'
-                  height: '6'
+                  x: '16'
+                  'y': '16'
+                  width: '20'
+                  height: '4'
                   hide_header: 'YES'
                   fields:
                     - type: INTEGER
@@ -1367,6 +1479,9 @@ zabbix_export:
                       name: ds.0.width
                       value: '2'
                     - type: INTEGER
+                      name: legend_columns
+                      value: '2'
+                    - type: INTEGER
                       name: legend_lines
                       value: '10'
                     - type: INTEGER
@@ -1375,53 +1490,6 @@ zabbix_export:
                     - type: STRING
                       name: reference
                       value: GDNJF
-                    - type: INTEGER
-                      name: righty
-                      value: '0'
-                - type: svggraph
-                  name: 'Registry, System'
-                  x: '23'
-                  'y': '30'
-                  width: '31'
-                  height: '4'
-                  hide_header: 'YES'
-                  fields:
-                    - type: INTEGER
-                      name: ds.0.aggregate_function
-                      value: '3'
-                    - type: INTEGER
-                      name: ds.0.color_palette
-                      value: '0'
-                    - type: INTEGER
-                      name: ds.0.fill
-                      value: '1'
-                    - type: STRING
-                      name: ds.0.items.0
-                      value: Registry
-                    - type: STRING
-                      name: ds.0.items.1
-                      value: 'Secure System'
-                    - type: INTEGER
-                      name: ds.0.stacked
-                      value: '1'
-                    - type: INTEGER
-                      name: ds.0.transparency
-                      value: '0'
-                    - type: INTEGER
-                      name: ds.0.width
-                      value: '0'
-                    - type: STRING
-                      name: lefty_min
-                      value: '0'
-                    - type: INTEGER
-                      name: legend_lines
-                      value: '10'
-                    - type: INTEGER
-                      name: legend_lines_mode
-                      value: '1'
-                    - type: STRING
-                      name: reference
-                      value: SJIZT
                     - type: INTEGER
                       name: righty
                       value: '0'
@@ -1459,6 +1527,56 @@ zabbix_export:
                     - type: STRING
                       name: reference
                       value: ZDKWH
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'Registry, System'
+                  x: '36'
+                  'y': '4'
+                  width: '18'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.aggregate_function
+                      value: '3'
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: Registry
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: 'Secure System'
+                    - type: STRING
+                      name: ds.0.items.2
+                      value: System
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '0'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: SJIZT
                     - type: INTEGER
                       name: righty
                       value: '0'
