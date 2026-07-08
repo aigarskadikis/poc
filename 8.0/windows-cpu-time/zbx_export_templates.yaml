@@ -1,0 +1,1628 @@
+zabbix_export:
+  version: '8.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 2aad5735caa5484aa5764adf696f3568
+      template: 'windows cpu time s50'
+      name: 'windows cpu time s50'
+      description: AM_Delta
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 31f2ae5910414c1b8c54b39b2b24ae25
+          name: a1cat
+          type: DEPENDENT
+          key: a1cat
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?((@.[''Name''] =~ ''^{$MATCHES:a1}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract uniq process names
+                  var input = JSON.parse(value);
+                  var seen = {};
+                  var result = [];
+                  for (var i = 0; i < input.length; i++) {
+                      var name = input[i].Name;
+                      if (!seen[name]) {
+                          seen[name] = true;
+                          result.push({"Name": name});
+                      }
+                  }
+                  return JSON.stringify(result);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$PROTECT}'
+          master_item:
+            key: delta
+          tags:
+            - tag: debug
+        - uuid: dd442b88960342f18dff2dafd48d9ad3
+          name: a2cat
+          type: DEPENDENT
+          key: a2cat
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?((@.[''Name''] =~ ''^{$MATCHES:a2}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract uniq process names
+                  var input = JSON.parse(value);
+                  var seen = {};
+                  var result = [];
+                  for (var i = 0; i < input.length; i++) {
+                      var name = input[i].Name;
+                      if (!seen[name]) {
+                          seen[name] = true;
+                          result.push({"Name": name});
+                      }
+                  }
+                  return JSON.stringify(result);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$PROTECT}'
+          master_item:
+            key: delta
+          tags:
+            - tag: debug
+        - uuid: 014cfcadac424925b6b33db477d9eba9
+          name: a3cat
+          type: DEPENDENT
+          key: a3cat
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?((@.[''Name''] =~ ''^{$MATCHES:a3}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract uniq process names
+                  var input = JSON.parse(value);
+                  var seen = {};
+                  var result = [];
+                  for (var i = 0; i < input.length; i++) {
+                      var name = input[i].Name;
+                      if (!seen[name]) {
+                          seen[name] = true;
+                          result.push({"Name": name});
+                      }
+                  }
+                  return JSON.stringify(result);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$PROTECT}'
+          master_item:
+            key: delta
+          tags:
+            - tag: debug
+        - uuid: 1c41229aef7144c8b429d1f182460c07
+          name: autoSum
+          type: DEPENDENT
+          key: autoSum
+          value_type: JSON
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var data = JSON.parse(value);
+                  
+                  var sums = {};
+                  var result = [];
+                  
+                  var i;
+                  for (i = 0; i < data.length; i++) {
+                      var name = data[i].Name;
+                      var cpu = Number(data[i].CPUTime);
+                  
+                      if (sums[name] === undefined) {
+                          sums[name] = cpu;
+                      } else {
+                          sums[name] += cpu;
+                      }
+                  }
+                  
+                  for (var name in sums) {
+                      if (sums.hasOwnProperty(name)) {
+                          result.push({
+                              Name: name,
+                              CPUTime: sums[name]
+                          });
+                      }
+                  }
+                  
+                  return JSON.stringify(result);
+          master_item:
+            key: total
+          tags:
+            - tag: debug
+        - uuid: c073a8872c2443499a549037dba4de7f
+          name: delta
+          type: DEPENDENT
+          key: delta
+          history: '{$DBG}'
+          value_type: LOG
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: deltaProtect
+          tags:
+            - tag: debug
+        - uuid: 419f30fb0007431c9f7cc94f1ad292d1
+          name: deltaProtect
+          type: DEPENDENT
+          key: deltaProtect
+          history: '{$DBG}'
+          value_type: LOG
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract delta
+                  var input = JSON.parse(value);
+                  
+                  var list1 = JSON.parse(input[0].value);
+                  var list2 = JSON.parse(input[1].value);
+                  
+                  function aggregate(list) {
+                      var map = {};
+                  
+                      for (var i = 0; i < list.length; i++) {
+                          var item = list[i];
+                  
+                          if (!map[item.Name]) {
+                              map[item.Name] = 0;
+                          }
+                  
+                          // Sum CPUTime for processes with the same name
+                          map[item.Name] += Number(item.CPUTime);
+                      }
+                  
+                      return map;
+                  }
+                  
+                  var cpu1 = aggregate(list1);
+                  var cpu2 = aggregate(list2);
+                  
+                  var output = [];
+                  
+                  for (var name in cpu1) {
+                      output.push({
+                          Name: name,
+                          Delta: cpu1[name] - (cpu2[name] || 0)
+                      });
+                  }
+                  
+                  // Include names that exist only in the second list
+                  for (var name in cpu2) {
+                      if (!(name in cpu1)) {
+                          output.push({
+                              Name: name,
+                              Delta: -cpu2[name]
+                          });
+                      }
+                  }
+                  
+                  return JSON.stringify(output);
+          master_item:
+            key: fetch.history.stats
+          tags:
+            - tag: debug
+        - uuid: 37e953f635084578991f3cd3035c0bbc
+          name: fetch.history.stats
+          type: CALCULATED
+          key: fetch.history.stats
+          value_type: LOG
+          params: '1'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var url = '{$ZABBIX.URL}/api_jsonrpc.php'
+                  
+                  // new http request
+                  var req = new HttpRequest();
+                  
+                  // header
+                  req.addHeader('Content-Type: application/json');
+                  req.addHeader('Authorization: Bearer {$ZABBIX.API.TOKEN}');
+                  
+                  // extract itemid and data type
+                  var el = JSON.parse(req.post(url,
+                    '{"jsonrpc":"2.0","method":"item.get","params":{"output":["itemid","value_type"],"hostids":"{$HOST.ID}","filter":{"key_":"total"}},"id":1}'
+                  )).result[0];
+                  
+                  // fetch 2 most recent samples
+                  var context = JSON.parse(req.post(url,
+                    '{"jsonrpc":"2.0","method":"history.get","params":{"output":["value"],"history":' + el.value_type + ',"itemids":"' + el.itemid + '","sortfield":"clock","sortorder":"DESC","limit":2},"id":1}'
+                  )).result;
+                  
+                  
+                  return JSON.stringify(context);
+          tags:
+            - tag: debug
+        - uuid: ce447d53479146998c9c32442038b1bc
+          name: filter
+          type: DEPENDENT
+          key: filter
+          history: '{$DBG}'
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''Name''] =~ ''^{$NOT_MATCHES:Name}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?((@.[''Name''] =~ ''^{$MATCHES:Name}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+          master_item:
+            key: protect
+          tags:
+            - tag: debug
+        - uuid: 43f24de1a5a447a598f4f58d66964bc5
+          name: 'System Idle Process'
+          type: DEPENDENT
+          key: idle
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''Name''] == ''System Idle Process'')].CPUTime.first()'
+            - type: SIMPLE_CHANGE
+            - type: MULTIPLIER
+              parameters:
+                - '1.0E-7'
+          master_item:
+            key: total
+        - uuid: cf6a5ed75f9b4fbeae15a84f4bdd3ccd
+          name: m1cat
+          type: DEPENDENT
+          key: m1cat
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?((@.[''Name''] =~ ''^{$MATCHES:m1}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract uniq process names
+                  var input = JSON.parse(value);
+                  var seen = {};
+                  var result = [];
+                  for (var i = 0; i < input.length; i++) {
+                      var name = input[i].Name;
+                      if (!seen[name]) {
+                          seen[name] = true;
+                          result.push({"Name": name});
+                      }
+                  }
+                  return JSON.stringify(result);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$PROTECT}'
+          master_item:
+            key: delta
+          tags:
+            - tag: debug
+        - uuid: b2b89a2767a94f0d830f5f4fe6abb1cc
+          name: m2cat
+          type: DEPENDENT
+          key: m2cat
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?((@.[''Name''] =~ ''^{$MATCHES:m2}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract uniq process names
+                  var input = JSON.parse(value);
+                  var seen = {};
+                  var result = [];
+                  for (var i = 0; i < input.length; i++) {
+                      var name = input[i].Name;
+                      if (!seen[name]) {
+                          seen[name] = true;
+                          result.push({"Name": name});
+                      }
+                  }
+                  return JSON.stringify(result);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$PROTECT}'
+          master_item:
+            key: delta
+          tags:
+            - tag: debug
+        - uuid: 35868876cc474d7baaea913f7ce9fcad
+          name: 'Memory Compression'
+          type: DEPENDENT
+          key: MemoryCompression
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''Name''] == ''Memory Compression'')].CPUTime.first()'
+            - type: SIMPLE_CHANGE
+            - type: MULTIPLIER
+              parameters:
+                - '1.0E-7'
+          master_item:
+            key: total
+        - uuid: e2e544a862aa40709b8f570939c65031
+          name: proc.num
+          type: DEPENDENT
+          key: proc.num
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.length()
+          master_item:
+            key: protect
+        - uuid: f77446b8389f42528af8cf21c3a1488b
+          name: protect
+          type: DEPENDENT
+          key: protect
+          history: '{$DBG}'
+          value_type: LOG
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+          master_item:
+            key: 'wmi.getall[root\cimv2,"SELECT Name, KernelModeTime, UserModeTime FROM Win32_Process WHERE NOT Name LIKE ''svchost.exe''"]'
+          tags:
+            - tag: debug
+        - uuid: 70c4066b1330406885657e836a06700a
+          name: Registry
+          type: DEPENDENT
+          key: registry
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''Name''] == ''Registry'')].CPUTime.first()'
+            - type: SIMPLE_CHANGE
+            - type: MULTIPLIER
+              parameters:
+                - '1.0E-7'
+          master_item:
+            key: total
+        - uuid: e4e36e9a468d476888399f0b454ce4b4
+          name: 'Secure System'
+          type: DEPENDENT
+          key: Secure.System
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''Name''] == ''Secure System'')].CPUTime.first()'
+            - type: SIMPLE_CHANGE
+            - type: MULTIPLIER
+              parameters:
+                - '1.0E-7'
+          master_item:
+            key: total
+        - uuid: fc6420df491f4a61a136fa33905bc514
+          name: System
+          type: DEPENDENT
+          key: system
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(@.[''Name''] == ''System'')].CPUTime.first()'
+            - type: SIMPLE_CHANGE
+            - type: MULTIPLIER
+              parameters:
+                - '1.0E-7'
+          master_item:
+            key: total
+        - uuid: 30b942272a5640a69c69a3f16535f096
+          name: total
+          type: DEPENDENT
+          key: total
+          history: 1d
+          value_type: JSON
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // combine KernelModeTime + UserModeTime
+                  var data = JSON.parse(value);
+                  var out = [];
+                  for (var i = 0; i < data.length; i++) {
+                  var row = {};
+                  row["Name"] = data[i].Name;
+                  var item = data[i];
+                  row["CPUTime"] = Number(item.KernelModeTime) + Number(item.UserModeTime);
+                  out.push(row);
+                  }
+                  return JSON.stringify(out);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sum together similar object
+                  
+                  var data = JSON.parse(value);
+                  
+                  var sums = {};
+                  var output = [];
+                  var i;
+                  
+                  // Sum CPUTime by Name
+                  for (i = 0; i < data.length; i++) {
+                      var name = data[i].Name;
+                      var cpu = Number(data[i].CPUTime) || 0;
+                  
+                      if (sums[name] === undefined) {
+                          sums[name] = cpu;
+                      } else {
+                          sums[name] += cpu;
+                      }
+                  }
+                  
+                  // Convert object to array
+                  for (var name in sums) {
+                      if (sums.hasOwnProperty(name)) {
+                          output.push({
+                              "Name": name,
+                              "CPUTime": sums[name]
+                          });
+                      }
+                  }
+                  
+                  return JSON.stringify(output);
+          master_item:
+            key: protect
+          tags:
+            - tag: debug
+        - uuid: de72152c6d904a96aa01030a74182f96
+          name: uncat
+          type: DEPENDENT
+          key: uncat
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''Name''] =~ ''^{$MATCHES:m1}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''Name''] =~ ''^{$MATCHES:m2}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''Name''] =~ ''^{$MATCHES:a1}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''Name''] =~ ''^{$MATCHES:a2}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''Name''] =~ ''^{$MATCHES:a3}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''Name''] =~ ''^{$NOT_MATCHES:Name}$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$..[?((@.[''Delta''] > {$SENSITIVITY:lvl3}))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract uniq process names
+                  var input = JSON.parse(value);
+                  var seen = {};
+                  var result = [];
+                  for (var i = 0; i < input.length; i++) {
+                      var name = input[i].Name;
+                      if (!seen[name]) {
+                          seen[name] = true;
+                          result.push({"Name": name});
+                      }
+                  }
+                  return JSON.stringify(result);
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // sort json
+                  function sortJson(obj) {
+                    if (Object.prototype.toString.call(obj) === '[object Object]') {
+                      var sortedObj = {};
+                      var keys = [];
+                      for (var key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                          keys.push(key);
+                        }
+                      }
+                      keys.sort();
+                      for (var i = 0; i < keys.length; i++) {
+                        var k = keys[i];
+                        sortedObj[k] = sortJson(obj[k]);
+                      }
+                      return sortedObj;
+                    } else if (Object.prototype.toString.call(obj) === '[object Array]') {
+                      var sortedArray = [];
+                      for (var j = 0; j < obj.length; j++) {
+                        sortedArray.push(sortJson(obj[j]));
+                      }
+                      return sortedArray.sort(function (a, b) {
+                        return JSON.stringify(a) > JSON.stringify(b) ? 1 : -1;
+                      });
+                    } else {
+                      return obj;
+                    }
+                  }
+                  return JSON.stringify(sortJson(JSON.parse(value)));
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$PROTECT}'
+          master_item:
+            key: delta
+          tags:
+            - tag: debug
+        - uuid: 07bfe5a1552e4355833ed3371b57d453
+          name: 'kernel user time raw'
+          type: ZABBIX_ACTIVE
+          key: 'wmi.getall[root\cimv2,"SELECT Name, KernelModeTime, UserModeTime FROM Win32_Process WHERE NOT Name LIKE ''svchost.exe''"]'
+          delay: '0;{$UPD}'
+          history: '{$DBG}'
+          value_type: LOG
+          timeout: 1s
+      discovery_rules:
+        - uuid: 8bd8b33ae5084ff594f76184e823ffa6
+          name: a1
+          type: DEPENDENT
+          key: a1
+          lifetime: '{$DEFRAG}'
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: 62bcb9bd8b1d4107b15f843c51539aff
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": a1 CPU time"}'
+              type: DEPENDENT
+              key: 'a1["{#NAME}"]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''Name''] == ''{#NAME}'')].CPUTime.first()'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '1.0E-7'
+              master_item:
+                key: total
+              tags:
+                - tag: cpu
+                  value: a1
+          master_item:
+            key: a1cat
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''Name'']'
+          overrides:
+            - name: 'dont make tag for idle'
+              step: '1'
+              filter:
+                conditions:
+                  - macro: '{#NAME}'
+                    value: '^System Idle Process$'
+                    operator: NOT_MATCHES_REGEX
+              operations:
+                - operator: LIKE
+                  tags:
+                    - tag: measure
+                      value: cpu
+        - uuid: dc49c77d337b4963ac70af88634d231d
+          name: a2
+          type: DEPENDENT
+          key: a2
+          lifetime: '{$DEFRAG}'
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: d527f8ecad1c4b2ea42b76587ab1652b
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": a2 CPU time"}'
+              type: DEPENDENT
+              key: 'a2["{#NAME}"]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''Name''] == ''{#NAME}'')].CPUTime.first()'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '1.0E-7'
+              master_item:
+                key: total
+              tags:
+                - tag: cpu
+                  value: a2
+          master_item:
+            key: a2cat
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''Name'']'
+          overrides:
+            - name: 'dont make tag for idle'
+              step: '1'
+              filter:
+                conditions:
+                  - macro: '{#NAME}'
+                    value: '^System Idle Process$'
+                    operator: NOT_MATCHES_REGEX
+              operations:
+                - operator: LIKE
+                  tags:
+                    - tag: measure
+                      value: cpu
+        - uuid: 79db8f0d1f3d4187a80351126fd7095e
+          name: a3
+          type: DEPENDENT
+          key: a3
+          lifetime: '{$DEFRAG}'
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: 6bbe037514964cebb62b938a1b4c5c70
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": a3 CPU time"}'
+              type: DEPENDENT
+              key: 'a3[{#NAME}]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''Name''] == ''{#NAME}'')].CPUTime.first()'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '1.0E-7'
+              master_item:
+                key: total
+              tags:
+                - tag: cpu
+                  value: a3
+          master_item:
+            key: a3cat
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''Name'']'
+        - uuid: 56e7d449dd4f4e9b919ac175690d3b59
+          name: m1
+          type: DEPENDENT
+          key: m1
+          lifetime: '{$DEFRAG}'
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: ac1a132a0da748ad960087661ab58787
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": m1 CPU time"}'
+              type: DEPENDENT
+              key: 'm1["{#NAME}"]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''Name''] == ''{#NAME}'')].CPUTime.first()'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '1.0E-7'
+              master_item:
+                key: total
+              tags:
+                - tag: cpu
+                  value: m1
+          master_item:
+            key: m1cat
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''Name'']'
+          overrides:
+            - name: 'dont make tag for idle'
+              step: '1'
+              filter:
+                conditions:
+                  - macro: '{#NAME}'
+                    value: '^System Idle Process$'
+                    operator: NOT_MATCHES_REGEX
+              operations:
+                - operator: LIKE
+                  tags:
+                    - tag: measure
+                      value: cpu
+        - uuid: 5341facbd958495c95520e750c5f17e3
+          name: m2
+          type: DEPENDENT
+          key: m2
+          lifetime: '{$DEFRAG}'
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: 129de0afaaa141b48c886b5dfeaad12f
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": m2 CPU time"}'
+              type: DEPENDENT
+              key: 'm2["{#NAME}"]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''Name''] == ''{#NAME}'')].CPUTime.first()'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '1.0E-7'
+              master_item:
+                key: total
+              tags:
+                - tag: cpu
+                  value: m2
+          master_item:
+            key: m2cat
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''Name'']'
+          overrides:
+            - name: 'dont make tag for idle'
+              step: '1'
+              filter:
+                conditions:
+                  - macro: '{#NAME}'
+                    value: '^System Idle Process$'
+                    operator: NOT_MATCHES_REGEX
+              operations:
+                - operator: LIKE
+                  tags:
+                    - tag: measure
+                      value: cpu
+        - uuid: 8d898a308520478394909d001f3b2121
+          name: o
+          type: DEPENDENT
+          key: o
+          lifetime: '{$DEFRAG}'
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: 399f16b370dc427cbb8257b3e5b7fb60
+              name: '{{#NAME}.regsub("(.*)\....$",\1)}{$EMPTY:": o CPU time"}'
+              type: DEPENDENT
+              key: 'o["{#NAME}"]'
+              value_type: FLOAT
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.[''Name''] == ''{#NAME}'')].CPUTime.first()'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '1.0E-7'
+              master_item:
+                key: total
+              tags:
+                - tag: cpu
+                  value: o
+          master_item:
+            key: uncat
+          lld_macro_paths:
+            - lld_macro: '{#NAME}'
+              path: '$.[''Name'']'
+          overrides:
+            - name: 'dont make tag for idle'
+              step: '1'
+              filter:
+                conditions:
+                  - macro: '{#NAME}'
+                    value: '^System Idle Process$'
+                    operator: NOT_MATCHES_REGEX
+              operations:
+                - operator: LIKE
+                  tags:
+                    - tag: measure
+                      value: cpu
+      macros:
+        - macro: '{$DBG}'
+          value: 1d
+        - macro: '{$DEFRAG}'
+          value: 4d
+        - macro: '{$EMPTY}'
+        - macro: '{$MATCHES:a1}'
+          value: (FortiSSLVPNdaemon.exe|FortiVPN.exe|XWin_MobaX.exe|FortiTray.exe|MobaXterm.exe|MoTTY.exe|XMouseButtonControl.exe|WebexHost.exe|Dropbox.exe|dptf_helper.exe|WUDFHost.exe|rustdesk.exe|Telegram.exe|WhatsApp.Root.exe)
+        - macro: '{$MATCHES:a2}'
+          value: (zabbix_agent2.exe|zabbix_agentd.exe|WmiPrvSE.exe|WmiApSrv.exe)
+        - macro: '{$MATCHES:a3}'
+          value: (firefox.exe|msedge.exe|msedgewebview2.exe|chrome.exe|dwm.exe)
+          description: 'web browsers'
+        - macro: '{$MATCHES:m1}'
+          value: (MsSense.exe|vmmemWSL|ms-teams.exe|MsMpEng.exe|OneDrive.exe|WindowsTerminal.exe|explorer.exe|snmp.exe|MpDefenderCoreService.exe)
+        - macro: '{$MATCHES:m2}'
+          value: (lsass.exe|PowerToys.AlwaysOnTop.exe|ctfmon.exe|NisSrv.exe|SenseNdr.exe|cmd.exe|csrss.exe|services.exe|SearchIndexer.exe|TextInputHost.exe|Microsoft.Management.Services.IntuneWindowsAgent.exe)
+        - macro: '{$MATCHES:Name}'
+          value: '.*'
+        - macro: '{$NOT_MATCHES:lvl1}'
+        - macro: '{$NOT_MATCHES:lvl2}'
+        - macro: '{$NOT_MATCHES:lvl3}'
+        - macro: '{$NOT_MATCHES:Name}'
+          value: '(updater.exe|AM_Delta.*|System Idle Process|Memory Compression|System|Registry|Secure System)'
+        - macro: '{$PROTECT}'
+          value: 1h
+        - macro: '{$SENSITIVITY:lvl1}'
+          value: '5000000'
+        - macro: '{$SENSITIVITY:lvl2}'
+          value: '1000000'
+        - macro: '{$SENSITIVITY:lvl3}'
+          value: '500000'
+        - macro: '{$UPD}'
+          value: s50
+      dashboards:
+        - uuid: cf00b2df43ff4fd889c2676b7319a499
+          name: 'Top processes'
+          auto_start: 'NO'
+          pages:
+            - name: 'top priority'
+              widgets:
+                - type: topitems
+                  name: browsers
+                  width: '16'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: STRING
+                      name: columns.0.base_color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '* a3 CPU time*'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.thresholds.0.color
+                      value: FFD54F
+                    - type: STRING
+                      name: columns.0.thresholds.0.threshold
+                      value: '30'
+                    - type: STRING
+                      name: columns.0.thresholds.1.color
+                      value: FF465C
+                    - type: STRING
+                      name: columns.0.thresholds.1.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                - type: topitems
+                  name: m1
+                  'y': '4'
+                  width: '16'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: STRING
+                      name: columns.0.base_color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '* m1 CPU time*'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.thresholds.0.color
+                      value: FFD54F
+                    - type: STRING
+                      name: columns.0.thresholds.0.threshold
+                      value: '30'
+                    - type: STRING
+                      name: columns.0.thresholds.1.color
+                      value: FF465C
+                    - type: STRING
+                      name: columns.0.thresholds.1.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                - type: topitems
+                  name: m2
+                  'y': '8'
+                  width: '16'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: STRING
+                      name: columns.0.base_color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '* m2 CPU time*'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.thresholds.0.color
+                      value: FFD54F
+                    - type: STRING
+                      name: columns.0.thresholds.0.threshold
+                      value: '30'
+                    - type: STRING
+                      name: columns.0.thresholds.1.color
+                      value: FF465C
+                    - type: STRING
+                      name: columns.0.thresholds.1.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                - type: topitems
+                  name: a1
+                  'y': '12'
+                  width: '16'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: STRING
+                      name: columns.0.base_color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '* a1 CPU time*'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.thresholds.0.color
+                      value: FFD54F
+                    - type: STRING
+                      name: columns.0.thresholds.0.threshold
+                      value: '30'
+                    - type: STRING
+                      name: columns.0.thresholds.1.color
+                      value: FF465C
+                    - type: STRING
+                      name: columns.0.thresholds.1.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                - type: topitems
+                  name: a2
+                  'y': '16'
+                  width: '16'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: STRING
+                      name: columns.0.base_color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '* a2 CPU time*'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.thresholds.0.color
+                      value: FFD54F
+                    - type: STRING
+                      name: columns.0.thresholds.0.threshold
+                      value: '30'
+                    - type: STRING
+                      name: columns.0.thresholds.1.color
+                      value: FF465C
+                    - type: STRING
+                      name: columns.0.thresholds.1.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
+                - type: svggraph
+                  name: a3
+                  x: '16'
+                  width: '20'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '* a3 CPU time*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_columns
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: MBUTU
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: m1
+                  x: '16'
+                  'y': '4'
+                  width: '20'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '* m1 CPU time*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_columns
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: WQEGR
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: m2
+                  x: '16'
+                  'y': '8'
+                  width: '20'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '* m2 CPU time*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_columns
+                      value: '3'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: EJQFW
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: a1
+                  x: '16'
+                  'y': '12'
+                  width: '20'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '* a1 CPU time*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_columns
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: EQCCC
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: a2
+                  x: '16'
+                  'y': '16'
+                  width: '20'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '* a2 CPU time*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_columns
+                      value: '2'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: GDNJF
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: idle
+                  x: '36'
+                  width: '18'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FDD835
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'System Idle Process'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: ZDKWH
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'Registry, System'
+                  x: '36'
+                  'y': '4'
+                  width: '18'
+                  height: '4'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.aggregate_function
+                      value: '3'
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: Registry
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: 'Secure System'
+                    - type: STRING
+                      name: ds.0.items.2
+                      value: System
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '0'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '10'
+                    - type: INTEGER
+                      name: legend_lines_mode
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: SJIZT
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: topitems
+                  name: others
+                  x: '54'
+                  width: '18'
+                  height: '61'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.aggregate_function
+                      value: '5'
+                    - type: STRING
+                      name: columns.0.base_color
+                      value: 0EC9AC
+                    - type: INTEGER
+                      name: columns.0.display
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.items.0
+                      value: '* o CPU time*'
+                    - type: STRING
+                      name: columns.0.min
+                      value: '0'
+                    - type: STRING
+                      name: columns.0.thresholds.0.color
+                      value: FFD54F
+                    - type: STRING
+                      name: columns.0.thresholds.0.threshold
+                      value: '30'
+                    - type: STRING
+                      name: columns.0.thresholds.1.color
+                      value: FF465C
+                    - type: STRING
+                      name: columns.0.thresholds.1.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: host_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: item_ordering_limit
+                      value: '100'
+                    - type: INTEGER
+                      name: layout
+                      value: '1'
+                    - type: INTEGER
+                      name: show_column_header
+                      value: '0'
