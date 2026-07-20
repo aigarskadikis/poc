@@ -1,0 +1,135 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 999d59c905254081979ef472ecf949c0
+      name: Debug
+  templates:
+    - uuid: b06d30d80fd74a2b843a21757bdc583b
+      template: 'Zabbix active agent measure failures today yesterday'
+      name: 'Zabbix active agent measure failures today yesterday'
+      groups:
+        - name: Debug
+      items:
+        - uuid: 4299e40c67aa4fc4bfae8aaa79750269
+          name: 'Agent Availability - Flapping'
+          type: DEPENDENT
+          key: za.active.flapping
+          delay: '0'
+          trends: '0'
+          preprocessing:
+            - type: SIMPLE_CHANGE
+              parameters:
+                - ''
+          master_item:
+            key: 'zabbix[host,active_agent,"available"]'
+          tags:
+            - tag: activeAgent
+        - uuid: 70b45bf7fd464497a38259fd18c20830
+          name: 'Agent Availability - Flapping Today'
+          type: CALCULATED
+          key: za.active.flapping.today
+          trends: '0'
+          units: '!times'
+          params: 'sum(//za.active.flapping,1d:now/d+1d)'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          tags:
+            - tag: activeAgent
+              value: unavailableToday
+        - uuid: 22138e2e048844fd92ce2ba1392cedb5
+          name: 'Agent Availability - Flapping Yesterday'
+          type: CALCULATED
+          key: za.active.flapping.yesterday
+          trends: '0'
+          units: '!times'
+          params: 'sum(//za.active.flapping,1d:now/d)'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          tags:
+            - tag: activeAgent
+              value: unavailableYesterday
+        - uuid: 7d4b5ee6832140a9b63c39a8d2a535b9
+          name: 'Agent Availability - Unavailable'
+          type: DEPENDENT
+          key: za.active.unavailable
+          delay: '0'
+          trends: '0'
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '2'
+                - '1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: 'zabbix[host,active_agent,"available"]'
+          tags:
+            - tag: activeAgent
+        - uuid: 8cfd302b64f1453f832a23b79c216146
+          name: 'Agent Availability - Unavailable Minutes Today'
+          type: CALCULATED
+          key: za.active.unavailable.today
+          trends: '0'
+          units: s
+          params: 'sum(//za.active.unavailable,1d:now/d+1d)'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: MULTIPLIER
+              parameters:
+                - '60'
+          tags:
+            - tag: activeAgent
+              value: unavailableToday
+        - uuid: dddff3277ef6429fa06d941d1871b735
+          name: 'Agent Availability - Unavailable Minutes Yesterday'
+          type: CALCULATED
+          key: za.active.unavailable.yesterday
+          trends: '0'
+          units: s
+          params: 'sum(//za.active.unavailable,1d:now/d)'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '-1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: MULTIPLIER
+              parameters:
+                - '60'
+            - type: DISCARD_UNCHANGED
+              parameters:
+                - ''
+          tags:
+            - tag: activeAgent
+              value: unavailableYesterday
+        - uuid: dba5f555488f400abe60d51db7607804
+          name: 'Active agent availability'
+          type: INTERNAL
+          key: 'zabbix[host,active_agent,"available"]'
+          trends: '0'
+          valuemap:
+            name: active_agent_available
+          tags:
+            - tag: activeAgent
+      valuemaps:
+        - uuid: 3320295bcba54782945e056998d75a62
+          name: active_agent_available
+          mappings:
+            - value: '0'
+              newvalue: unknown
+            - value: '1'
+              newvalue: available
+            - value: '2'
+              newvalue: 'not available'
