@@ -57,7 +57,7 @@ zabbix_export:
             - tag: activeAgent
               value: unavailableYesterday
         - uuid: 7d4b5ee6832140a9b63c39a8d2a535b9
-          name: 'Agent Availability - Unavailable'
+          name: 'Agent Availability - Unavailable Hits'
           type: DEPENDENT
           key: za.active.unavailable
           delay: '0'
@@ -74,7 +74,7 @@ zabbix_export:
           tags:
             - tag: activeAgent
         - uuid: 8cfd302b64f1453f832a23b79c216146
-          name: 'Agent Availability - Unavailable Minutes Today'
+          name: 'Agent Availability - Unavailable Time Today'
           type: CALCULATED
           key: za.active.unavailable.today
           trends: '0'
@@ -93,7 +93,7 @@ zabbix_export:
             - tag: activeAgent
               value: unavailableToday
         - uuid: dddff3277ef6429fa06d941d1871b735
-          name: 'Agent Availability - Unavailable Minutes Yesterday'
+          name: 'Agent Availability - Unavailable Time Yesterday'
           type: CALCULATED
           key: za.active.unavailable.yesterday
           trends: '0'
