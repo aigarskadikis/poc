@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2026-08-18T12:15:57Z</date>
+    <date>2026-08-18T12:28:38Z</date>
     <groups>
         <group>
             <name>debug</name>
@@ -46,7 +46,7 @@
                     </preprocessing>
                 </item>
                 <item>
-                    <name>Dummy item to ask local agent to render data every 1s</name>
+                    <name>Read loacal agent time</name>
                     <type>ZABBIX_ACTIVE</type>
                     <key>system.localtime[utc]</key>
                     <delay>1s</delay>
