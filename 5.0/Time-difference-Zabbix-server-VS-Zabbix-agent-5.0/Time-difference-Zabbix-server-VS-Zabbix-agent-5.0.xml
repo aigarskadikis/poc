@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2026-08-18T12:15:57Z</date>
+    <groups>
+        <group>
+            <name>debug</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Time difference Zabbix server VS Zabbix agent 5.0</template>
+            <name>Time difference Zabbix server VS Zabbix agent 5.0</name>
+            <groups>
+                <group>
+                    <name>debug</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>time</name>
+                </application>
+                <application>
+                    <name>timeDiffAgent</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Read local time on Zabbix server</name>
+                    <type>CALCULATED</type>
+                    <key>server.time</key>
+                    <delay>1s</delay>
+                    <trends>0</trends>
+                    <units>unixtime</units>
+                    <params>0</params>
+                    <applications>
+                        <application>
+                            <name>time</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return Math.floor(Date.now() / 1000);</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Dummy item to ask local agent to render data every 1s</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>system.localtime[utc]</key>
+                    <delay>1s</delay>
+                    <trends>0</trends>
+                    <units>unixtime</units>
+                    <applications>
+                        <application>
+                            <name>time</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Time difference</name>
+                    <type>DEPENDENT</type>
+                    <key>time.difference</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <applications>
+                        <application>
+                            <name>timeDiffAgent</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>REGEX</type>
+                            <params>(\d+)
+\1</params>
+                            <error_handler>DISCARD_VALUE</error_handler>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>time.offset</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>Time offset between Zabbix server and Zabbix agent</name>
+                    <type>CALCULATED</type>
+                    <key>time.offset</key>
+                    <delay>1s</delay>
+                    <trends>0</trends>
+                    <value_type>FLOAT</value_type>
+                    <units>s</units>
+                    <params>last(&quot;server.time&quot;)-last(&quot;system.localtime[utc]&quot;)</params>
+                    <applications>
+                        <application>
+                            <name>time</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+        </template>
+    </templates>
+</zabbix_export>

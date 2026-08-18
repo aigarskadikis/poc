@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2026-08-18T12:17:16Z</date>
+    <groups>
+        <group>
+            <name>debug</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Time difference Zabbix server VS Zabbix proxy 5.0</template>
+            <name>Time difference Zabbix server VS Zabbix proxy 5.0</name>
+            <groups>
+                <group>
+                    <name>debug</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>time</name>
+                </application>
+                <application>
+                    <name>timeDiffProxy</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Read local time on Zabbix proxy</name>
+                    <type>DEPENDENT</type>
+                    <key>proxy.time</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <units>unixtime</units>
+                    <applications>
+                        <application>
+                            <name>time</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return Math.floor(Date.now() / 1000);</params>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>zabbix[host,&quot;&quot;,items_unsupported]</key>
+                    </master_item>
+                </item>
+                <item>
+                    <name>Read local time on Zabbix server</name>
+                    <type>CALCULATED</type>
+                    <key>server.time</key>
+                    <delay>1s</delay>
+                    <trends>0</trends>
+                    <units>unixtime</units>
+                    <params>0</params>
+                    <applications>
+                        <application>
+                            <name>time</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <params>return Math.floor(Date.now() / 1000);</params>
+                        </step>
+                    </preprocessing>
+                </item>
+                <item>
+                    <name>Time difference</name>
+                    <type>CALCULATED</type>
+                    <key>time.difference</key>
+                    <delay>1s</delay>
+                    <trends>0</trends>
+                    <value_type>FLOAT</value_type>
+                    <units>s</units>
+                    <params>last(&quot;server.time&quot;)-last(&quot;proxy.time&quot;)</params>
+                    <applications>
+                        <application>
+                            <name>timeDiffProxy</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Dummy item to ask proxy render data every 1s</name>
+                    <type>INTERNAL</type>
+                    <key>zabbix[host,&quot;&quot;,items_unsupported]</key>
+                    <delay>1s</delay>
+                    <history>0</history>
+                    <units>unixtime</units>
+                    <applications>
+                        <application>
+                            <name>time</name>
+                        </application>
+                    </applications>
+                </item>
+            </items>
+        </template>
+    </templates>
+</zabbix_export>
