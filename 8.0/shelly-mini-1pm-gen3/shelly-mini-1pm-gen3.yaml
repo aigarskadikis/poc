@@ -1,0 +1,534 @@
+zabbix_export:
+  version: '8.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: b817818509524f42bba88f69fb0a8fae
+      template: 'Shelly Mini 1PM Gen3'
+      name: 'Shelly Mini 1PM Gen3'
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: 736f173c244c41caa30521eade286902
+          name: 'Wh consumed'
+          type: DEPENDENT
+          key: aenergy.total
+          value_type: FLOAT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$["switch:0"].aenergy.total'
+              error_handler: DISCARD_VALUE
+            - type: SIMPLE_CHANGE
+          master_item:
+            key: params
+          tags:
+            - tag: mqtt
+        - uuid: 8f367090ddbe4031b7340d6e2847e8c0
+          name: Power
+          type: DEPENDENT
+          key: apower
+          value_type: FLOAT
+          units: '!W'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.apower
+          master_item:
+            key: mqtt.switch0
+          tags:
+            - tag: mqtt
+        - uuid: 7b0a1d104a994c448ce57dd5a1f9151b
+          name: Current
+          type: DEPENDENT
+          key: current
+          value_type: FLOAT
+          units: A
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.current
+          master_item:
+            key: mqtt.switch0
+          tags:
+            - tag: mqtt
+        - uuid: b44e43479c554743b27ab2381f48cb49
+          name: Frequency
+          type: DEPENDENT
+          key: freq
+          value_type: FLOAT
+          units: '!Hz'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.freq
+          master_item:
+            key: mqtt.switch0
+          tags:
+            - tag: mqtt
+        - uuid: 2676f1fbe3314e749d9a107d9eca2246
+          name: kW
+          type: DEPENDENT
+          key: kW
+          value_type: FLOAT
+          units: '!kW'
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '0.001'
+          master_item:
+            key: aenergy.total
+        - uuid: 4881cfac3fad4bf79e9e0036952c764e
+          name: mqtt.events.rpc
+          type: DEPENDENT
+          key: mqtt.events.rpc
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.["shelly1pmminig3-48f6eeb9375c/events/rpc"]'
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED
+          master_item:
+            key: 'mqtt.get[192.168.88.59:1883,"#",,]'
+          tags:
+            - tag: mqtt
+        - uuid: 5c509eabd491487fac8aefb598362c5f
+          name: 'shelly gen3 b'
+          type: ZABBIX_ACTIVE
+          key: 'mqtt.get[192.168.88.59:1883,"#",,]'
+          value_type: LOG
+          tags:
+            - tag: mqtt
+        - uuid: 0d85b35cd1474c608488b9ec83539107
+          name: mqtt.switch0
+          type: DEPENDENT
+          key: mqtt.switch0
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.["shelly1pmminig3-48f6eeb9375c/status/switch:0"]'
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED
+          master_item:
+            key: 'mqtt.get[192.168.88.59:1883,"#",,]'
+          tags:
+            - tag: mqtt
+        - uuid: 0ae72d527cdf4c97898bb8d7732c5c83
+          name: params
+          type: DEPENDENT
+          key: params
+          value_type: LOG
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.params
+          master_item:
+            key: ret_aenergy
+          tags:
+            - tag: mqtt
+        - uuid: caed5b408e554c299c2e3af6848aebfb
+          name: 'Returned active energy'
+          type: DEPENDENT
+          key: ret_aenergy
+          value_type: LOG
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - '.*ret_aenergy.*'
+                - \0
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: mqtt.events.rpc
+          tags:
+            - tag: mqtt
+        - uuid: 1700f0c5a3164189ba5ef7b9c011529d
+          name: switch0.apower
+          type: DEPENDENT
+          key: switch0.apower
+          value_type: FLOAT
+          units: '!W'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$["switch:0"].apower'
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: params
+          tags:
+            - tag: mqtt
+        - uuid: e7e0adfdc2b14ef48fa98929bb8d7716
+          name: switch0.current
+          type: DEPENDENT
+          key: switch0.current
+          value_type: FLOAT
+          units: '!A'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$["switch:0"].current'
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: params
+          tags:
+            - tag: mqtt
+        - uuid: 552bf1282e724de9bddcb0da791cf092
+          name: Temperature
+          type: DEPENDENT
+          key: tC
+          value_type: FLOAT
+          trends: '0'
+          units: '!C'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.temperature.tC
+          master_item:
+            key: mqtt.switch0
+          tags:
+            - tag: mqtt
+        - uuid: 52dd42441cb24d9481536b321e9b6563
+          name: Voltage
+          type: DEPENDENT
+          key: voltage
+          value_type: FLOAT
+          units: '!V'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.voltage
+          master_item:
+            key: mqtt.switch0
+          tags:
+            - tag: mqtt
+      dashboards:
+        - uuid: 58910f82c1eb4a809e945597e8b73cb1
+          name: Shelly
+          display_period: '10'
+          pages:
+            - display_period: '10'
+              widgets:
+                - type: item
+                  name: Power
+                  width: '18'
+                  height: '3'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: STRING
+                      name: itemid._reference
+                      value: ALHKQ._itemid
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                - type: svggraph
+                  name: Power
+                  'y': '3'
+                  width: '18'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: F59E0B
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: Power
+                    - type: INTEGER
+                      name: ds.0.missingdatafunc
+                      value: '3'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.type
+                      value: '2'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: ALHKQ
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: item
+                  name: 'kW Consumed per selected time frame'
+                  'y': '7'
+                  width: '28'
+                  height: '4'
+                  fields:
+                    - type: INTEGER
+                      name: aggregate_function
+                      value: '5'
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '4'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Shelly Mini 1PM Gen3'
+                        key: kW
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                - type: item
+                  name: Current
+                  x: '18'
+                  width: '18'
+                  height: '3'
+                  hide_header: 'YES'
+                  fields:
+                    - type: STRING
+                      name: itemid._reference
+                      value: EZLBF._itemid
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                - type: svggraph
+                  name: Current
+                  x: '18'
+                  'y': '3'
+                  width: '18'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: 3B82F6
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: Current
+                    - type: INTEGER
+                      name: ds.0.missingdatafunc
+                      value: '3'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.type
+                      value: '2'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: EZLBF
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'Wh consumed'
+                  x: '28'
+                  'y': '7'
+                  width: '26'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: 10B981
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'Wh consumed'
+                    - type: INTEGER
+                      name: ds.0.type
+                      value: '2'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: REZNC
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: item
+                  name: Voltage
+                  x: '36'
+                  width: '18'
+                  height: '3'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: STRING
+                      name: itemid._reference
+                      value: EFDSB._itemid
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                - type: svggraph
+                  name: Voltage
+                  x: '36'
+                  'y': '3'
+                  width: '18'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: 8B5CF6
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: Voltage
+                    - type: INTEGER
+                      name: ds.0.missingdatafunc
+                      value: '3'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.type
+                      value: '2'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: EFDSB
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: item
+                  name: Temperature
+                  x: '54'
+                  width: '18'
+                  height: '3'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: STRING
+                      name: itemid._reference
+                      value: LBVFU._itemid
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                - type: svggraph
+                  name: Temperature
+                  x: '54'
+                  'y': '3'
+                  width: '18'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: FF0000
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: Temperature
+                    - type: INTEGER
+                      name: ds.0.missingdatafunc
+                      value: '3'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.type
+                      value: '2'
+                    - type: STRING
+                      name: lefty_min
+                      value: '0'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: LBVFU
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: Frequency
+                  x: '54'
+                  'y': '7'
+                  width: '18'
+                  height: '4'
+                  fields:
+                    - type: STRING
+                      name: ds.0.color
+                      value: 06B6D4
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '1'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: Frequency
+                    - type: INTEGER
+                      name: ds.0.missingdatafunc
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: MPKVA
+                    - type: INTEGER
+                      name: rf_rate
+                      value: '10'
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
