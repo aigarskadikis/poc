@@ -1,0 +1,69 @@
+zabbix_export:
+  version: '8.0'
+  template_groups:
+    - uuid: 8713ebdebdd94645b82398960691697c
+      name: 'Zabbix API'
+  templates:
+    - uuid: f783722c87474bf287449a907b1004fe
+      template: 'swap2hosts win'
+      name: 'swap2hosts win'
+      groups:
+        - name: 'Zabbix API'
+      items:
+        - uuid: c6d7e2a30d994e6e8a7665add7d11011
+          name: swap2hosts
+          type: SCRIPT
+          key: swap2hosts
+          delay: 3s
+          history: 90d
+          value_type: LOG
+          params: |
+            var params = JSON.parse(value);
+            // new http request
+            var req = new HttpRequest();
+            
+            // header
+            req.addHeader('Content-Type: application/json');
+            req.addHeader('Authorization: Bearer ' + params.token);
+            
+            var el = JSON.parse(req.post(params.url,
+                '{"jsonrpc":"2.0","method":"host.get","params":{"filter":{"host": ["' + params.newHost + '","' + params.premade + '"]},"output":["hostid","host"]},"id":1}'
+            )).result;
+            
+            if (el.length === 2) {
+                // rename new host, set in in background
+                for (i = 0; i < el.length; i++) {
+                    if (el[i].host === params.newHost) {
+                        var update1 = JSON.parse(req.post(params.url,
+                            '{"jsonrpc":"2.0","method":"host.update","params":{"hostid":"' + el[i].hostid + '","groups":[{"groupid":"' + params.hg_temp + '"}],"host":"' + params.newHost + '_new"},"id":1}'
+                        ));
+                    }
+                }
+            
+                // host with graphs, bring upfront
+                for (i = 0; i < el.length; i++) {
+                    if (el[i].host === params.premade) {
+                        var update2 = JSON.parse(req.post(params.url,
+                            '{"jsonrpc":"2.0","method":"host.update","params":{"hostid":"' + el[i].hostid + '","groups":[{"groupid":"' + params.hg_dest + '"}],"host":"' + params.newHost + '"},"id":1}'
+                        ));
+                    }
+                }
+            
+                return JSON.stringify(update2);
+            }
+            
+            return el.length;
+          timeout: 103s
+          parameters:
+            - name: hg_dest
+              value: '12350'
+            - name: hg_temp
+              value: '12353'
+            - name: newHost
+              value: win-srv
+            - name: premade
+              value: win-srv-ready
+            - name: token
+              value: '{$ZABBIX.API.TOKEN}'
+            - name: url
+              value: '{$ZABBIX.URL}/api_jsonrpc.php'
