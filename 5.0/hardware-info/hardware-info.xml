@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2026-10-20T14:23:41Z</date>
+    <date>2026-10-20T14:30:59Z</date>
     <groups>
         <group>
             <name>Templates/Modules</name>
@@ -114,7 +114,7 @@ return filter.join(',');</params>
                         </step>
                     </preprocessing>
                     <master_item>
-                        <key>vfs.file.contents[&quot;/proc/net/fib_trie&quot;, ]</key>
+                        <key>vfs.file.contents[&quot;/proc/net/fib_trie&quot; ,]</key>
                     </master_item>
                 </item>
                 <item>
@@ -239,7 +239,7 @@ return JSON.stringify(out);</params>
                 </item>
                 <item>
                     <name>fib_trie</name>
-                    <key>vfs.file.contents[&quot;/proc/net/fib_trie&quot;, ]</key>
+                    <key>vfs.file.contents[&quot;/proc/net/fib_trie&quot; ,]</key>
                     <delay>{$INV:ip}</delay>
                     <history>0</history>
                     <trends>0</trends>
