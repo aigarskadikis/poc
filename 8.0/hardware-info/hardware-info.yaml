@@ -1,0 +1,404 @@
+zabbix_export:
+  version: '8.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
+  templates:
+    - uuid: 7097181da3ab4a239f7216da03dea83a
+      template: 'hardware inventory cpuinfo partitions meminfo audit'
+      name: 'hardware inventory cpuinfo partitions meminfo audit'
+      description: |
+        WITH eligible_hosts AS (
+            SELECT hostid, host, name
+            FROM hosts
+            WHERE status = 0
+              AND flags = 0
+        ),
+        string_inventory AS (
+            SELECT
+                i.hostid,
+                i.key_,
+                latest.value
+            FROM items i
+            JOIN eligible_hosts h ON h.hostid = i.hostid
+            JOIN LATERAL (
+                SELECT hs.value
+                FROM history_str hs
+                WHERE hs.itemid = i.itemid
+                ORDER BY hs.clock DESC, hs.ns DESC
+                LIMIT 1
+            ) latest ON TRUE
+            WHERE i.status = 0
+              AND i.flags = 0
+              AND i.key_ IN (
+                  'inventory.cpu.model',
+                  'inventory.ip.address',
+                  'inventory.operating.system'
+              )
+        ),
+        uint_inventory AS (
+            SELECT
+                i.hostid,
+                i.key_,
+                latest.value
+            FROM items i
+            JOIN eligible_hosts h ON h.hostid = i.hostid
+            JOIN LATERAL (
+                SELECT hu.value
+                FROM history_uint hu
+                WHERE hu.itemid = i.itemid
+                ORDER BY hu.clock DESC, hu.ns DESC
+                LIMIT 1
+            ) latest ON TRUE
+            WHERE i.status = 0
+              AND i.flags = 0
+              AND i.key_ IN (
+                  'inventory.mem',
+                  'inventory.total.disk',
+                  'inventory.cpus'
+              )
+        ),
+        string_pivot AS (
+            SELECT
+                hostid,
+                MAX(value) FILTER (
+                    WHERE key_ = 'inventory.cpu.model'
+                ) AS cpu_model,
+                MAX(value) FILTER (
+                    WHERE key_ = 'inventory.ip.address'
+                ) AS ip_address,
+                MAX(value) FILTER (
+                    WHERE key_ = 'inventory.operating.system'
+                ) AS operating_system
+            FROM string_inventory
+            GROUP BY hostid
+        ),
+        uint_pivot AS (
+            SELECT
+                hostid,
+                TRUNC(MAX(value) FILTER (
+                    WHERE key_ = 'inventory.mem'
+                ) / 1024 / 1024) AS memory_mb,
+                TRUNC(MAX(value) FILTER (
+                    WHERE key_ = 'inventory.total.disk'
+                ) / 1024 / 1024) AS disk_gb,
+                MAX(value) FILTER (
+                    WHERE key_ = 'inventory.cpus'
+                ) AS CPUs
+            FROM uint_inventory
+            GROUP BY hostid
+        )
+        SELECT
+            h.host,
+            h.name,
+            s.cpu_model,
+            s.ip_address,
+            s.operating_system,
+            u.memory_mb,
+            u.disk_gb,
+            u.CPUs
+        FROM eligible_hosts h
+        LEFT JOIN string_pivot s ON s.hostid = h.hostid
+        LEFT JOIN uint_pivot u ON u.hostid = h.hostid
+        WHERE EXISTS (
+            SELECT 1
+            FROM items i
+            WHERE i.hostid = h.hostid
+              AND i.status = 0
+              AND i.flags = 0
+              AND i.key_ IN (
+                  'inventory.cpu.model',
+                  'inventory.ip.address',
+                  'inventory.operating.system',
+                  'inventory.mem',
+                  'inventory.total.disk',
+                  'inventory.cpus'
+              )
+        )
+        ORDER BY h.name \gx
+      groups:
+        - name: Templates/Modules
+      items:
+        - uuid: fa054f5043c944db94b7dcf1e4d6acfc
+          name: 'Inventory CPU model'
+          type: DEPENDENT
+          key: inventory.cpu.model
+          value_type: CHAR
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // extract "model name" or "CPU part" code
+                  
+                  // in case master item is stored in inventory, need to remove tabs and new line characters
+                  var formated = value.replace(/\\t/gm, '').replace(/\\n/gm, '\n');
+                  
+                  // for x86_64
+                  if (formated.match(/model nam.*: (.*)/)) { return formated.match(/model nam.*: (.*)/)[1]; }
+                  
+                  // for aarch64
+                  if (formated.match(/CPU par.*: (.*)/)) { return formated.match(/CPU par.*: (.*)/)[1]; }
+          master_item:
+            key: 'vfs.file.contents["/proc/cpuinfo" ,]'
+          tags:
+            - tag: audit
+        - uuid: 6b266b02c9a44cb5aa373196070f4a2b
+          name: 'Inventory CPUs'
+          type: DEPENDENT
+          key: inventory.cpus
+          trends: '0'
+          units: '!CPUs'
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - 'return value.match(/^processor/gm).length;'
+          master_item:
+            key: 'vfs.file.contents["/proc/cpuinfo" ,]'
+          tags:
+            - tag: audit
+        - uuid: dffe7fec70c348ce83b08037cec04448
+          name: 'Inventory hostname'
+          type: DEPENDENT
+          key: inventory.hostname
+          value_type: CHAR
+          master_item:
+            key: 'vfs.file.contents["/proc/sys/kernel/hostname" ,]'
+        - uuid: 81955fc6b8814e2bbc07c383142aab69
+          name: 'Inventory IP address'
+          type: DEPENDENT
+          key: inventory.ip.address
+          value_type: CHAR
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  // remove new line characters, leave only printable characters
+                  var format = value.replace(/\\n/gm, "").replace(/[\x00-\x1F\x7F]/g, "");
+                  
+                  // extract ip
+                  var data = format.match(/(\S+)\s+\/32/gm);
+                  
+                  if (data.length > 1) {
+                      data = format.match(/(\S+)\s+\/32/gm).sort();
+                  }
+                  function uniq(a) {
+                      return a.sort().filter(function (item, pos, ary) {
+                          return !pos || item != ary[pos - 1];
+                      });
+                  }
+                  var out = [];
+                  for (n = 0; n < data.length; n++) {
+                      if (!
+                          (data[n].match(/^127/))
+                          && !(data[n].match(/\S+\.255 /))
+                          && !(data[n].match(/\S+\.254 /))
+                          && !(data[n].match(/\S+\.0 /))
+                          && !(data[n].match(/\S+\.1 /))
+                          && !(data[n].match(/^169/))
+                      ) {
+                          out.push(data[n].match(/^\S+/)[0]);
+                      }
+                  }
+                  var filter = uniq(out);
+                  return filter.join(',');
+          master_item:
+            key: 'vfs.file.contents["/proc/net/fib_trie", ]'
+          tags:
+            - tag: audit
+        - uuid: 41ac1e47684240c6b8041a6b4c4b54fa
+          name: 'Inventory RAM'
+          type: DEPENDENT
+          key: inventory.mem
+          trends: '0'
+          units: B
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'MemTotal:\s+(\d+) kB'
+                - \1
+            - type: MULTIPLIER
+              parameters:
+                - '1024'
+          master_item:
+            key: 'vfs.file.contents["/proc/meminfo" , ]'
+          tags:
+            - tag: audit
+        - uuid: d893942d734648f9939e9e463f5821ae
+          name: 'Inventory Operating system'
+          type: DEPENDENT
+          key: inventory.operating.system
+          value_type: CHAR
+          preprocessing:
+            - type: REGEX
+              parameters:
+                - 'PRETTY_NAME=.(.*).'
+                - \1
+            - type: STR_REPLACE
+              parameters:
+                - ' Server'
+                - ''
+            - type: STR_REPLACE
+              parameters:
+                - ' GNU/Linux'
+                - ''
+            - type: REGEX
+              parameters:
+                - '^(.*[0-9.]+)'
+                - \1
+          master_item:
+            key: 'vfs.file.contents["/etc/os-release" ,]'
+          tags:
+            - tag: audit
+        - uuid: 839789cc23834b9ebc5eb3020813b909
+          name: 'Inventory Disk'
+          type: DEPENDENT
+          key: inventory.total.disk
+          trends: '0'
+          units: B
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var input = value.match(/\d+\s+\d+\s+\d+\s+\S+/gm);
+                  var out = [];
+                  for (var n = 0; n < input.length; n++) {
+                      var row = {};
+                      row["disk"] = input[n].match(/\d+\s+\d+\s+\d+\s+(\S+)/)[1];
+                      row["size"] = input[n].match(/\d+\s+\d+\s+(\d+)\s+\S+/)[1];
+                      out.push(row);
+                  }
+                  return JSON.stringify(out);
+            - type: JSONPATH
+              parameters:
+                - '$..[?(!(@.[''disk''] =~ "^sr" || @.[''disk''] =~ "^loop" || @.[''disk''] =~ "^ram" || @.[''disk''] =~ "^dm" || @.[''disk''] =~ "^....$" || @.[''disk''] =~ ''^.*0p[0-9]+$''))]'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '[]'
+            - type: JSONPATH
+              parameters:
+                - '$[*].size.sum()'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          master_item:
+            key: 'vfs.file.contents["/proc/partitions" ,]'
+          tags:
+            - tag: audit
+        - uuid: f090dbb9322c4167b51266b9db6ca610
+          name: os-release
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents["/etc/os-release" ,]'
+          delay: '{$INV:os}'
+          history: '0'
+          value_type: LOG
+          timeout: 1s
+          tags:
+            - tag: audit
+        - uuid: c41de4fb170d4a79ad68059a71f6c717
+          name: cpuinfo
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents["/proc/cpuinfo" ,]'
+          delay: '{$INV:cpu}'
+          history: '0'
+          value_type: LOG
+          timeout: 1s
+          tags:
+            - tag: audit
+        - uuid: b2e4f83ff50049089ec583f2bc9d4195
+          name: meminfo
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents["/proc/meminfo" , ]'
+          delay: '{$INV:mem}'
+          history: '0'
+          value_type: LOG
+          timeout: 1s
+          tags:
+            - tag: audit
+        - uuid: 39e9947f08fb4a9691034df0113abe1a
+          name: fib_trie
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents["/proc/net/fib_trie", ]'
+          delay: '{$INV:ip}'
+          history: '0'
+          value_type: LOG
+          timeout: 1s
+          tags:
+            - tag: audit
+        - uuid: a5a8db180af64cdf86ff9c3e24005b7e
+          name: partitions
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents["/proc/partitions" ,]'
+          delay: '{$INV:disk}'
+          history: '0'
+          value_type: LOG
+          timeout: 1s
+          tags:
+            - tag: audit
+        - uuid: 049928fc86b04b4ba7131f2259af221b
+          name: hostname
+          type: ZABBIX_ACTIVE
+          key: 'vfs.file.contents["/proc/sys/kernel/hostname" ,]'
+          delay: '{$INV:hostname}'
+          history: '0'
+          value_type: CHAR
+          timeout: 1s
+          tags:
+            - tag: audit
+      tags:
+        - tag: summary
+          value: hardware
+      macros:
+        - macro: '{$INV}'
+          value: 12s
+        - macro: '{$SQL:my}'
+          value: '```sql WITH eligible_hosts AS( SELECT hostid, name FROM hosts WHERE status = 0 AND flags = 0), string_inventory AS ( SELECT i.hostid, i.key_, ( SELECT hs.value FROM history_str hs WHERE hs.itemid = i.itemid ORDER BY hs.clock DESC, hs.ns DESC LIMIT 1 ) AS value FROM items i JOIN eligible_hosts h ON h.hostid = i.hostid WHERE i.status = 0 AND i.flags = 0 AND i.key_ IN ( ''inventory.cpu.model'', ''inventory.ip.address'', ''inventory.operating.system'' ) AND EXISTS ( SELECT 1 FROM history_str hs WHERE hs.itemid = i.itemid ) ), uint_inventory AS ( SELECT i.hostid, i.key_, ( SELECT hu.value FROM history_uint hu WHERE hu.itemid = i.itemid ORDER BY hu.clock DESC, hu.ns DESC LIMIT 1 ) AS value FROM items i JOIN eligible_hosts h ON h.hostid = i.hostid WHERE i.status = 0 AND i.flags = 0 AND i.key_ IN ( ''inventory.mem'', ''inventory.total.disk'', ''inventory.cpus'' ) AND EXISTS ( SELECT 1 FROM history_uint hu WHERE hu.itemid = i.itemid ) ), string_pivot AS ( SELECT hostid, MAX(CASE WHEN key_ = ''inventory.cpu.model'' THEN value END) AS cpu_model, MAX(CASE WHEN key_ = ''inventory.ip.address'' THEN value END) AS ip_address, MAX(CASE WHEN key_ = ''inventory.operating.system'' THEN value END) AS operating_system FROM string_inventory GROUP BY hostid ), uint_pivot AS ( SELECT hostid, TRUNC(MAX(CASE WHEN key_ = ''inventory.mem'' THEN value END) / 1024 / 1024, 0) AS memory_mb, TRUNC(MAX(CASE WHEN key_ = ''inventory.total.disk'' THEN value END) / 1024 / 1024, 0) AS disk_gb, MAX(CASE WHEN key_ = ''inventory.cpus'' THEN value END) AS CPUs FROM uint_inventory GROUP BY hostid ) SELECT h.name, s.cpu_model, s.ip_address, s.operating_system, u.memory_mb, u.disk_gb, u.CPUs FROM eligible_hosts h LEFT JOIN string_pivot s ON s.hostid = h.hostid LEFT JOIN uint_pivot u ON u.hostid = h.hostid WHERE EXISTS ( SELECT 1 FROM items i WHERE i.hostid = h.hostid AND i.status = 0 AND i.flags = 0 AND i.key_ IN ( ''inventory.cpu.model'', ''inventory.ip.address'', ''inventory.operating.system'', ''inventory.mem'', ''inventory.total.disk'', ''inventory.cpus'' ) ) ORDER BY h.name; ```'
+        - macro: '{$SQL:pg}'
+          value: 'WITH eligible_hosts AS( SELECT hostid, host, name FROM hosts WHERE status = 0 AND flags = 0), string_inventory AS ( SELECT i.hostid, i.key_, latest.value FROM items i JOIN eligible_hosts h ON h.hostid = i.hostid JOIN LATERAL ( SELECT hs.value FROM history_str hs WHERE hs.itemid = i.itemid ORDER BY hs.clock DESC, hs.ns DESC LIMIT 1 ) latest ON TRUE WHERE i.status = 0 AND i.flags = 0 AND i.key_ IN ( ''inventory.cpu.model'', ''inventory.ip.address'', ''inventory.operating.system'' ) ), uint_inventory AS ( SELECT i.hostid, i.key_, latest.value FROM items i JOIN eligible_hosts h ON h.hostid = i.hostid JOIN LATERAL ( SELECT hu.value FROM history_uint hu WHERE hu.itemid = i.itemid ORDER BY hu.clock DESC, hu.ns DESC LIMIT 1 ) latest ON TRUE WHERE i.status = 0 AND i.flags = 0 AND i.key_ IN ( ''inventory.mem'', ''inventory.total.disk'', ''inventory.cpus'' ) ), string_pivot AS ( SELECT hostid, MAX(value) FILTER ( WHERE key_ = ''inventory.cpu.model'' ) AS cpu_model, MAX(value) FILTER ( WHERE key_ = ''inventory.ip.address'' ) AS ip_address, MAX(value) FILTER ( WHERE key_ = ''inventory.operating.system'' ) AS operating_system FROM string_inventory GROUP BY hostid ), uint_pivot AS ( SELECT hostid, TRUNC(MAX(value) FILTER ( WHERE key_ = ''inventory.mem'' ) / 1024 / 1024) AS memory_mb, TRUNC(MAX(value) FILTER ( WHERE key_ = ''inventory.total.disk'' ) / 1024 / 1024) AS disk_gb, MAX(value) FILTER ( WHERE key_ = ''inventory.cpus'' ) AS CPUs FROM uint_inventory GROUP BY hostid ) SELECT h.host, h.name, s.cpu_model, s.ip_address, s.operating_system, u.memory_mb, u.disk_gb, u.CPUs FROM eligible_hosts h LEFT JOIN string_pivot s ON s.hostid = h.hostid LEFT JOIN uint_pivot u ON u.hostid = h.hostid WHERE EXISTS ( SELECT 1 FROM items i WHERE i.hostid = h.hostid AND i.status = 0 AND i.flags = 0 AND i.key_ IN ( ''inventory.cpu.model'', ''inventory.ip.address'', ''inventory.operating.system'', ''inventory.mem'', ''inventory.total.disk'', ''inventory.cpus'' ) ) ORDER BY h.name \gx'
+      dashboards:
+        - uuid: abad8908e2a7488288b596b449d542b9
+          name: 'Hardware info'
+          display_period: '3600'
+          pages:
+            - widgets:
+                - type: tophosts
+                  name: Info
+                  width: '72'
+                  height: '6'
+                  fields:
+                    - type: INTEGER
+                      name: columns.0.data
+                      value: '3'
+                    - type: STRING
+                      name: columns.0.name
+                      value: CPUs
+                    - type: STRING
+                      name: columns.0.text
+                      value: '{INVENTORY.POC.PRIMARY.PHONE.A}'
+                    - type: INTEGER
+                      name: columns.1.data
+                      value: '3'
+                    - type: STRING
+                      name: columns.1.name
+                      value: 'Operating system'
+                    - type: STRING
+                      name: columns.1.text
+                      value: '{INVENTORY.OS.SHORT}'
+                    - type: INTEGER
+                      name: columns.2.data
+                      value: '3'
+                    - type: STRING
+                      name: columns.2.name
+                      value: 'CPU model'
+                    - type: STRING
+                      name: columns.2.text
+                      value: '{INVENTORY.MODEL}'
+                    - type: INTEGER
+                      name: columns.3.data
+                      value: '3'
+                    - type: STRING
+                      name: columns.3.name
+                      value: 'Memory in GB'
+                    - type: STRING
+                      name: columns.3.text
+                      value: '{INVENTORY.POC.PRIMARY.PHONE.B}'
+                    - type: STRING
+                      name: reference
+                      value: DMFZS
