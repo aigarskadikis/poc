@@ -32,7 +32,10 @@ inventory.mem
 
 ## PostgreSQL query
 
-Host
+This is tested with:
+
+* PostgreSQL 18
+
 ```sql
 WITH eligible_hosts AS (
   SELECT hostid, host, name FROM hosts WHERE status = 0 AND flags = 0
@@ -75,7 +78,10 @@ ORDER BY h.name;
 
 ## MySQL query
 
-Host
+This is tested with versions:
+
+* MySQL 8.0
+
 ```sql
 WITH hosts_ok AS (SELECT hostid, host, name FROM hosts WHERE status=0 AND flags=0),
 sl AS (
